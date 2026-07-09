@@ -1,0 +1,103 @@
+{
+  "$schema": "https://registry.zk.email/schemas/blueprint.schema.json",
+  "title": "p2peace News Event v1 (template; example instance: incentive-42)",
+  "slug": "p2peace/news-event-v1/incentive-42",
+  "circuitName": "NewsEventV1_Incentive42",
+  "description": "Proves that a DKIM-signed email (news newsletter / breaking-news alert) sent at time T contains body text matching the boolean keyword pattern committed to by a p2peace incentive. This file is the TEMPLATE for the news-event proof family: the four body regexes below are not hand-written, they are the output of the keyword compiler (circuits/keyword-compiler.md) for the worked example incentive #42, '(checkpoint removal OR military withdrawal OR IDF dismantles) AND (Jordan Valley OR West Bank) AND (removed OR dismantled OR withdrawn) AND (confirmed OR verified OR observed)'. One instance is compiled and registered per incentive; each instance has its own slug, verifying key, and patternHash. The sender domain is NOT baked into the circuit: it is exposed as a public capture and checked on-chain against the incentive's approved source set, so one instance serves every approved outlet.",
+  "tags": ["p2peace", "news", "attestation"],
+  "emailQuery": "list:(*) OR from:(news)",
+  "senderDomain": null,
+  "ignoreBodyHashCheck": false,
+  "removeSoftLinebreaks": true,
+  "emailHeaderMaxLength": 1024,
+  "emailBodyMaxLength": 4096,
+  "shaPrecomputeSelector": "",
+  "clientSideOnly": false,
+  "zkFramework": "circom",
+  "version": 1,
+  "decomposedRegexes": [
+    {
+      "name": "fromDomain",
+      "location": "header",
+      "maxLength": 64,
+      "parts": [
+        { "isPublic": false, "regexDef": "(\r\n|^)from:([^\r\n]+<)?[A-Za-z0-9!#$%&'*+\\-/=?^_`{|}~.]+@" },
+        { "isPublic": true, "regexDef": "[a-z0-9.\\-]+" },
+        { "isPublic": false, "regexDef": ">?\r\n" }
+      ]
+    },
+    {
+      "name": "dkimTimestamp",
+      "location": "header",
+      "maxLength": 10,
+      "parts": [
+        { "isPublic": false, "regexDef": "(\r\n|^)dkim-signature:[^\r\n]*( |\t)t=" },
+        { "isPublic": false, "regexDef": "[0-9]+" },
+        { "isPublic": false, "regexDef": ";" }
+      ]
+    },
+    {
+      "name": "kwGroup1",
+      "location": "body",
+      "maxLength": 64,
+      "parts": [
+        { "isPublic": false, "regexDef": "[Cc][Hh][Ee][Cc][Kk][Pp][Oo][Ii][Nn][Tt]( |\t|\r\n)+[Rr][Ee][Mm][Oo][Vv][Aa][Ll]|[Mm][Ii][Ll][Ii][Tt][Aa][Rr][Yy]( |\t|\r\n)+[Ww][Ii][Tt][Hh][Dd][Rr][Aa][Ww][Aa][Ll]|[Ii][Dd][Ff]( |\t|\r\n)+[Dd][Ii][Ss][Mm][Aa][Nn][Tt][Ll][Ee][Ss]" }
+      ]
+    },
+    {
+      "name": "kwGroup2",
+      "location": "body",
+      "maxLength": 64,
+      "parts": [
+        { "isPublic": false, "regexDef": "[Jj][Oo][Rr][Dd][Aa][Nn]( |\t|\r\n)+[Vv][Aa][Ll][Ll][Ee][Yy]|[Ww][Ee][Ss][Tt]( |\t|\r\n)+[Bb][Aa][Nn][Kk]" }
+      ]
+    },
+    {
+      "name": "kwGroup3",
+      "location": "body",
+      "maxLength": 64,
+      "parts": [
+        { "isPublic": false, "regexDef": "[Rr][Ee][Mm][Oo][Vv][Ee][Dd]|[Dd][Ii][Ss][Mm][Aa][Nn][Tt][Ll][Ee][Dd]|[Ww][Ii][Tt][Hh][Dd][Rr][Aa][Ww][Nn]" }
+      ]
+    },
+    {
+      "name": "kwGroup4",
+      "location": "body",
+      "maxLength": 64,
+      "parts": [
+        { "isPublic": false, "regexDef": "[Cc][Oo][Nn][Ff][Ii][Rr][Mm][Ee][Dd]|[Vv][Ee][Rr][Ii][Ff][Ii][Ee][Dd]|[Oo][Bb][Ss][Ee][Rr][Vv][Ee][Dd]" }
+      ]
+    }
+  ],
+  "externalInputs": [],
+  "x-p2peace": {
+    "note": "Everything above follows registry.zk.email blueprint conventions, with one deviation flagged below (senderDomain=null). This block documents the project-specific circuit extensions layered on the registry-generated core before trusted setup; the registry does not interpret it. See circuits/README.md section 3 (honesty box).",
+    "senderDomainDeviation": "Registry blueprints normally pin a senderDomain and constrain the from-header against it. Here the from-domain is a PUBLIC capture instead (fromDomain part index 1, packed 31 bytes/field-element in the raw signals); the adapter contract unpacks it and computes domainHash = keccak256(domainBytes), and EventAttestation checks that hash against the incentive's approved source set and tags its category (A / B / International). The capture regex admits only lowercase domain bytes, matching the lowercase-keccak convention.",
+    "keywordLogic": {
+      "source": "(checkpoint removal OR military withdrawal OR IDF dismantles) AND (Jordan Valley OR West Bank) AND (removed OR dismantled OR withdrawn) AND (confirmed OR verified OR observed)",
+      "compilation": "Each AND-group compiles to one decomposed regex (kwGroup1..kwGroup4) whose alternation encodes the OR terms; the circuit requires every group's match flag to equal 1 (instantiating each zk-regex matcher with a match-count >= 1 constraint; the conjunction is the set of constraints). Full rules: circuits/keyword-compiler.md.",
+      "canonicalArtifactSha256": "computed by the compiler over the canonical JSON serialization of decomposedRegexes kwGroup1..kwGroup4; pinned in the proposal metadata URI for auditability (see README section 5 caveat)"
+    },
+    "nullifier": {
+      "formula": "Poseidon(dkimSignature)",
+      "implementation": "Stock EmailNullifier() helper from @zk-email/circuits (Poseidon over the RSA signature limbs). Unique per physical email: the same newsletter edition can be attested once, while different editions and different outlets each produce fresh nullifiers. Deliberately NOT salted per incentive: one email should not attest the same physical evidence twice anywhere in the system.",
+      "exposure": "public signal 2"
+    },
+    "emailTimestamp": {
+      "primary": "dkimTimestamp capture (DKIM t= tag) converted to an integer in-circuit; used by EventAttestation for the attestation window (default 7 days).",
+      "fallback": "Instances targeting senders that omit t= compile a Date:-header parse gadget instead (ether-email-auth style).",
+      "exposure": "public signal 4"
+    },
+    "publicSignals": [
+      { "index": 0, "name": "dkimPubkeyHash", "source": "EmailVerifier pubkey Poseidon hash (stock)" },
+      { "index": 1, "name": "domainHash", "source": "adapter: keccak256(unpacked fromDomain capture)" },
+      { "index": 2, "name": "nullifier", "source": "EmailNullifier() output" },
+      { "index": 3, "name": "patternHash", "source": "adapter constant keccak256('p2peace/news-event-v1/incentive-42@1'); binding is via the verifying key registered under this hash" },
+      { "index": 4, "name": "emailTimestamp", "source": "circuit output" },
+      { "index": 5, "name": "extraData", "source": "constant 0 for attestations; adapter rejects nonzero" }
+    ],
+    "patternHash": "keccak256(utf8('p2peace/news-event-v1/incentive-42@1')) — must equal the patternHash committed in incentive #42 at proposal time, or EventAttestation rejects the proof",
+    "privacy": "clientSideOnly=false: newsletters are public content; the hosted remote prover is acceptable (and much faster on low-end devices). Local proving remains available for attesters who prefer not to reveal which newsletters they receive.",
+    "consumedBy": "EventAttestation.attest(uint256 incentiveId, EmailProof proof): checks patternHash matches the incentive, domainHash is in the incentive's source set, emailTimestamp inside the event window, nullifier unused, then tallies distinct source domains per category (>=1 A, >=1 B, >=2 International by default)."
+  }
+}

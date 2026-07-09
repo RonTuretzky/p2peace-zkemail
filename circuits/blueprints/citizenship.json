@@ -1,0 +1,97 @@
+{
+  "$schema": "https://registry.zk.email/schemas/blueprint.schema.json",
+  "title": "p2peace Citizenship v1 (taxes.gov.example)",
+  "slug": "p2peace/citizenship-v1",
+  "circuitName": "CitizenshipV1",
+  "description": "Proves receipt of a DKIM-signed institutional notice from an allowlisted government domain, addressed to an inbox the prover controls. Reveals nothing about the recipient: the to-address is captured privately, canonicalized, and hashed with a registration salt into a per-address nullifier. One blueprint instance is compiled per allowlisted government domain; this file is the instance for the example domain taxes.gov.example. The proof is bound to a target wallet via an external input (extraData) so a relayer cannot redirect the registration.",
+  "tags": ["p2peace", "identity", "citizenship"],
+  "emailQuery": "from:(taxes.gov.example) subject:(tax statement)",
+  "senderDomain": "taxes.gov.example",
+  "ignoreBodyHashCheck": false,
+  "removeSoftLinebreaks": true,
+  "emailHeaderMaxLength": 1024,
+  "emailBodyMaxLength": 2048,
+  "shaPrecomputeSelector": "",
+  "clientSideOnly": true,
+  "zkFramework": "circom",
+  "version": 1,
+  "decomposedRegexes": [
+    {
+      "name": "fromDomain",
+      "location": "header",
+      "maxLength": 64,
+      "parts": [
+        { "isPublic": false, "regexDef": "(\r\n|^)from:([^\r\n]+<)?[A-Za-z0-9!#$%&'*+\\-/=?^_`{|}~.]+@" },
+        { "isPublic": false, "regexDef": "taxes\\.gov\\.example" },
+        { "isPublic": false, "regexDef": ">?\r\n" }
+      ]
+    },
+    {
+      "name": "recipientLocalBase",
+      "location": "header",
+      "maxLength": 64,
+      "parts": [
+        { "isPublic": false, "regexDef": "(\r\n|^)to:([^\r\n]+<)?" },
+        { "isPublic": false, "regexDef": "[A-Za-z0-9._%\\-]+" },
+        { "isPublic": false, "regexDef": "(\\+[A-Za-z0-9._%\\-]*)?@[a-zA-Z0-9.\\-]+\\.[a-zA-Z]{2,}>?\r\n" }
+      ]
+    },
+    {
+      "name": "dkimTimestamp",
+      "location": "header",
+      "maxLength": 10,
+      "parts": [
+        { "isPublic": false, "regexDef": "(\r\n|^)dkim-signature:[^\r\n]*( |\t)t=" },
+        { "isPublic": false, "regexDef": "[0-9]+" },
+        { "isPublic": false, "regexDef": ";" }
+      ]
+    },
+    {
+      "name": "noticeAnchor",
+      "location": "body",
+      "maxLength": 128,
+      "parts": [
+        { "isPublic": false, "regexDef": "Your (annual|quarterly) tax statement (for [0-9]{4} )?is (now )?(ready|available)" }
+      ]
+    }
+  ],
+  "externalInputs": [
+    {
+      "name": "walletAddress",
+      "description": "0x-prefixed, checksummed EVM address of the wallet being registered. Packed into one field element and exposed verbatim as public signal 5 (extraData). Binds the proof to the wallet: IdentityRegistry.register(proof, communityId, wallet) requires extraData == uint256(uint160(wallet)).",
+      "maxLength": 44
+    }
+  ],
+  "x-p2peace": {
+    "note": "Everything above follows registry.zk.email blueprint conventions and compiles as-is. Everything in this block is a project-specific circuit extension layered on the registry-generated core before trusted setup; it is NOT interpreted by the registry. See circuits/README.md section 3 (honesty box).",
+    "domainInstance": "taxes.gov.example",
+    "domainInstancePolicy": "One compiled instance per allowlisted government domain. The sender domain is constrained in-circuit by the fromDomain regex (all parts private: the domain is a compile-time constant, nothing needs revealing). The adapter contract exposes domainHash = keccak256('taxes.gov.example') as an immutable constant.",
+    "recipientCanonicalization": {
+      "capture": "recipientLocalBase (part index 1) plus the compile-time recipient-domain match",
+      "plusTagStripping": "Structural, not computed: the capture group for the local part excludes '+', and the optional '+tag' segment is matched by a subsequent private part. The tag therefore never enters the nullifier preimage.",
+      "lowercasing": "In-circuit per-byte gadget over the <=64-byte capture: for each byte b, if 65 <= b <= 90 then b += 32. ~6 constraints/byte; project-specific circom, applied before hashing.",
+      "canonicalForm": "lowercase(localBase) || '@' || lowercase(recipientDomainBytes)"
+    },
+    "nullifier": {
+      "formula": "Poseidon(pack31(canonicalRecipient) .. , REGISTRATION_SALT)",
+      "packing": "Canonical recipient bytes packed 31 bytes per field element (up to 4 limbs for a 124-byte budget), then Poseidon over [limbs..., REGISTRATION_SALT].",
+      "REGISTRATION_SALT": "0x70325032505f434954495a454e5f5245475f5631 (field element constant, ascii 'p2P2P_CITIZEN_REG_V1' packed; fixed protocol-wide so the nullifier is constant per email address across wallets and renewals)"
+    },
+    "emailTimestamp": {
+      "primary": "dkimTimestamp capture (DKIM t= tag): digits converted to an integer in-circuit; numeric, signed by the sending server. Set by Gmail/Google Workspace and most large senders.",
+      "fallback": "If the sending domain omits t=, the instance is compiled with a Date:-header regex plus a date-to-unix gadget (as in zk-email's ether-email-auth) instead. Exactly one source is compiled in per instance; the signal meaning is identical.",
+      "exposure": "public signal 4"
+    },
+    "publicSignals": [
+      { "index": 0, "name": "dkimPubkeyHash", "source": "EmailVerifier pubkey Poseidon hash (stock)" },
+      { "index": 1, "name": "domainHash", "source": "adapter constant keccak256(senderDomain); no raw signal" },
+      { "index": 2, "name": "nullifier", "source": "circuit output per x-p2peace.nullifier" },
+      { "index": 3, "name": "patternHash", "source": "adapter constant keccak256('p2peace/citizenship-v1@1'); no raw signal; binding is via the verifying key registered under this hash" },
+      { "index": 4, "name": "emailTimestamp", "source": "circuit output per x-p2peace.emailTimestamp" },
+      { "index": 5, "name": "extraData", "source": "externalInput walletAddress, packed field element" }
+    ],
+    "patternHash": "keccak256(utf8('p2peace/citizenship-v1@1'))",
+    "privacy": "clientSideOnly=true: citizenship emails contain the prover's identity; proofs MUST be generated locally (SDK isLocal), never via the hosted remote prover.",
+    "consumedBy": "IdentityRegistry.register(EmailProof proof, uint8 communityId, address wallet); registry checks domainHash is allowlisted for communityId, nullifier unused (or rotating per docs/ARCHITECTURE.md section 4), emailTimestamp >= now - maxProofAge (90d default)."
+  }
+}
