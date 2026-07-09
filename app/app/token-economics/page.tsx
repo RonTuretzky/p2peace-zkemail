@@ -1,258 +1,234 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { ArrowLeft, Coins, ArrowRight, Building, TrendingUp } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
+import { SectionChip, SectionHeading, HonestyNote, StatPill } from "@/components/explainer"
+
+/* Token economics, explained — the reserve invariant, the 90/10 split, the
+   outsider premium, and what the pools can and cannot touch, each in plain
+   language with a static "read it like this" visualization. */
+
+const POOL_RULES = [
+  {
+    can: true,
+    title: "The staked corpus can be slashed",
+    body: "The 10% peace stake from every citizen mint sits in your community's pool corpus. A finalized harmful event by your side moves a capped slice of it (≤5% of the corpus per event) to the other side's pool. That exposure is the point — it's the money you put where your community's behavior is.",
+  },
+  {
+    can: true,
+    title: "The pool can receive and pay dividends",
+    body: "Pool-to-pool transfers, Treasury rewards for positive events, and released escrow tranches all land in a pool's reward balance — which members claim in equal per-person shares.",
+  },
+  {
+    can: false,
+    title: "Your wallet balance is untouchable",
+    body: "The 90% in your wallet is never slashable, never freezable, never votable-away. No incentive, no council decision, no governance vote can reach it. If you don't like where things are heading, redeem 1:1 and walk.",
+  },
+  {
+    can: false,
+    title: "The other side's savings are untouchable too",
+    body: "Rewards for one side's de-escalation are paid by the shared Treasury — never taken from the other community's pool or wallets. Rewarding peace never manufactures a new grievance.",
+  },
+]
+
+function Bar({ segments }: { segments: { pct: number; label: string; cls: string }[] }) {
+  return (
+    <div className="flex h-14 w-full overflow-hidden rounded-xl text-xs font-bold">
+      {segments.map((s) => (
+        <div
+          key={s.label}
+          style={{ width: `${s.pct}%` }}
+          className={`flex items-center justify-center px-1 text-center leading-tight ${s.cls}`}
+        >
+          {s.label}
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export default function TokenEconomicsPage() {
   return (
     <>
       <section className="container mx-auto px-4 py-14">
-        <div className="mx-auto max-w-3xl space-y-3 text-center">
-          <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">Token Economics</h1>
+        {/* -------------------------------- hero -------------------------------- */}
+        <div className="mx-auto max-w-3xl space-y-4 text-center">
+          <SectionChip>Token economics, explained</SectionChip>
+          <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            The token is a receipt, not a bet
+          </h1>
           <p className="text-muted-foreground md:text-lg">
-            How the peer-to-peer-to-peace system creates economic incentives for peace: citizens mint
-            1:1 with a 90/10 split, 10% opting into a slashable peace pool, and a shared Treasury funds
-            every positive reward.
+            PEACE-A and PEACE-B don't float, don't inflate, and don't promise number-go-up. Every
+            token is minted 1:1 against a reserve deposit and redeems 1:1, any time. All the
+            economics live in two deliberate asymmetries: the 10% peace stake citizens opt into, and
+            the 2× premium outsiders pay. Here is exactly where every unit goes.
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-2">
             <Button asChild>
               <Link href="/mint">Mint tokens</Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/pools">View the peace pools</Link>
+              <Link href="/pools">See the pools</Link>
             </Button>
           </div>
         </div>
 
-        <div className="mx-auto max-w-5xl mt-12">
-              <Card className="mb-8">
-                <CardHeader>
-                  <CardTitle>The Dual-Token System</CardTitle>
-                  <CardDescription>A bridge between separate economies with a path to integration</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p>
-                    The peertopeertopeace system uses a dual-token model that acknowledges the current separation of
-                    conflicting economies while creating a path toward eventual integration:
-                  </p>
+        {/* --------------------------- reserve invariant --------------------------- */}
+        <div className="mx-auto mt-16 max-w-5xl">
+          <SectionHeading
+            chip="The one invariant"
+            title="Reserve equals supply, always"
+            lede="For every token in existence there is exactly one unit of reserve asset in the contract backing it. Minting deposits reserve and creates tokens; redeeming burns tokens and returns reserve. There is no seigniorage, no fractional trick, no depeg mechanics."
+          />
+          <div className="mx-auto mt-10 grid max-w-3xl gap-4 sm:grid-cols-3">
+            <StatPill label="Mint rate" value="1 : 1" hint="1 reserve in → 1 token out" />
+            <StatPill label="Redeem rate" value="1 : 1" hint="any holder, any time, no queue" />
+            <StatPill label="Backing" value="100%" hint="reserve balance == token supply" tone="positive" />
+          </div>
+          <HonestyNote>
+            Read it like this: holding the token can never lose you money to protocol mechanics —
+            only the 10% you explicitly staked is ever at risk, and only under rules your own
+            community voted for. Even redistribution preserves the invariant: slashed pool tokens
+            are redeemed to reserve and re-minted at par on the receiving side.
+          </HonestyNote>
+        </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                    <div className="bg-muted p-4 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-100">Nation A Token</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Minted 1:1 against a reserve asset by zkEmail-verified citizens of Nation A, this token
-                        circulates primarily within their communities but can be used for cross-border transactions.
-                      </p>
-                      <div className="mt-4">
-                        <h4 className="text-sm font-medium">Key Features</h4>
-                        <ul className="space-y-1 list-disc pl-6 text-sm text-muted-foreground mt-1">
-                          <li>Reserve-backed; redeemable 1:1 while reserves last</li>
-                          <li>Citizens mint 1:1 — 90% to their wallet, 10% staked into the Nation A peace pool</li>
-                          <li>Only the staked pool share is exposed to redistribution</li>
-                          <li>Governance gated to verified Nation A members</li>
-                        </ul>
-                      </div>
-                    </div>
+        {/* ----------------------------- the two mints ----------------------------- */}
+        <div className="mx-auto mt-20 max-w-5xl">
+          <SectionHeading
+            chip="Follow the money"
+            title="Two ways in, two very different splits"
+            lede="The same 100 mUSD deposit does different work depending on who you are. Citizens get full value with a peace stake; outsiders get half value and half solidarity."
+          />
 
-                    <div className="bg-muted p-4 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Nation B Token</Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Minted 1:1 against a reserve asset by zkEmail-verified citizens of Nation B, this token
-                        circulates primarily within their communities but can be used for cross-border transactions.
-                      </p>
-                      <div className="mt-4">
-                        <h4 className="text-sm font-medium">Key Features</h4>
-                        <ul className="space-y-1 list-disc pl-6 text-sm text-muted-foreground mt-1">
-                          <li>Reserve-backed; redeemable 1:1 while reserves last</li>
-                          <li>Citizens mint 1:1 — 90% to their wallet, 10% staked into the Nation B peace pool</li>
-                          <li>Only the staked pool share is exposed to redistribution</li>
-                          <li>Governance gated to verified Nation B members</li>
-                        </ul>
-                      </div>
-                    </div>
-                  </div>
+          <div className="mx-auto mt-10 grid gap-6 lg:grid-cols-2">
+            {/* Citizen mint */}
+            <div className="rounded-3xl border-2 border-border bg-card p-6">
+              <h3 className="font-display text-lg font-bold">A verified citizen mints 100 mUSD</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                100 tokens are minted — full value, because identity was proven. 90 go to your
+                wallet; 10 are staked into your community's pool corpus. That stake is your
+                signature on the rebalancing agreement: minting <em>is</em> consenting.
+              </p>
+              <div className="mt-5">
+                <Bar
+                  segments={[
+                    { pct: 90, label: "90 tokens → your wallet (redeemable 1:1, untouchable)", cls: "bg-accent/70 text-accent-foreground" },
+                    { pct: 10, label: "10 staked", cls: "bg-primary text-primary-foreground" },
+                  ]}
+                />
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Read it like this: for every 100 you put in, 90 are ordinary money and 10 are your
+                  personal stake on your own side keeping the peace.
+                </p>
+              </div>
+            </div>
 
-                  <div className="bg-muted p-4 rounded-lg mt-6">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge className="bg-orange-100 text-orange-800 hover:bg-orange-100">Non-Citizen Minting</Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Outsiders (anyone without a citizenship proof) can also mint tokens from either nation, but at
-                      a premium price (default 2×). The premium half of their payment goes to the shared Treasury —
-                      global participants directly fund the positive-action rewards and cooperation bonuses.
-                    </p>
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium">Key Features</h4>
-                      <ul className="space-y-1 list-disc pl-6 text-sm text-muted-foreground mt-1">
-                        <li>Premium minting cost (default 2× the citizen rate)</li>
-                        <li>Same economic rights: hold, pay, redeem — but no voting, since governance is identity-gated to the two communities</li>
-                        <li>Premium proceeds fund the Treasury that pays peace rewards</li>
-                        <li>Supports global peace-building participation without becoming a capture vector</li>
-                      </ul>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Outsider mint */}
+            <div className="rounded-3xl border-2 border-border bg-card p-6">
+              <h3 className="font-display text-lg font-bold">An outsider mints 100 mUSD</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                No identity proof, so the rate is 2× par: 50 tokens are minted 1:1 against half the
+                payment, and the other 50 mUSD goes to the shared Treasury — the fund that pays
+                every positive-event reward and cooperation bonus. Money in, no governance power:
+                outsiders hold, pay, and redeem, but never vote.
+              </p>
+              <div className="mt-5">
+                <Bar
+                  segments={[
+                    { pct: 50, label: "50 tokens → your wallet (backed 1:1)", cls: "bg-accent/70 text-accent-foreground" },
+                    { pct: 50, label: "50 mUSD → Treasury", cls: "bg-primary text-primary-foreground" },
+                  ]}
+                />
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Read it like this: an outsider mint is half purchase, half donation to the peace
+                  fund — solidarity with a receipt, and no capture vector.
+                </p>
+              </div>
+            </div>
+          </div>
+          <HonestyNote>
+            Numbers are the demo defaults (10% stake, 2× outsider premium) read from the deployed
+            PeaceMinter contracts; a production deployment would set its own via governance. mUSD is
+            the demo's mock reserve asset — grab some from the faucet on the mint page.
+          </HonestyNote>
+        </div>
 
-              <Tabs defaultValue="usage" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="usage">Supporting Peace-Abiding Entities</TabsTrigger>
-                  <TabsTrigger value="integration">Path to Economic Integration</TabsTrigger>
-                </TabsList>
+        {/* --------------------------- what pools can touch --------------------------- */}
+        <div className="mx-auto mt-20 max-w-5xl">
+          <SectionHeading
+            chip="Boundaries"
+            title="What the pools can and cannot touch"
+            lede="Redistribution sounds scary until you see its fence. Two things are exposed; two things are structurally out of reach."
+          />
+          <div className="mx-auto mt-10 grid gap-6 sm:grid-cols-2">
+            {POOL_RULES.map((r) => (
+              <div
+                key={r.title}
+                className={`rounded-3xl border-2 p-6 ${r.can ? "border-border bg-card" : "border-primary/40 bg-accent/20"}`}
+              >
+                <span
+                  className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    r.can ? "bg-amber-500/15 text-amber-700 dark:text-amber-300" : "bg-primary/15 text-primary"
+                  }`}
+                >
+                  {r.can ? "Exposed — by consent" : "Never touchable"}
+                </span>
+                <h3 className="mt-3 font-display text-lg font-bold">{r.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{r.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
 
-                <TabsContent value="usage" className="mt-6 space-y-8">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">Supporting Peace-Abiding Entities</h2>
-                    <p className="mb-6">
-                      The peertopeertopeace system enables token holders to support businesses and citizens that abide
-                      by peace principles, creating economic incentives for peace-building behavior.
-                    </p>
+        {/* ------------------------ dividends & cooperation ------------------------ */}
+        <div className="mx-auto mt-20 max-w-5xl">
+          <SectionHeading
+            chip="Where value lands"
+            title="Equal dividends and subsidized cooperation"
+            lede="Everything that flows into a pool leaves it the same way: one equal share per verified person."
+          />
+          <div className="mx-auto mt-10 grid gap-6 sm:grid-cols-2">
+            <div className="rounded-3xl border-2 border-border bg-card p-6">
+              <h3 className="font-display text-lg font-bold">The per-citizen peace dividend</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Pool payouts raise a reward-per-member accumulator, and every verified member claims
+                the identical amount — whether they staked 10 tokens or 10,000. A payout of 5,000
+                tokens to a pool with 1,000 members is exactly 5 tokens each. Peace revenue is a
+                dividend of citizenship, not a return on capital, and claims follow your identity
+                even if you rotate wallets.
+              </p>
+            </div>
+            <div className="rounded-3xl border-2 border-border bg-card p-6">
+              <h3 className="font-display text-lg font-bold">The cooperation bonus, budget-capped</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Pay a certified business across the community line and the Treasury adds a 2% bonus
+                on top — commerce across the divide is subsidized, not taxed. To keep enthusiasm
+                from draining the fund, each epoch snapshots a budget of 1% of the Treasury; once an
+                epoch's budget is spent, payments still clear but bonuses pause until the next epoch
+                rolls. Try it live at{" "}
+                <Link href="/business" className="font-medium text-primary underline underline-offset-4">
+                  /business
+                </Link>
+                .
+              </p>
+            </div>
+          </div>
+        </div>
 
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Peace-Abiding Business Certification</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-6">
-                          <p>
-                            Businesses can receive "Peace-Abiding" certification by meeting specific criteria and
-                            committing to peace-building principles. This certification makes them eligible to receive
-                            and use peertopeertopeace tokens.
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="integration" className="mt-6 space-y-8">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">Path to Economic Integration</h2>
-                    <p className="mb-6">
-                      The peertopeertopeace system is designed with a long-term vision of gradual economic integration
-                      between conflicting economies, while respecting the autonomy of local communities.
-                    </p>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Decades-Long Integration Process</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-6">
-                          <p>
-                            The system envisions a gradual, organic integration of the Nation A and Nation B tokens over
-                            several decades, allowing time for trust-building and the development of shared economic
-                            interests.
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-              </Tabs>
-
-              <Card className="mt-12">
-                <CardHeader>
-                  <CardTitle>Engineered Negative-Sum Outcomes</CardTitle>
-                  <CardDescription>
-                    Applying cryptoeconomic game theory to create a "Lose/Lose" situation that accelerates peace
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <p>
-                      The peertopeertopeace system incorporates advanced cryptoeconomic game theory principles to create
-                      increasingly negative mutual consequences for conflict over time. This engineered "Lose/Lose"
-                      situation makes peace the only rational economic choice in an otherwise hostile, trustless
-                      environment.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="mt-12">
-                <CardHeader>
-                  <CardTitle>Decentralization of Economic Power</CardTitle>
-                  <CardDescription>
-                    How token adoption gradually shifts power from centralized governments to local communities
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <p>
-                      As economic activity gradually shifts from traditional currencies to the peertopeertopeace system,
-                      there is a corresponding shift in economic power from centralized governments to local
-                      communities. This decentralization creates the foundation for rebuilding society based on
-                      cryptographic consensus rather than centralized authority.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="mt-12">
-                <CardHeader>
-                  <CardTitle>Token Economics Summary</CardTitle>
-                  <CardDescription>Key principles of the peertopeertopeace system</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-muted p-4 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Coins className="h-5 w-5 text-primary" />
-                        <h4 className="font-medium">Economic Incentives</h4>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        The system creates powerful economic incentives for peace-building actions and disincentives for
-                        conflict-causing actions, aligning individual economic interests with collective peace goals.
-                      </p>
-                    </div>
-
-                    <div className="bg-muted p-4 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Building className="h-5 w-5 text-primary" />
-                        <h4 className="font-medium">Municipal Autonomy</h4>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        Municipalities maintain autonomy over their economic decisions while having the option to
-                        integrate with neighboring communities when mutually beneficial.
-                      </p>
-                    </div>
-
-                    <div className="bg-muted p-4 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <TrendingUp className="h-5 w-5 text-primary" />
-                        <h4 className="font-medium">Gradual Integration</h4>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        The system supports a gradual, organic integration process that allows time for trust-building
-                        and the development of shared economic interests over decades.
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-                <CardFooter className="border-t pt-6">
-                  <div className="flex justify-between items-center w-full">
-                    <Button variant="outline" asChild>
-                      <Link href="/governance">
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Governance System
-                      </Link>
-                    </Button>
-                    <Button asChild>
-                      <Link href="/incentives">
-                        Propose an Incentive
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  </div>
-                </CardFooter>
-              </Card>
+        {/* --------------------------------- CTA --------------------------------- */}
+        <div className="mx-auto mt-16 flex max-w-3xl flex-col items-center gap-4 rounded-3xl border-2 border-primary/40 bg-card p-8 text-center">
+          <h2 className="font-display text-2xl font-bold">Watch the splits happen on-chain</h2>
+          <p className="text-sm text-muted-foreground">
+            Mint with the faucet and see the 90/10 split land in real balances, then watch both
+            pools' corpus and claimable dividends move as events settle.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button size="lg" asChild>
+              <Link href="/mint">Mint tokens — /mint</Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/pools">The peace pools — /pools</Link>
+            </Button>
+          </div>
         </div>
       </section>
     </>

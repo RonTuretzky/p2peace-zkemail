@@ -1,205 +1,233 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Shield, Lock, FileCheck, UserCheck, Mail } from "lucide-react"
+import { SectionChip, SectionHeading, HonestyNote } from "@/components/explainer"
+
+/* Verification, explained — the deep companion to the homepage trust section:
+   DKIM, pattern pinning, the two nullifiers, the key registry, renewal, and
+   exactly what is (and isn't) linkable on-chain. */
+
+const NULLIFIERS = [
+  {
+    title: "Identity nullifier — one per inbox",
+    formula: "Poseidon(recipient address, salt)",
+    body: "When you prove citizenship, the circuit derives a nullifier from your email address. The address itself never appears — only this hash — but the same inbox always produces the same nullifier, so it can only ever be registered once. One government-known inbox, one membership, one vote. Ten wallets won't help you; they'd all collide on the same nullifier.",
+  },
+  {
+    title: "Attestation nullifier — one per email",
+    formula: "Poseidon(DKIM signature)",
+    body: "When anyone attests a news event, the nullifier is derived from the newsletter's unique DKIM signature. The same physical email can never be counted twice — but a different edition, or the same story from a different outlet, is a different signature and counts separately. Exactly what you want: dedup without silencing corroboration.",
+  },
+]
+
+const PRIVACY_ROWS = [
+  { fact: "Your wallet address and community (A or B)", visible: true },
+  { fact: "Your identity nullifier — an opaque hash", visible: true },
+  { fact: "Which government domain signed your email (as a hash)", visible: true },
+  { fact: "When you registered and when your membership expires", visible: true },
+  { fact: "Your email address", visible: false },
+  { fact: "Your name, or anything in the email body", visible: false },
+  { fact: "Which specific email you used", visible: false },
+  { fact: "A list linking members to inboxes — it never exists, anywhere", visible: false },
+]
 
 export default function VerificationPage() {
   return (
     <>
       <section className="container mx-auto px-4 py-14">
-        <div className="mx-auto max-w-3xl space-y-3 text-center">
+        {/* -------------------------------- hero -------------------------------- */}
+        <div className="mx-auto max-w-3xl space-y-4 text-center">
+          <SectionChip>Verification, explained</SectionChip>
           <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            zkEmail Verification System
+            Everything is built on signed email
           </h1>
           <p className="text-muted-foreground md:text-lg">
-            Identities and events are proven from DKIM-signed emails with zero-knowledge proofs —
-            nothing sensitive ever leaves your device.
+            Both trust roots of p2p2p — who counts as a citizen, and what counts as news — reduce to
+            the same primitive: mail servers cryptographically sign what they send, and
+            zero-knowledge proofs let you use those signatures without revealing the mail. This page
+            is the deep version of the homepage trust story: how each piece works, and what an
+            adversary would have to break.
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-2">
             <Button asChild>
-              <Link href="/verify">Get verified now</Link>
+              <Link href="/verify">Get verified — /verify</Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/attest">Attest an event</Link>
+              <Link href="/attest">Attest an event — /attest</Link>
             </Button>
           </div>
         </div>
 
-        <div className="mx-auto mt-8 max-w-3xl rounded-lg border border-primary/30 bg-accent/40 p-4 text-center text-sm text-accent-foreground">
-          This is a conceptual explainer — try the live flow at{" "}
-          <Link href="/verify" className="font-medium underline underline-offset-4">
-            /verify
-          </Link>{" "}
-          (or{" "}
-          <Link href="/incentives" className="font-medium underline underline-offset-4">
-            /incentives
-          </Link>
-          ).
+        {/* -------------------------------- DKIM -------------------------------- */}
+        <div className="mx-auto mt-16 max-w-5xl">
+          <SectionHeading
+            chip="The trust anchor"
+            title="DKIM: the signature the internet already runs on"
+            lede="Every serious sender — governments, newsrooms, banks — signs outgoing mail with DKIM (RFC 6376): the mail server signs the headers and body hash with an RSA key published in DNS. It's how your inbox knows a tax receipt really came from the tax office."
+          />
+          <div className="mx-auto mt-10 grid gap-6 sm:grid-cols-2">
+            <div className="rounded-3xl border-2 border-border bg-card p-6">
+              <h3 className="font-display text-lg font-bold">Why it's the right foundation</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                p2p2p adds <em>no new trust assumption</em>: if DKIM were broken, email itself would
+                be broken, and the world would have far bigger problems. Crucially, neither
+                governments nor newsrooms need to cooperate, integrate an API, or even know the
+                protocol exists — they already emit the evidence every day, signed, into millions of
+                inboxes. And a signature is frozen at send time: an article can be edited, retracted,
+                or taken down, but the newsletter that announced it stays provable forever.
+              </p>
+            </div>
+            <div className="rounded-3xl border-2 border-border bg-card p-6">
+              <h3 className="font-display text-lg font-bold">The proof never leaves home</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                You download the .eml file and load it into a prover running in your own browser
+                (WASM, via the zk-email SDK — roughly 10–60 seconds on a laptop). The circuit
+                verifies the RSA signature and the required patterns, then emits only public
+                signals: key hash, domain hash, nullifier, pattern hash, timestamp. The raw email
+                never leaves your device. The proof also binds your wallet, so a relayer can submit
+                it for gasless UX but can never redirect it.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:gap-12 mt-12">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <UserCheck className="h-5 w-5 text-primary" />
-                    <CardTitle>Identity Verification</CardTitle>
-                  </div>
-                  <CardDescription>
-                    Prove you receive email from your government — without revealing who you are
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p>
-                    Governments already send DKIM-signed email: tax receipts, national ID portal confirmations,
-                    health-fund notices. A citizen proves, in zero knowledge, "I received an email from an
-                    allowlisted government domain, addressed to an inbox I control":
-                  </p>
-                  <ul className="space-y-2 list-disc pl-6">
-                    <li>
-                      Your email address is <strong>never revealed</strong> — only a nullifier
-                      (Poseidon hash of the recipient address) goes on-chain
-                    </li>
-                    <li>One nullifier per email address — one registration per government-known inbox</li>
-                    <li>Proof freshness: the email must be at most 90 days old</li>
-                    <li>Membership lasts 365 days and is renewable with a fresh proof from the same inbox</li>
-                    <li>No government cooperation, API, or notary required — DKIM signatures already exist</li>
-                  </ul>
-                  <div className="bg-muted p-4 rounded-lg">
-                    <h4 className="font-medium">How It Works</h4>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      You download the .eml file of a government email from your inbox and load it into the browser
-                      prover. A zkEmail circuit (running as WASM on your machine) verifies the DKIM signature and
-                      produces a Groth16 proof exposing only: the DKIM key hash, the sender domain hash, your
-                      nullifier, and the email timestamp. The IdentityRegistry contract checks the domain against
-                      the per-community allowlist, checks the DKIM key against the on-chain DKIMRegistry, consumes
-                      the nullifier, and enrolls your wallet. The email body, headers, and your address stay private.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+        {/* --------------------------- pattern pinning --------------------------- */}
+        <div className="mx-auto mt-20 max-w-5xl">
+          <SectionHeading
+            chip="Blueprints & pinning"
+            title="Voters approve a circuit, not a description"
+            lede="What a proof is allowed to claim is pinned in advance — cryptographically."
+          />
+          <div className="mx-auto mt-8 max-w-3xl rounded-3xl border-2 border-border bg-card p-6">
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Every kind of proof runs through a <strong className="text-foreground">blueprint</strong> —
+              a zk-regex circuit compiled from explicit matching rules ("from an allowlisted
+              government domain, matching the official notice template" for citizenship; the
+              committed keyword logic for each news incentive). The chain stores each blueprint's
+              hash — its <strong className="text-foreground">patternHash</strong> — next to the
+              verifying key, and the ZKEmailVerifier accepts a proof only if it verifies against the
+              key registered for exactly that hash. The consequence is subtle but decisive: when a
+              community votes on an incentive, it votes on a specific machine whose behavior anyone
+              can test against real newsletters beforehand. There is no prose to reinterpret later,
+              no judge who decides after the fact what "checkpoint removal" meant. The words were
+              compiled before the vote; the vote approved the compilation.
+            </p>
+          </div>
+        </div>
 
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <FileCheck className="h-5 w-5 text-primary" />
-                    <CardTitle>Event Verification</CardTitle>
-                  </div>
-                  <CardDescription>News events proven from DKIM-signed newsletters, by any subscriber</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p>
-                    Redistribution events are proven from newsletters and breaking-news alerts that news
-                    organizations already DKIM-sign:
-                  </p>
-                  <ul className="space-y-2 list-disc pl-6">
-                    <li>
-                      <strong>Any subscriber can attest</strong> — no monitoring service, notary, or oracle to
-                      censor, bribe, or DDoS
-                    </li>
-                    <li>
-                      Evidence survives article edits, retractions, and takedowns — the DKIM signature is frozen at
-                      send time
-                    </li>
-                    <li>
-                      Per-email nullifier (hash of the DKIM signature): each physical email counts once, but
-                      different sources and editions each count
-                    </li>
-                    <li>
-                      Distinct-source thresholds: at least 1 source from each community and 2 international
-                      sources, within a 7-day event window
-                    </li>
-                  </ul>
-                  <div className="bg-muted p-4 rounded-lg">
-                    <h4 className="font-medium">How It Works</h4>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Each approved incentive commits on-chain to a compiled keyword pattern (patternHash). A
-                      subscriber proves their saved newsletter email matches that exact pattern and came from an
-                      approved source domain, then submits the proof to the EventAttestation contract. The contract
-                      tallies distinct sender domains per category; when thresholds are met the event is confirmed,
-                      a 48-hour dispute window opens, and only then does redistribution execute.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+        {/* ------------------------------ nullifiers ------------------------------ */}
+        <div className="mx-auto mt-20 max-w-5xl">
+          <SectionHeading
+            chip="Nullifiers"
+            title="Two hashes carry the whole anti-abuse story"
+            lede="Uniqueness without identification: each proof consumes a nullifier, and the contract just checks it hasn't been seen before."
+          />
+          <div className="mx-auto mt-10 grid gap-6 sm:grid-cols-2">
+            {NULLIFIERS.map((n) => (
+              <div key={n.title} className="rounded-3xl border-2 border-border bg-card p-6">
+                <h3 className="font-display text-lg font-bold">{n.title}</h3>
+                <p className="mt-2 rounded-lg bg-muted/60 px-3 py-1.5 font-mono text-xs text-muted-foreground">
+                  {n.formula}
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">{n.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
 
-              <Card className="md:col-span-2">
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Lock className="h-5 w-5 text-primary" />
-                    <CardTitle>Technical Implementation</CardTitle>
-                  </div>
-                  <CardDescription>The cryptographic foundation of our verification system</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-6">
-                    <div>
-                      <h3 className="text-lg font-medium">DKIM Signatures as the Trust Anchor</h3>
-                      <p className="text-muted-foreground mt-1">
-                        Every serious mail sender signs outgoing mail with DKIM (RFC 6376): the mail server signs
-                        the canonicalized headers and body hash with an RSA key published in DNS. p2p2p adds no new
-                        trust assumption beyond DNS/DKIM, which the entire email ecosystem already relies on. An
-                        on-chain DKIMRegistry archives keys with validity windows (keys rotate every 6–12 months)
-                        and supports immediate revocation of compromised keys.
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-medium">Client-Side Zero-Knowledge Proving</h3>
-                      <p className="text-muted-foreground mt-1">
-                        Proofs are generated on the user&apos;s own machine (browser WASM via the zk-email SDK,
-                        roughly 10–60 seconds on a desktop). The circuit verifies the DKIM RSA signature, matches
-                        the sender domain and body regexes, and derives the nullifier and timestamp. Only these
-                        public signals are submitted; the raw email never leaves the device. No relayer is
-                        required, but any relayer can submit on a user&apos;s behalf for gasless UX — proofs are
-                        self-contained and bind the target wallet, so they cannot be redirected.
-                      </p>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-medium">On-Chain Verification</h3>
-                      <p className="text-muted-foreground mt-1">
-                        The ZKEmailVerifier contract checks each proof in two steps: (1) the DKIM key hash must be
-                        registered and unrevoked for the sender domain in the DKIMRegistry, and (2) the Groth16
-                        proof must verify against the verifying key registered for the pattern commitment
-                        (patternHash) — so voters approve an exact circuit, not prose. All results are recorded
-                        on-chain, immutable and auditable.
-                      </p>
-                    </div>
-                    <div className="bg-muted p-4 rounded-lg">
-                      <h4 className="font-medium">Security Measures</h4>
-                      <ul className="space-y-2 list-disc pl-6 text-sm text-muted-foreground mt-2">
-                        <li>Nullifiers prevent replay: per-address for identity, per-email for attestations</li>
-                        <li>
-                          Distinct-source thresholds mean a single captured newsroom or one compromised DKIM key
-                          cannot fire an event alone
-                        </li>
-                        <li>Domain allowlist changes go through governance with a 48-hour timelock</li>
-                        <li>Guardian can revoke leaked DKIM keys immediately and pause attestation (auto-expiring)</li>
-                        <li>Open-source circuits and contracts for community review</li>
-                      </ul>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+        {/* ------------------------- key registry & renewal ------------------------- */}
+        <div className="mx-auto mt-20 max-w-5xl">
+          <SectionHeading
+            chip="Key lifecycle"
+            title="Keys rotate, leak, and expire — the registry keeps up"
+            lede="DKIM keys are the one thing that can actually break this system, so their lifecycle is managed on-chain."
+          />
+          <div className="mx-auto mt-10 grid gap-6 sm:grid-cols-2">
+            <div className="rounded-3xl border-2 border-border bg-card p-6">
+              <h3 className="font-display text-lg font-bold">Archive with validity windows</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Senders rotate DKIM keys every 6–12 months and delete old ones from DNS — which
+                would silently strand old evidence. The DKIMRegistry archives every key on-chain
+                with the window in which it was valid, so an email stays provable for as long as it
+                matters, not for as long as a DNS record survives. New keys are added through the
+                timelocked governance path.
+              </p>
             </div>
+            <div className="rounded-3xl border-2 border-border bg-card p-6">
+              <h3 className="font-display text-lg font-bold">Revocation in minutes</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                A leaked signing key would let an attacker forge "government email" or "newsletters"
+                wholesale — the worst failure the threat model contains. That's why revocation is
+                the guardian's one fast power: a compromised key is killed immediately, no timelock,
+                and every proof depending on it stops verifying at once. The guardian's own pause
+                powers auto-expire, so the emergency brake can't become a handbrake.
+              </p>
+            </div>
+            <div className="rounded-3xl border-2 border-border bg-card p-6 sm:col-span-2">
+              <h3 className="font-display text-lg font-bold">Membership renewal &amp; wallet rotation</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                A membership isn't forever — it expires after 365 days and is renewed with a fresh
+                proof (the email itself must be under 90 days old at proof time), so the rolls track
+                people who still receive government mail, not addresses registered once in 2026.
+                Lost your keys? Prove again from the same inbox: the identical nullifier lets you
+                rotate to a new wallet without creating a second identity — and your pool claims and
+                voting rights follow the identity, not the wallet.
+              </p>
+            </div>
+          </div>
+        </div>
 
-        <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" asChild>
-            <Link href="/verify">
-              Get Verified
-              <UserCheck className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link href="/attest">
-              Attest an Event
-              <Mail className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link href="/governance">
-              Learn About Governance
-              <Shield className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+        {/* ---------------------------- privacy table ---------------------------- */}
+        <div className="mx-auto mt-20 max-w-5xl">
+          <SectionHeading
+            chip="Privacy properties"
+            title="What the chain sees — and what it can never see"
+            lede="Membership in a conflict-zone protocol is sensitive. These properties aren't a policy promise; they're what the proof system does and doesn't reveal."
+          />
+          <div className="mx-auto mt-10 grid max-w-3xl gap-3 sm:grid-cols-2">
+            {PRIVACY_ROWS.map((r) => (
+              <div
+                key={r.fact}
+                className={`flex items-start gap-3 rounded-2xl border p-4 text-sm ${
+                  r.visible ? "border-border bg-card" : "border-primary/40 bg-accent/20"
+                }`}
+              >
+                <span
+                  className={`mt-0.5 flex-none rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                    r.visible
+                      ? "bg-amber-500/15 text-amber-700 dark:text-amber-300"
+                      : "bg-primary/15 text-primary"
+                  }`}
+                >
+                  {r.visible ? "ON-CHAIN" : "NEVER"}
+                </span>
+                <span className="text-muted-foreground">{r.fact}</span>
+              </div>
+            ))}
+          </div>
+          <HonestyNote>
+            The honest limit: your wallet's transactions are public like on any chain, and being
+            verified reveals that <em>some</em> government-known inbox backs your wallet — just never
+            which one. If your wallet is linked to you by other means, your membership and community
+            are too. Keep the wallet clean if that matters for your situation.
+          </HonestyNote>
+        </div>
+
+        {/* --------------------------------- CTA --------------------------------- */}
+        <div className="mx-auto mt-16 flex max-w-3xl flex-col items-center gap-4 rounded-3xl border-2 border-primary/40 bg-card p-8 text-center">
+          <h2 className="font-display text-2xl font-bold">Verify yourself in two minutes</h2>
+          <p className="text-sm text-muted-foreground">
+            The live flow builds a structurally real proof (this demo's mock verifier skips only the
+            WASM proving step) and registers your wallet on Gnosis — nullifier, expiry, community
+            roll and all. It's the first step of the whole journey.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+            <Button size="lg" asChild>
+              <Link href="/verify">Start verification — /verify</Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/docs">Read the full docs</Link>
+            </Button>
+          </div>
         </div>
       </section>
     </>

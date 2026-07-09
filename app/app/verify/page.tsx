@@ -1,11 +1,13 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ShieldCheck, Mail, CheckCircle2, RotateCcw } from "lucide-react"
+import { ShieldCheck, Mail, CheckCircle2, RotateCcw, ArrowRight } from "lucide-react"
 import { ConnectGate, FlowHeader, TxButton, useMembership } from "@/components/flow"
+import { JourneyBar, HonestyNote } from "@/components/explainer"
 import { contract } from "@/lib/contracts"
 import { Community } from "@/lib/chains"
 import { buildCitizenshipProof, DEMO_DOMAINS } from "@/lib/demo"
@@ -23,9 +25,22 @@ export default function VerifyPage() {
         title="Get Verified with zkEmail"
         blurb="Prove you receive DKIM-signed email from an allowlisted government domain. Your address never goes on-chain — only a nullifier that binds one inbox to one membership."
       />
+      <JourneyBar current="/verify" />
+      <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
+        Why this step exists: everything downstream — 1:1 minting, one-person voting, equal pool
+        dividends — assumes one person cannot be two members. zkEmail gives us that without a
+        passport office: your government inbox becomes the credential, and only its nullifier ever
+        touches the chain.
+      </p>
       <ConnectGate>
         <VerifyInner />
       </ConnectGate>
+      <HonestyNote>
+        Honest limit: this proves control of <em>one government inbox</em>, not one human. Someone
+        with two email accounts on the allowlisted domain gets two memberships; someone the
+        government never issued an address to gets none. It is a practical sybil floor tied to
+        existing civil registries — not a biometric proof of personhood.
+      </HonestyNote>
     </div>
   )
 }
@@ -71,9 +86,12 @@ function VerifyInner() {
           />
           <Row label="Community" value={membership.communityLabel} />
           {membership.isActiveMember && (
-            <p className="rounded-lg bg-accent/40 p-3 text-sm text-accent-foreground">
-              You can now mint tokens, vote on incentives, attest events, and claim pool rewards.
-            </p>
+            <div className="rounded-lg bg-accent/40 p-3 text-sm text-accent-foreground">
+              You can now mint tokens, vote on incentives, attest events, and claim pool rewards.{" "}
+              <Link href="/mint" className="inline-flex items-center gap-1 font-medium text-primary underline">
+                Next: mint 1:1 <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -114,6 +132,12 @@ function VerifyInner() {
                 Verified as {membership.communityLabel}. Membership is valid for one year and
                 renewable with a fresh proof.
               </p>
+              <Link
+                href="/mint"
+                className="inline-flex items-center gap-1 text-sm font-medium text-primary underline"
+              >
+                Next step: mint peace tokens at 1:1 <ArrowRight className="h-4 w-4" />
+              </Link>
               <TxButton variant="outline" size="sm" onClick={reset}>
                 <RotateCcw className="mr-2 h-4 w-4" /> Register another
               </TxButton>

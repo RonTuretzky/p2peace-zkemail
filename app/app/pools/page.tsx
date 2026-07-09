@@ -1,11 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useAccount, useReadContracts, useWriteContract, useWaitForTransactionReceipt } from "wagmi"
+import Link from "next/link"
+import { useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt } from "wagmi"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Coins, Gift, ShieldAlert, Timer, CheckCircle2, XCircle, Gavel } from "lucide-react"
+import { Coins, Gift, ShieldAlert, Timer, CheckCircle2, XCircle, Gavel, ArrowRight } from "lucide-react"
 import { ConnectGate, FlowHeader, TxButton, useMembership } from "@/components/flow"
+import { JourneyBar, HonestyNote, PrereqNote } from "@/components/explainer"
 import { contract } from "@/lib/contracts"
 import { Community } from "@/lib/chains"
 import { fmt, DIRECTION_LABEL } from "@/lib/format"
@@ -17,11 +19,42 @@ export default function PoolsPage() {
         title="Peace Pools & Event Resolution"
         blurb="Every citizen mint stakes 10% into their community's peace pool corpus — capital consciously put at risk against their own side's aggression. Finalized harmful events slash that corpus into the other community's claimable rewards. Positive and joint events pay from the shared Treasury."
       />
+      <PoolsJourney />
+      <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
+        Why this step exists: this is where words become settlement. A confirmed event sits out a
+        dispute window so the council can catch a bad round, then anyone can finalize it — moving
+        real stake from the responsible side to the harmed one, and turning your membership into a
+        claimable dividend.
+      </p>
       <ConnectGate>
         <PoolsInner />
       </ConnectGate>
+      <HonestyNote>
+        Honest limit: two brakes sit on every slash — the per-event cap (an event can move at most
+        its incentive&apos;s redistribution share, 5% of the corpus here) and the Dispute Council,
+        which can reverse a confirmed event during the window. Neither brake can create funds or
+        redirect them to itself; they can only stop or shrink a move.
+      </HonestyNote>
     </div>
   )
+}
+
+/** Journey state: verified ⇒ /verify done; holding community tokens ⇒ /mint done. */
+function PoolsJourney() {
+  const { address } = useAccount()
+  const membership = useMembership()
+  const isCitizen = membership.isActiveMember && membership.community !== Community.None
+  const bal = useReadContract({
+    ...contract.token(isCitizen ? membership.community : Community.A),
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address && isCitizen },
+  })
+  const done = [
+    ...(isCitizen ? ["/verify"] : []),
+    ...(((bal.data as bigint | undefined) ?? 0n) > 0n ? ["/mint"] : []),
+  ]
+  return <JourneyBar current="/pools" done={done} />
 }
 
 const STATUS = ["None", "Pending", "Finalized", "Reversed"] as const
@@ -116,6 +149,7 @@ function PoolsInner() {
   const history = events.filter((e) => e.status === 2 || e.status === 3).reverse()
 
   // -------- writes --------
+  const [lastAction, setLastAction] = useState<"claim" | "finalize" | null>(null)
   const { writeContract, data: hash, isPending, error, reset } = useWriteContract()
   const receipt = useWaitForTransactionReceipt({ hash })
   useEffect(() => {
@@ -132,10 +166,12 @@ function PoolsInner() {
 
   const claim = () => {
     if (myCommunity === Community.None) return
+    setLastAction("claim")
     writeContract({ ...contract.pool(myCommunity), functionName: "claim" })
   }
   const finalize = (id: bigint) => {
     reset()
+    setLastAction("finalize")
     writeContract({ ...contract.engine(), functionName: "finalize", args: [id] })
   }
 
@@ -143,6 +179,14 @@ function PoolsInner() {
 
   return (
     <div className="mx-auto mt-10 max-w-5xl space-y-6">
+      <PrereqNote
+        met={isCitizen || (myClaimable ?? 0n) > 0n}
+        href="/verify"
+        cta="Verify"
+      >
+        You have nothing claimable and no pool membership yet. Verify to join your community&apos;s
+        pool — dividends are split equally per member, so membership is the whole ticket.
+      </PrereqNote>
       {/* Section 1 — pool state */}
       <div className="grid gap-6 lg:grid-cols-2">
         <PoolCard
@@ -201,6 +245,20 @@ function PoolsInner() {
                   is finalized, or when the Treasury pays out a positive/joint event to your pool.
                 </p>
               )}
+              {receipt.isSuccess && lastAction === "claim" && (
+                <div className="rounded-lg bg-accent/40 p-3 text-sm">
+                  <p className="font-medium text-primary">
+                    Claimed — the dividend is in your wallet. That completes the journey.
+                  </p>
+                  <Link
+                    href="/business"
+                    className="mt-1 inline-flex items-center gap-1 font-medium text-primary underline"
+                  >
+                    Next: spend it across the line at a certified business for a cooperation bonus{" "}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              )}
             </>
           ) : (
             <p className="rounded-lg bg-muted p-3 text-sm text-muted-foreground">
@@ -250,6 +308,12 @@ function PoolsInner() {
                 pending={txPending}
               />
             ))
+          )}
+          {receipt.isSuccess && lastAction === "finalize" && (
+            <p className="rounded-lg bg-accent/40 p-3 text-sm text-accent-foreground">
+              Event finalized — the value has moved. Next: check your dividend in the claim card
+              above; if your community was the harmed side, your share is now claimable.
+            </p>
           )}
         </CardContent>
       </Card>
@@ -353,6 +417,11 @@ function PoolCard({
         <Row label="Corpus (at-risk stake)" value={fmt(corpus)} />
         <Row label="Pool token balance" value={fmt(poolTokBal)} />
         <Row label="Your claimable" value={fmt(claimable)} />
+        <p className="rounded-lg bg-muted p-2 text-xs text-muted-foreground">
+          Read the corpus like this: it is the sum of every member&apos;s 10% peace stakes. The
+          most one finalized event can move out of it is 5% — and only to the other community,
+          only for a verified harmful event by this side.
+        </p>
       </CardContent>
     </Card>
   )

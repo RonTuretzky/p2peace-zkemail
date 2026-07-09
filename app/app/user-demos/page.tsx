@@ -1,854 +1,167 @@
+import type React from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { User, Vote, FileText, Globe, CheckCircle } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Badge } from "@/components/ui/badge"
+import { SectionChip, SectionHeading, HonestyNote } from "@/components/explainer"
+
+/* Walkthroughs — scripted end-to-end demo scenarios. Each is a numbered
+   checklist that links into the live page for every step. */
+
+interface Step {
+  text: React.ReactNode
+  wait?: boolean
+}
+
+function Checklist({ steps }: { steps: Step[] }) {
+  return (
+    <ol className="mt-5 space-y-3">
+      {steps.map((s, i) => (
+        <li key={i} className="flex items-start gap-3">
+          <span
+            className={`mt-0.5 flex h-6 w-6 flex-none items-center justify-center rounded-full text-xs font-bold ${
+              s.wait ? "bg-amber-500/15 text-amber-700 dark:text-amber-300" : "bg-primary/15 text-primary"
+            }`}
+          >
+            {s.wait ? "⏱" : i + 1}
+          </span>
+          <span className="text-sm leading-relaxed text-muted-foreground">{s.text}</span>
+        </li>
+      ))}
+    </ol>
+  )
+}
+
+const L = ({ href, children }: { href: string; children: React.ReactNode }) => (
+  <Link href={href} className="font-medium text-primary underline underline-offset-4">
+    {children}
+  </Link>
+)
 
 export default function UserDemosPage() {
   return (
     <>
       <section className="container mx-auto px-4 py-14">
-        <div className="mx-auto max-w-3xl space-y-3 text-center">
+        {/* -------------------------------- hero -------------------------------- */}
+        <div className="mx-auto max-w-3xl space-y-4 text-center">
+          <SectionChip>Walkthroughs</SectionChip>
           <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            User Flow Demonstrations
+            Three scripts, everything real
           </h1>
           <p className="text-muted-foreground md:text-lg">
-            Step-by-step walkthroughs of every user action in the peer-to-peer-to-peace system — from
-            zkEmail verification to the equal-per-member peace dividend.
+            These are scripted runs through the live Gnosis deployment — every click lands a real
+            transaction on real contracts. The demo compresses every governance clock (discussion,
+            voting, reporting, dispute) to <strong className="text-foreground">10 minutes</strong>,
+            so loops that would take weeks in production fit in an afternoon. Each page reads its
+            live countdown from chain, so trust the timers you see there.
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-2">
             <Button asChild>
-              <Link href="/verify">Try the live verify flow</Link>
+              <Link href="/verify">Start walkthrough 1</Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/mint">Mint tokens</Link>
+              <Link href="/docs">Read the diagrams first</Link>
             </Button>
           </div>
         </div>
 
-        <div className="mx-auto max-w-5xl mt-12">
-              <Tabs defaultValue="verification" className="w-full">
-                <TabsList className="grid w-full grid-cols-6">
-                  <TabsTrigger value="verification">Identity Verification</TabsTrigger>
-                  <TabsTrigger value="minting">Token Minting</TabsTrigger>
-                  <TabsTrigger value="proposing">Propose Incentive</TabsTrigger>
-                  <TabsTrigger value="voting">Voting</TabsTrigger>
-                  <TabsTrigger value="business">Business Actions</TabsTrigger>
-                  <TabsTrigger value="redistribution">Token Redistribution</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="verification" className="mt-6 space-y-8">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">Identity Verification Flow</h2>
-                    <p className="mb-6">
-                      How users verify their citizenship to participate in the peertopeertopeace system.
-                    </p>
-
-                    <div className="space-y-6">
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-blue-100 text-blue-800">Step 1</Badge>
-                            <CardTitle>Find a Government Email</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <h4 className="font-medium">User Actions</h4>
-                              <ol className="space-y-2 list-decimal pl-6 text-sm">
-                                <li>Search your inbox for a DKIM-signed government email (tax receipt, ID-portal confirmation, health-fund notice)</li>
-                                <li>Check the sender domain is on your community's allowlist</li>
-                                <li>Confirm the email is at most 90 days old (proof freshness window)</li>
-                                <li>Download it as a raw .eml file and connect your wallet</li>
-                              </ol>
-                            </div>
-                            <div className="bg-muted p-4 rounded-lg">
-                              <h4 className="font-medium mb-2">Why This Works</h4>
-                              <ul className="space-y-1 text-sm text-muted-foreground">
-                                <li>• Governments already DKIM-sign outgoing mail — no cooperation needed</li>
-                                <li>• The signature covers sender, recipient, date, and body</li>
-                                <li>• The allowlist maps each government domain to a community</li>
-                                <li>• No document upload, biometrics, or verification server exists</li>
-                              </ul>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-blue-100 text-blue-800">Step 2</Badge>
-                            <CardTitle>Generate the Proof Client-Side</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <h4 className="font-medium">User Actions</h4>
-                              <ol className="space-y-2 list-decimal pl-6 text-sm">
-                                <li>Load the .eml into the in-browser prover (zk-email SDK)</li>
-                                <li>The citizenship blueprint for the domain is fetched by its patternHash</li>
-                                <li>Wait ~10–60 seconds while the WASM prover runs on your machine</li>
-                                <li>Review the public signals before submitting anything</li>
-                              </ol>
-                            </div>
-                            <div className="bg-muted p-4 rounded-lg">
-                              <h4 className="font-medium mb-2">What the Circuit Proves</h4>
-                              <ul className="space-y-1 text-sm text-muted-foreground">
-                                <li>• The DKIM RSA signature verifies against the registered key</li>
-                                <li>• The from-domain and government notice template match</li>
-                                <li>• Nullifier = Poseidon(your address, salt) — the address itself stays private</li>
-                                <li>• The email never leaves your device; only public signals do</li>
-                              </ul>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-green-100 text-green-800">Step 3</Badge>
-                            <CardTitle>Register On-Chain</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <h4 className="font-medium">User Experience</h4>
-                              <ol className="space-y-2 list-decimal pl-6 text-sm">
-                                <li>Submit the EmailProof to IdentityRegistry.register (or let a relayer submit it gaslessly — the proof binds your wallet)</li>
-                                <li>Enrollment is instant once the transaction confirms</li>
-                                <li>Membership lasts 365 days, renewable with a fresh proof from the same inbox</li>
-                                <li>You can now mint at 1:1, vote, and claim pool rewards</li>
-                              </ol>
-                            </div>
-                            <div className="bg-muted p-4 rounded-lg">
-                              <h4 className="font-medium mb-2">System Actions</h4>
-                              <ul className="space-y-1 text-sm text-muted-foreground">
-                                <li>• ZKEmailVerifier checks the DKIM key in the DKIMRegistry and verifies the Groth16 proof</li>
-                                <li>• The nullifier is consumed — one registration per government-known inbox</li>
-                                <li>• Wallet enrolled in the community roll (counts toward quorum math)</li>
-                                <li>• Lost keys? The same nullifier with a fresh proof can rotate the wallet</li>
-                              </ul>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="minting" className="mt-6 space-y-8">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">Token Minting Flow</h2>
-                    <p className="mb-6">How users mint tokens to participate in the peertopeertopeace economy.</p>
-
-                    <div className="space-y-6">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Citizen vs Non-Citizen Minting</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                              <div className="flex items-center gap-2 mb-2">
-                                <CheckCircle className="h-5 w-5 text-green-600" />
-                                <h4 className="font-medium text-green-800">Verified Citizens</h4>
-                              </div>
-                              <ul className="space-y-2 text-sm text-green-700">
-                                <li>• Mint at 1:1 rate against the reserve asset</li>
-                                <li>• 90% to your wallet, 10% staked into your community's peace pool</li>
-                                <li>• Full governance rights (identity-gated)</li>
-                                <li>• Equal-per-member claims on pool rewards</li>
-                              </ul>
-                            </div>
-                            <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Globe className="h-5 w-5 text-orange-600" />
-                                <h4 className="font-medium text-orange-800">Non-Citizens</h4>
-                              </div>
-                              <ul className="space-y-2 text-sm text-orange-700">
-                                <li>• Mint at a premium (default 2× the citizen rate)</li>
-                                <li>• Premium half of the payment funds the shared Treasury</li>
-                                <li>• Same economic rights, but no voting (governance needs identity)</li>
-                                <li>• Support global peace-building</li>
-                              </ul>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-blue-100 text-blue-800">Citizen Flow</Badge>
-                            <CardTitle>Verified Citizen Minting Process</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">1. Select Amount</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  Choose how much reserve asset to convert to your community's PeaceToken
-                                </p>
-                              </div>
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">2. Membership Check</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  PeaceMinter checks your zkEmail registration in the IdentityRegistry for the 1:1 rate
-                                </p>
-                              </div>
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">3. Mint with 90/10 Split</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  90% of tokens go to your wallet; 10% is staked into your community pool as your
-                                  peace stake — the only capital exposed to redistribution
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-orange-100 text-orange-800">Non-Citizen Flow</Badge>
-                            <CardTitle>Non-Citizen Minting Process</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">1. Choose Nation</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  Select which community's tokens to mint (Israeli or Palestinian)
-                                </p>
-                              </div>
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">2. Pay Premium</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  Pay 2× the citizen rate in the reserve asset (no identity proof needed)
-                                </p>
-                              </div>
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">3. Premium to Treasury</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  Tokens mint 1:1 against half your payment; the premium half funds the shared
-                                  Treasury that pays peace rewards
-                                </p>
-                              </div>
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">4. Receive Tokens</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  Full economic rights: hold, pay, redeem — voting stays with verified members
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="proposing" className="mt-6 space-y-8">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">Incentive Proposal Flow</h2>
-                    <p className="mb-6">How users propose new economic incentives for peace-building actions.</p>
-
-                    <div className="space-y-6">
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-purple-100 text-purple-800">Phase 1</Badge>
-                            <CardTitle>Proposal Creation</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <h4 className="font-medium">User Actions</h4>
-                              <ol className="space-y-2 list-decimal pl-6 text-sm">
-                                <li>Access proposal creation interface</li>
-                                <li>Define specific behavior to incentivize/disincentivize</li>
-                                <li>Specify keyword combinations for verification</li>
-                                <li>Select trusted news sources for verification</li>
-                                <li>Set token redistribution parameters</li>
-                                <li>Write justification and impact analysis</li>
-                                <li>Submit proposal to community</li>
-                              </ol>
-                            </div>
-                            <div className="bg-muted p-4 rounded-lg">
-                              <h4 className="font-medium mb-2">Example: Checkpoint Removal</h4>
-                              <div className="space-y-2 text-sm text-muted-foreground">
-                                <p>
-                                  <strong>Behavior:</strong> Military checkpoint removal in Jordan Valley (positive, by A)
-                                </p>
-                                <p>
-                                  <strong>Pattern:</strong> "checkpoint removal" AND "Jordan Valley" — compiled to a
-                                  zk-regex, committed as patternHash
-                                </p>
-                                <p>
-                                  <strong>Sources:</strong> haaretz.co.il (A), maannews.net (B), reuters.com + apnews.com (Intl)
-                                </p>
-                                <p>
-                                  <strong>Payout:</strong> Treasury reward into the Israeli community's peace pool,
-                                  claimed equally per member
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-purple-100 text-purple-800">Phase 2</Badge>
-                            <CardTitle>Community Discussion</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <h4 className="font-medium">7-Day Discussion Period</h4>
-                              <ul className="space-y-2 list-disc pl-6 text-sm">
-                                <li>Proposal published to community forum</li>
-                                <li>Token holders ask questions and provide feedback</li>
-                                <li>Proposer can clarify and make modifications</li>
-                                <li>Technical review of keyword logic</li>
-                                <li>Impact assessment by community experts</li>
-                              </ul>
-                            </div>
-                            <div className="bg-muted p-4 rounded-lg">
-                              <h4 className="font-medium mb-2">Discussion Tools</h4>
-                              <ul className="space-y-1 text-sm text-muted-foreground">
-                                <li>• On-chain forum for permanent record</li>
-                                <li>• Live video calls with translation</li>
-                                <li>• Keyword testing tool</li>
-                                <li>• Historical event analysis</li>
-                                <li>• Community sentiment polling</li>
-                              </ul>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-green-100 text-green-800">Phase 3</Badge>
-                            <CardTitle>Proposal Finalization</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">Final Review</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  Proposer incorporates feedback and submits final version
-                                </p>
-                              </div>
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">Technical Validation</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  System validates keyword logic and news source availability
-                                </p>
-                              </div>
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">Voting Preparation</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  Proposal moves to voting phase with all parameters locked
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="voting" className="mt-6 space-y-8">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">Governance Voting Flow</h2>
-                    <p className="mb-6">How token holders vote on proposals and participate in governance.</p>
-
-                    <div className="space-y-6">
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-blue-100 text-blue-800">Step 1</Badge>
-                            <CardTitle>Voting Access</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <h4 className="font-medium">Voter Requirements</h4>
-                              <ul className="space-y-2 list-disc pl-6 text-sm">
-                                <li>Must be a verified member (zkEmail citizenship proof, unexpired)</li>
-                                <li>One ballot per identity — outsider capital cannot vote</li>
-                                <li>Must hold enough PeaceTokens to cover the quadratic lock</li>
-                                <li>Tokens are locked only for the 3-day voting period</li>
-                              </ul>
-                            </div>
-                            <div className="bg-muted p-4 rounded-lg">
-                              <h4 className="font-medium mb-2">Voting Power Calculation</h4>
-                              <p className="text-sm text-muted-foreground">
-                                Quadratic voting: casting n votes locks n² tokens (returned after the vote)
-                              </p>
-                              <div className="mt-2 text-xs text-muted-foreground">
-                                <p>1 vote = 1 token</p>
-                                <p>2 votes = 4 tokens</p>
-                                <p>3 votes = 9 tokens</p>
-                                <p>4 votes = 16 tokens</p>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-blue-100 text-blue-800">Step 2</Badge>
-                            <CardTitle>Casting Votes</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <h4 className="font-medium">Voting Process</h4>
-                              <ol className="space-y-2 list-decimal pl-6 text-sm">
-                                <li>Review the proposal — including the exact committed pattern and parameters</li>
-                                <li>Select number of votes to cast (considering the n² lock)</li>
-                                <li>Choose position: For or Against</li>
-                                <li>Confirm the token lock for the voting period</li>
-                                <li>Submit the vote on-chain</li>
-                              </ol>
-                            </div>
-                            <div className="bg-muted p-4 rounded-lg">
-                              <h4 className="font-medium mb-2">Why the Lock Matters</h4>
-                              <p className="text-sm text-muted-foreground mb-2">
-                                Strong preferences cost real, temporarily illiquid capital
-                              </p>
-                              <ul className="space-y-1 text-xs text-muted-foreground">
-                                <li>• Locked tokens are returned win or lose</li>
-                                <li>• Splitting tokens across wallets doesn't help — ballots are per identity</li>
-                                <li>• Vote weight counts toward your community's tally only</li>
-                                <li>• Participation counts toward the 30% joint quorum</li>
-                              </ul>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-green-100 text-green-800">Step 3</Badge>
-                            <CardTitle>Vote Counting & Results</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">Approval Requirements</h4>
-                                <ul className="space-y-1 text-sm text-muted-foreground">
-                                  <li>• Majority of Israeli members' vote weight</li>
-                                  <li>• Majority of Palestinian members' vote weight</li>
-                                  <li>• Minimum 30% participation of registered members</li>
-                                </ul>
-                              </div>
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">Vote Tallying</h4>
-                                <ul className="space-y-1 text-sm text-muted-foreground">
-                                  <li>• Tallied per community, on-chain</li>
-                                  <li>• Weight n from an n² token lock</li>
-                                  <li>• All locks released at tally</li>
-                                </ul>
-                              </div>
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">Implementation</h4>
-                                <ul className="space-y-1 text-sm text-muted-foreground">
-                                  <li>• Incentive activates in the IncentiveRegistry</li>
-                                  <li>• EventAttestation starts accepting matching proofs</li>
-                                  <li>• Rejected proposals: proposer waits 30 days</li>
-                                </ul>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="business" className="mt-6 space-y-8">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">Business Integration Flow</h2>
-                    <p className="mb-6">How businesses integrate with peertopeertopeace to receive and use tokens.</p>
-
-                    <div className="space-y-6">
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-green-100 text-green-800">Step 1</Badge>
-                            <CardTitle>Peace-Abiding Certification</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <h4 className="font-medium">Certification Requirements</h4>
-                              <ul className="space-y-2 list-disc pl-6 text-sm">
-                                <li>No involvement in activities that undermine peace</li>
-                                <li>Commitment to non-discrimination policies</li>
-                                <li>Willingness to serve customers from both communities</li>
-                                <li>Transparent business practices</li>
-                                <li>Regular compliance reporting</li>
-                              </ul>
-                            </div>
-                            <div className="bg-muted p-4 rounded-lg">
-                              <h4 className="font-medium mb-2">Application Process</h4>
-                              <ol className="space-y-1 text-sm text-muted-foreground">
-                                <li>1. Apply on-chain with the business wallet + metadata URI</li>
-                                <li>2. Complete peace-abiding commitment form</li>
-                                <li>3. 3-day member vote (simple majority of each community roll)</li>
-                                <li>4. Receive certification if approved</li>
-                                <li>5. Certification is revocable by the same vote</li>
-                              </ol>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-green-100 text-green-800">Step 2</Badge>
-                            <CardTitle>Token Integration</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <h4 className="font-medium">Technical Integration</h4>
-                              <ul className="space-y-2 list-disc pl-6 text-sm">
-                                <li>Install peertopeertopeace payment gateway</li>
-                                <li>Configure token acceptance rates</li>
-                                <li>Set up automatic conversion to local currency</li>
-                                <li>Implement customer verification system</li>
-                                <li>Enable cross-border transaction processing</li>
-                              </ul>
-                            </div>
-                            <div className="bg-muted p-4 rounded-lg">
-                              <h4 className="font-medium mb-2">Business Benefits</h4>
-                              <ul className="space-y-1 text-sm text-muted-foreground">
-                                <li>• Access to cross-border customers</li>
-                                <li>• Reduced transaction fees</li>
-                                <li>• Marketing as peace-supporting business</li>
-                                <li>• Eligibility for cooperation bonuses</li>
-                                <li>• Priority in joint venture opportunities</li>
-                              </ul>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-blue-100 text-blue-800">Step 3</Badge>
-                            <CardTitle>Cross-Border Transactions</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">Customer Payment</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  Customer calls payBusiness with PeaceTokens from their wallet
-                                </p>
-                              </div>
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">Certification Check</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  The token contract checks the BusinessRegistry certification and communities
-                                </p>
-                              </div>
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">Cooperation Bonus</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  If payer and business are from different communities, the Treasury adds a bonus to
-                                  the business
-                                </p>
-                              </div>
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">Currency Conversion</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  Business can convert tokens to local currency if desired
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="redistribution" className="mt-6 space-y-8">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">Peace-Pool Redistribution Flow</h2>
-                    <p className="mb-6">
-                      How proven events move value between the opt-in peace pools — never anyone's unstaked savings.
-                    </p>
-
-                    <div className="space-y-6">
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-red-100 text-red-800">Trigger Event</Badge>
-                            <CardTitle>Permissionless Attestation</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <h4 className="font-medium">Anyone With the Newsletter Can Attest</h4>
-                              <ul className="space-y-2 list-disc pl-6 text-sm">
-                                <li>Subscribers save the DKIM-signed newsletter reporting the event as .eml</li>
-                                <li>Each generates a zkEmail proof against the incentive's committed pattern</li>
-                                <li>Proofs are submitted to EventAttestation — no monitoring service exists</li>
-                                <li>Per-email nullifiers stop double-counting; per-domain dedup stops digest spam</li>
-                              </ul>
-                            </div>
-                            <div className="bg-muted p-4 rounded-lg">
-                              <h4 className="font-medium mb-2">Example Attestation</h4>
-                              <div className="space-y-2 text-sm text-muted-foreground">
-                                <p>
-                                  <strong>Event:</strong> Military checkpoint removed in Jordan Valley
-                                </p>
-                                <p>
-                                  <strong>Sources proven:</strong> Haaretz, Ma'an News, Reuters, AP newsletters
-                                </p>
-                                <p>
-                                  <strong>Pattern:</strong> Matches the incentive's committed patternHash
-                                </p>
-                                <p>
-                                  <strong>Status:</strong> Tallying distinct sources within the 7-day window
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-yellow-100 text-yellow-800">Verification</Badge>
-                            <CardTitle>zkEmail Verification Process</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <h4 className="font-medium">Multi-Source Verification</h4>
-                              <ol className="space-y-2 list-decimal pl-6 text-sm">
-                                <li>Each proof verifies the sender's DKIM signature against the DKIMRegistry</li>
-                                <li>The DKIM-covered Date header must fall inside the event window</li>
-                                <li>The sender domain must be in the incentive's approved source set</li>
-                                <li>Distinct domains are tallied per category (A / B / International)</li>
-                                <li>Evidence is immune to article edits and takedowns — signatures froze at send time</li>
-                              </ol>
-                            </div>
-                            <div className="bg-muted p-4 rounded-lg">
-                              <h4 className="font-medium mb-2">Verification Timeline</h4>
-                              <div className="space-y-2 text-sm text-muted-foreground">
-                                <p>
-                                  <strong>Day 1:</strong> Israeli-source newsletter proven (1 of 1 required)
-                                </p>
-                                <p>
-                                  <strong>Day 2:</strong> Palestinian-source newsletter proven (1 of 1 required)
-                                </p>
-                                <p>
-                                  <strong>Day 3:</strong> Two international sources proven (2 of 2 required)
-                                </p>
-                                <p>
-                                  <strong>Day 3:</strong> Thresholds met — event CONFIRMED
-                                </p>
-                                <p>
-                                  <strong>Status:</strong> 48-hour dispute window opens, amount frozen
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-purple-100 text-purple-800">Dispute Window</Badge>
-                            <CardTitle>48 Hours Before Any Funds Move</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-4">
-                              <h4 className="font-medium">Courts Before Bailiffs</h4>
-                              <ul className="space-y-2 list-disc pl-6 text-sm">
-                                <li>Any member can raise a dispute about a confirmed event</li>
-                                <li>Disputes reviewed by the DisputeCouncil (both communities represented)</li>
-                                <li>Evidence must be provided for dispute claims</li>
-                                <li>75% council supermajority required to reverse — and only inside the window</li>
-                              </ul>
-                            </div>
-                            <div className="bg-muted p-4 rounded-lg">
-                              <h4 className="font-medium mb-2">Dispute Outcomes</h4>
-                              <ul className="space-y-1 text-sm text-muted-foreground">
-                                <li>
-                                  • <strong>Reversed (75%):</strong> Event voided, frozen amount released, no funds move
-                                </li>
-                                <li>
-                                  • <strong>No reversal:</strong> Event FINALIZED after 48h — irreversible
-                                </li>
-                                <li>
-                                  • <strong>After finalization:</strong> No retroactive reversals, ever — payouts stay certain
-                                </li>
-                              </ul>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <div className="flex items-center gap-2">
-                            <Badge className="bg-green-100 text-green-800">Execution</Badge>
-                            <CardTitle>Pool Transfer & Peace Dividend</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">Harmful Events</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  The RedistributionEngine slashes the capped share from the aggressor community's
-                                  pool corpus and credits the harmed community's pool at par value
-                                </p>
-                              </div>
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">Positive & Joint Events</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  Rewards are paid from the shared Treasury into the acting pool(s) — never taken
-                                  from the counterpart community
-                                </p>
-                              </div>
-                              <div className="bg-muted p-4 rounded-lg">
-                                <h4 className="font-medium mb-2">Equal-Per-Member Claims</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  The receiving pool's reward-per-member accumulator increases; every verified member
-                                  claims the same amount
-                                </p>
-                              </div>
-                            </div>
-
-                            <div className="bg-muted p-4 rounded-lg">
-                              <h4 className="font-medium mb-2">Example Redistribution (harmful event by A)</h4>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-muted-foreground">
-                                <div>
-                                  <p>
-                                    <strong>Event:</strong> Cross-border attack, finalized after dispute window
-                                  </p>
-                                  <p>
-                                    <strong>Redistribution:</strong> 5% of pool A's corpus (the per-event cap)
-                                  </p>
-                                  <p>
-                                    <strong>Direction:</strong> Pool A → Pool B
-                                  </p>
-                                  <p>
-                                    <strong>Exposure:</strong> Only opted-in peace stakes — no wallet balances
-                                  </p>
-                                </div>
-                                <div>
-                                  <p>
-                                    <strong>Pool A corpus:</strong> 1,000,000 tokens
-                                  </p>
-                                  <p>
-                                    <strong>Amount moved:</strong> 50,000 tokens of value, minted at par into pool B rewards
-                                  </p>
-                                  <p>
-                                    <strong>Per verified B member:</strong> Equal share (e.g. 10,000 members → 5 tokens each)
-                                  </p>
-                                  <p>
-                                    <strong>Escrow effect:</strong> SanctionsEscrow tranches referencing this incentive release
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </div>
-                </TabsContent>
-              </Tabs>
-
-              <Card className="mt-12">
-                <CardHeader>
-                  <CardTitle>Interactive Demo Environment</CardTitle>
-                  <CardDescription>Experience these flows in our sandbox environment</CardDescription>
-                </CardHeader>
-                <CardContent className="text-center">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <Button variant="outline" className="h-auto p-4 bg-transparent" asChild>
-                      <Link href="/verify">
-                        <div className="flex flex-col items-center gap-2">
-                          <User className="h-6 w-6" />
-                          <span>Try Identity Verification</span>
-                        </div>
-                      </Link>
-                    </Button>
-                    <Button variant="outline" className="h-auto p-4 bg-transparent" asChild>
-                      <Link href="/incentives">
-                        <div className="flex flex-col items-center gap-2">
-                          <FileText className="h-6 w-6" />
-                          <span>Propose an Incentive</span>
-                        </div>
-                      </Link>
-                    </Button>
-                    <Button variant="outline" className="h-auto p-4 bg-transparent" asChild>
-                      <Link href="/incentives">
-                        <div className="flex flex-col items-center gap-2">
-                          <Vote className="h-6 w-6" />
-                          <span>Vote on Incentives</span>
-                        </div>
-                      </Link>
-                    </Button>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    These are live flows on the Gnosis demo deployment — the MockGroth16Verifier accepts
-                    demo proofs, and governance and dispute windows run in 10 minutes, not days.
-                  </p>
-                </CardContent>
-              </Card>
+        {/* --------------------------- before you start --------------------------- */}
+        <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-border bg-muted/40 p-5 text-sm text-muted-foreground">
+          <strong className="text-foreground">You need:</strong> a browser wallet with two accounts
+          (the dual-majority vote needs one verified member per community — you'll play both sides),
+          and a little xDAI on each for gas. Everything else — mUSD reserve, demo proofs — comes
+          from faucets and buttons inside the flows. Demo identity proofs stand in for the WASM
+          prover; every contract check they pass is real.
         </div>
+
+        {/* ------------------------- walkthrough 1: solo loop ------------------------- */}
+        <div className="mx-auto mt-14 max-w-3xl rounded-3xl border-2 border-primary/40 bg-card p-6 sm:p-8">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="font-display text-xl font-bold">1 · The full peace loop, solo</h2>
+            <span className="rounded-full bg-accent/60 px-2.5 py-0.5 text-xs font-semibold text-accent-foreground">
+              ~40 minutes · two wallets
+            </span>
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            The whole journey — Verify → Mint → Agree → Attest → Settle — played end to end, with
+            you as one citizen of each community. By the end, an incentive you proposed will have
+            fired on evidence you attested, and paid a dividend you claim.
+          </p>
+          <Checklist
+            steps={[
+              { text: <>With <strong>wallet 1</strong>, verify as Community A at <L href="/verify">/verify</L> — one click builds the demo citizenship proof and registers your nullifier.</> },
+              { text: <>Still wallet 1: at <L href="/mint">/mint</L>, tap the mUSD faucet, approve, and mint. Watch the split land: 90% in your wallet, 10% into pool A's corpus.</> },
+              { text: <>Switch to <strong>wallet 2</strong>, verify as Community B at <L href="/verify">/verify</L>, then faucet + mint at <L href="/mint">/mint</L>. Both rolls now have one member each.</> },
+              { text: <>With either wallet, open <L href="/incentives">/incentives</L> and propose — the form pre-fills the demo news sources and pattern. Submission freezes everything on-chain.</> },
+              { wait: true, text: <>Wait out the 10-minute discussion window (the card shows the live countdown).</> },
+              { text: <>Vote YES from wallet 1, then YES from wallet 2 at <L href="/incentives">/incentives</L>. Casting n votes locks n² tokens — approve the lock when prompted. Two members voting also satisfies the 30% quorum.</> },
+              { wait: true, text: <>Wait out the 10-minute voting window, then hit <em>Finalize</em> on the proposal and withdraw both wallets' vote stakes. The incentive is now active.</> },
+              { text: <>At <L href="/attest">/attest</L>, submit demo newsletter proofs from four distinct sources — 1 community-A outlet, 1 community-B outlet, 2 international. On the fourth, thresholds are met and the event is CONFIRMED.</> },
+              { wait: true, text: <>Wait out the 10-minute dispute window — this is the council's chance to reverse (it won't).</> },
+              { text: <>At <L href="/pools">/pools</L>, finalize the event and watch value move. Then, with the receiving community's wallet, claim your equal-per-member peace dividend. Loop complete.</> },
+            ]}
+          />
+        </div>
+
+        {/* ---------------------- walkthrough 2: business loop ---------------------- */}
+        <div className="mx-auto mt-8 max-w-3xl rounded-3xl border-2 border-border bg-card p-6 sm:p-8">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="font-display text-xl font-bold">2 · The business certification loop</h2>
+            <span className="rounded-full bg-accent/60 px-2.5 py-0.5 text-xs font-semibold text-accent-foreground">
+              ~15 minutes · after walkthrough 1, steps 1–3
+            </span>
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Certify a business by vote of both communities, then pay it from across the line and
+            watch the Treasury add the cooperation bonus on top — commerce subsidized, not taxed.
+          </p>
+          <Checklist
+            steps={[
+              { text: <>Prerequisite: two verified wallets holding tokens (walkthrough 1, steps 1–3).</> },
+              { text: <>At <L href="/business">/business</L>, apply for certification with one wallet — that wallet's community becomes the business's side.</> },
+              { text: <>Vote to approve from both wallets: certification needs a simple majority of <em>each</em> community's roll, just like everything else here.</> },
+              { wait: true, text: <>Wait out the 10-minute certification poll, then finalize it. The business is now certified (and revocable by the same vote, later).</> },
+              { text: <>From the wallet on the <em>other</em> side, pay the business at <L href="/business">/business</L> (approve, then pay). Because payer and business communities differ, the Treasury adds the 2% cooperation bonus — check the business balance to see the payment plus bonus arrive.</> },
+            ]}
+          />
+        </div>
+
+        {/* ----------------------- walkthrough 3: escrow loop ----------------------- */}
+        <div className="mx-auto mt-8 max-w-3xl rounded-3xl border-2 border-border bg-card p-6 sm:p-8">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="font-display text-xl font-bold">3 · The escrow donor loop</h2>
+            <span className="rounded-full bg-accent/60 px-2.5 py-0.5 text-xs font-semibold text-accent-foreground">
+              ~20 minutes · needs a passed incentive
+            </span>
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            Play the outside donor: lock funds against an outcome, then see both endings — release
+            when the event finalizes, or reclaim when the expiry passes with nothing proven. No
+            shifting goalposts in either direction.
+          </p>
+          <Checklist
+            steps={[
+              { text: <>Prerequisite: an active (passed) incentive — walkthrough 1 through step 7.</> },
+              { text: <>At <L href="/escrow">/escrow</L>, deposit a tranche: pick the incentive, a beneficiary (pool A, pool B, both, or Treasury), an amount (faucet mUSD at <L href="/mint">/mint</L> if needed), and an expiry. Everything is frozen at deposit.</> },
+              { text: <>Path A — the outcome happens: drive the event through <L href="/attest">/attest</L> (four sources) and the dispute window, finalize at <L href="/pools">/pools</L>, then hit <em>Release</em> on your tranche. The funds pay into the beneficiary pool, claimable equally per member.</> },
+              { wait: true, text: <>Path B — nothing happens: deposit a second tranche with an expiry a few minutes out, let it lapse with no finalized event, then <em>Reclaim</em> your full deposit.</> },
+            ]}
+          />
+        </div>
+
+        <HonestyNote>
+          What's compressed here is only time and proving: 10-minute windows instead of days, and
+          demo proofs instead of the ~60-second WASM prover. The contracts, checks, thresholds,
+          locks, and payouts are exactly the production logic — read along on{" "}
+          <a
+            href="https://gnosis.blockscout.com"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-4"
+          >
+            Blockscout
+          </a>{" "}
+          (addresses on <Link href="/docs" className="underline underline-offset-4">/docs</Link>) and
+          verify every step landed.
+        </HonestyNote>
       </section>
     </>
   )

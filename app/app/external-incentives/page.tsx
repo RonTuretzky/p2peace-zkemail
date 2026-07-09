@@ -1,471 +1,130 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Building, Handshake, Globe, ExternalLink, FileText, Shield, Users } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { SectionChip, SectionHeading, HonestyNote } from "@/components/explainer"
+
+/* Sanctions relief, explained — the tokenized-sanctions thesis, the tranche
+   lifecycle, and the anti-imperialist framing kept honest. */
+
+const LIFECYCLE = [
+  {
+    step: "1",
+    title: "Deposit — the promise is made precise",
+    body: "A donor — a state, an NGO, a diaspora network — deposits reserve assets into the SanctionsEscrow as a tranche. At deposit time three things are fixed forever: which approved incentive must fire (say, the checkpoint-removal incentive), who benefits (pool A, pool B, both, or the Treasury), and an expiry date. From that moment the money is on the table, visible to everyone, and the donor cannot move the goalposts.",
+  },
+  {
+    step: "2",
+    title: "Watch — the same pipeline as everything else",
+    body: "There is no special committee judging whether 'progress' happened. The release condition is exactly the protocol's own event pipeline: newsletter attestations from both sides' press plus international wires, distinct-source thresholds, confirmation, the 48-hour dispute window, finalization. If the referenced incentive never fires, the tranche just sits there — patient, public, and earning nothing but credibility.",
+  },
+  {
+    step: "3",
+    title: "Release or reclaim — no third outcome",
+    body: "The moment a finalized event of the referenced incentive exists, anyone can trigger release — the tranche pays out to the chosen beneficiary at par, claimable as the usual equal-per-member dividend. If the expiry passes with no finalized event, the donor reclaims the full deposit. Those are the only two exits; there is no discretionary 'circumstances have changed' clause.",
+  },
+]
+
+const HONEST_FRAMING = [
+  {
+    title: "What external money can buy",
+    body: "Outcomes. A donor can say 'when the checkpoint verifiably comes down, this fund pays the communities' — and be believed, because the code makes the promise self-executing. That is a genuinely new kind of foreign engagement: conditional, transparent, and impossible to quietly renege on.",
+  },
+  {
+    title: "What external money cannot buy",
+    body: "Power. Depositing into the escrow grants no votes, no council seats, no parameter access, no veto. Which incentives exist — and therefore which outcomes can even be funded — is decided solely by dual-majority votes of the two communities. Donors fund the menu; they never write it.",
+  },
+  {
+    title: "Why the conditions are immutable",
+    body: "Traditional sanctions relief is a moving target: conditions shift with elections, hidden criteria appear, promised relief evaporates after compliance. Freezing incentive, beneficiary, and expiry at deposit time removes the discretion that makes sanctions an instrument of leverage rather than of outcomes. If the event happens, payment happens — even if the donor's government changed its mind in the meantime.",
+  },
+  {
+    title: "What this doesn't fix",
+    body: "A tranche in this contract moves escrowed crypto — it does not lift a real-world tariff, unfreeze a bank account, or reopen a border. The thesis is that credible, self-executing commitments are the missing primitive that real sanctions policy could be rebuilt on; this contract is that primitive working at demo scale, not a claim that geopolitics is now a smart contract.",
+  },
+]
 
 export default function ExternalIncentivesPage() {
   return (
     <>
       <section className="container mx-auto px-4 py-14">
-        <div className="mx-auto max-w-3xl space-y-3 text-center">
+        {/* -------------------------------- hero -------------------------------- */}
+        <div className="mx-auto max-w-3xl space-y-4 text-center">
+          <SectionChip>Sanctions relief, explained</SectionChip>
           <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            Tokenized External Incentives
+            Turning sanctions from a stick into an escrow
           </h1>
           <p className="text-muted-foreground md:text-lg">
-            How outside parties can fund peace by depositing into the SanctionsEscrow — reserve assets
-            that release to a community pool or the Treasury only when a referenced event finalizes
-            through the same zkEmail attestation pipeline.
+            Sanctions are conditional money with the conditions kept vague — relief is promised for
+            'progress', judged later, by the sanctioning power, in private. The original p2p2p
+            concept proposed tokenizing that promise instead: outside parties lock funds against a
+            specific, community-approved incentive, and cryptographic evidence — not diplomacy —
+            decides whether the money releases. One contract, three states, zero discretion.
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-2">
             <Button asChild>
-              <Link href="/incentives">Browse active incentives</Link>
+              <Link href="/escrow">Open the escrow — /escrow</Link>
             </Button>
             <Button variant="outline" asChild>
-              <Link href="/pools">View the peace pools</Link>
+              <Link href="/incentives">See fundable incentives</Link>
             </Button>
           </div>
         </div>
 
-        <div className="mx-auto max-w-5xl mt-12">
-              <Card className="mb-8">
-                <CardHeader>
-                  <CardTitle>Transforming Sanctions into Peace Incentives</CardTitle>
-                  <CardDescription>A new approach to international economic engagement</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p>
-                    The peertopeertopeace system introduces a revolutionary approach to international economic
-                    engagement by allowing nations to tokenize their economic sanctions and transform them into
-                    transparent, verifiable peace incentives:
-                  </p>
+        {/* ------------------------------ lifecycle ------------------------------ */}
+        <div className="mx-auto mt-16 max-w-5xl">
+          <SectionHeading
+            chip="The tranche lifecycle"
+            title="Deposit → watch → release or reclaim"
+            lede="Every tranche lives this exact life. Nothing about it can be renegotiated after the deposit confirms."
+          />
+          <div className="mx-auto mt-10 grid gap-6 lg:grid-cols-3">
+            {LIFECYCLE.map((s) => (
+              <div key={s.step} className="rounded-3xl border-2 border-border bg-card p-6">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary font-display text-base font-bold text-primary-foreground">
+                  {s.step}
+                </div>
+                <h3 className="mt-4 font-display text-lg font-bold">{s.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.body}</p>
+              </div>
+            ))}
+          </div>
+          <HonestyNote>
+            Release is one-shot and irreversible, and reclaim is only possible after expiry with no
+            finalized event — a donor can never yank funds back mid-window because the news started
+            looking likely. The clock protects both sides of the promise.
+          </HonestyNote>
+        </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-                    <div className="bg-muted p-4 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Building className="h-5 w-5 text-primary" />
-                        <h4 className="font-medium">Traditional Sanctions Limitations</h4>
-                      </div>
-                      <ul className="space-y-2 list-disc pl-6 text-sm text-muted-foreground">
-                        <li>Often applied broadly, harming civilian populations</li>
-                        <li>Subject to political whims and inconsistent application</li>
-                        <li>Lack clear, verifiable conditions for relief</li>
-                        <li>Can be circumvented through various means</li>
-                        <li>Often reinforce imperial power dynamics</li>
-                      </ul>
-                    </div>
+        {/* --------------------------- honest framing --------------------------- */}
+        <div className="mx-auto mt-20 max-w-5xl">
+          <SectionHeading
+            chip="Power dynamics, kept honest"
+            title="Anti-imperialist by construction — with the fine print attached"
+            lede="The concept's promise was that external funding could stop being a lever of control. Here is exactly how far the code delivers on that, and where it stops."
+          />
+          <div className="mx-auto mt-10 grid gap-6 sm:grid-cols-2">
+            {HONEST_FRAMING.map((f) => (
+              <div key={f.title} className="rounded-3xl border-2 border-border bg-card p-6">
+                <h3 className="font-display text-lg font-bold">{f.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
 
-                    <div className="bg-muted p-4 rounded-lg">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Handshake className="h-5 w-5 text-primary" />
-                        <h4 className="font-medium">Tokenized Incentives Advantages</h4>
-                      </div>
-                      <ul className="space-y-2 list-disc pl-6 text-sm text-muted-foreground">
-                        <li>Targeted to specific actions and outcomes</li>
-                        <li>Transparent and immutable conditions</li>
-                        <li>Automatically executed when conditions are verified</li>
-                        <li>Resistant to political manipulation</li>
-                        <li>Empower local communities rather than external powers</li>
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="bg-muted p-4 rounded-lg mt-6">
-                    <h4 className="font-medium">How It Works</h4>
-                    <ol className="list-decimal list-inside text-sm text-muted-foreground mt-2 space-y-2">
-                      <li>
-                        <strong>Tokenization:</strong> Any external party (state, NGO, diaspora) deposits reserve
-                        assets into the SanctionsEscrow against a milestone — a specific incentive, a beneficiary
-                        (community pool A, B, both, or the Treasury), and an expiry
-                      </li>
-                      <li>
-                        <strong>Verification:</strong> The zkEmail attestation system proves when the referenced
-                        peace-building event has occurred, via DKIM-signed newsletter proofs from approved sources
-                      </li>
-                      <li>
-                        <strong>Automatic Execution:</strong> When the referenced event is finalized (after the
-                        48-hour dispute window), the escrowed tranche releases to the beneficiary pool(s); after
-                        expiry with no trigger, the donor may reclaim
-                      </li>
-                      <li>
-                        <strong>Transparent Record:</strong> All actions and relief measures are recorded on the
-                        blockchain for accountability
-                      </li>
-                      <li>
-                        <strong>Graduated Relief:</strong> As more substantial peace-building actions occur, more
-                        significant sanctions relief is unlocked
-                      </li>
-                    </ol>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Tabs defaultValue="examples" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="examples">Implementation Examples</TabsTrigger>
-                  <TabsTrigger value="technical">Technical Implementation</TabsTrigger>
-                  <TabsTrigger value="governance">Governance & Oversight</TabsTrigger>
-                </TabsList>
-                <TabsContent value="examples" className="mt-6 space-y-8">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">Implementation Examples</h2>
-                    <p className="mb-6">
-                      Here are specific examples of how nations could tokenize sanctions relief as peace incentives:
-                    </p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center gap-2">
-                            <Building className="h-5 w-5 text-primary" />
-                            <CardTitle>Trade Barrier Reduction</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="border-b pb-3">
-                            <h4 className="font-medium">Tariff Reduction</h4>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Nations could create smart contracts that automatically reduce tariffs on specific exports
-                              when verified demilitarization actions occur in targeted regions.
-                            </p>
-                          </div>
-                          <div className="border-b pb-3">
-                            <h4 className="font-medium">Export License Automation</h4>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Nations could create smart contracts that automatically grant export licenses for specific
-                              technologies when verified security cooperation measures are implemented.
-                            </p>
-                          </div>
-                          <div>
-                            <h4 className="font-medium">Market Access Expansion</h4>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Nations could create smart contracts that automatically expand market access for specific
-                              sectors when verified joint economic initiatives are established between conflicting
-                              communities.
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader className="pb-2">
-                          <div className="flex items-center gap-2">
-                            <Globe className="h-5 w-5 text-primary" />
-                            <CardTitle>Financial System Access</CardTitle>
-                          </div>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <div className="border-b pb-3">
-                            <h4 className="font-medium">Banking Relationship Restoration</h4>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Nations could create smart contracts that automatically restore correspondent banking
-                              relationships when verified transparency and anti-money laundering measures are
-                              implemented.
-                            </p>
-                          </div>
-                          <div className="border-b pb-3">
-                            <h4 className="font-medium">Investment Restrictions Lifting</h4>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Nations could create smart contracts that automatically lift investment restrictions for
-                              specific sectors when verified joint business ventures are established.
-                            </p>
-                          </div>
-                          <div>
-                            <h4 className="font-medium">Financial Aid Unlocking</h4>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Nations could create smart contracts that automatically unlock financial aid packages when
-                              verified governance reforms and transparency measures are implemented.
-                            </p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <Card className="mt-6">
-                      <CardHeader>
-                        <CardTitle>Comprehensive Peace Economy Pathway</CardTitle>
-                        <CardDescription>A graduated approach to full economic integration</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="mb-4">
-                          Nations could collaborate to create a comprehensive pathway to full economic integration, with
-                          each peace-building milestone unlocking new levels of economic opportunity:
-                        </p>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-                          <div className="bg-muted p-4 rounded-lg">
-                            <div className="flex items-center gap-2 mb-2">
-                              <ExternalLink className="h-5 w-5 text-primary" />
-                              <h4 className="font-medium">Level 1: Basic Relief</h4>
-                            </div>
-                            <ul className="space-y-1 list-disc pl-6 text-sm text-muted-foreground">
-                              <li>Reduction of specific tariffs</li>
-                              <li>Easing of travel restrictions</li>
-                              <li>Limited technology access</li>
-                              <li>Basic financial services access</li>
-                            </ul>
-                            <p className="text-sm text-muted-foreground mt-2">
-                              <strong>Triggered by:</strong> Initial security cooperation and demilitarization steps
-                            </p>
-                          </div>
-
-                          <div className="bg-muted p-4 rounded-lg">
-                            <div className="flex items-center gap-2 mb-2">
-                              <ExternalLink className="h-5 w-5 text-primary" />
-                              <h4 className="font-medium">Level 2: Sectoral Integration</h4>
-                            </div>
-                            <ul className="space-y-1 list-disc pl-6 text-sm text-muted-foreground">
-                              <li>Preferential trade agreements</li>
-                              <li>Expanded technology access</li>
-                              <li>Investment incentives</li>
-                              <li>Full financial services access</li>
-                            </ul>
-                            <p className="text-sm text-muted-foreground mt-2">
-                              <strong>Triggered by:</strong> Substantial demilitarization and joint economic zones
-                            </p>
-                          </div>
-
-                          <div className="bg-muted p-4 rounded-lg">
-                            <div className="flex items-center gap-2 mb-2">
-                              <ExternalLink className="h-5 w-5 text-primary" />
-                              <h4 className="font-medium">Level 3: Full Integration</h4>
-                            </div>
-                            <ul className="space-y-1 list-disc pl-6 text-sm text-muted-foreground">
-                              <li>Free trade agreements</li>
-                              <li>Full technology access</li>
-                              <li>Investment protection</li>
-                              <li>International financial integration</li>
-                            </ul>
-                            <p className="text-sm text-muted-foreground mt-2">
-                              <strong>Triggered by:</strong> Comprehensive peace agreement and sustained cooperation
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="technical" className="mt-6 space-y-8">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">Technical Implementation</h2>
-                    <p className="mb-6">
-                      The tokenization of sanctions relief requires sophisticated technical implementation to ensure
-                      security, transparency, and reliability:
-                    </p>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Smart Contract Architecture</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <p className="text-sm text-muted-foreground">
-                            The original's separate verification, escrow, execution, and audit contracts collapse
-                            into one auditable primitive — the SanctionsEscrow — with zkEmail as the verification
-                            layer:
-                          </p>
-                          <ul className="space-y-2 list-disc pl-6 text-sm text-muted-foreground">
-                            <li>
-                              <strong>Milestones:</strong> Each deposit references an approved incentive, a
-                              beneficiary (pool A, pool B, both, or Treasury), and an expiry date
-                            </li>
-                            <li>
-                              <strong>Verification:</strong> Release conditions are exactly the protocol's own event
-                              pipeline — newsletter attestations, confirmation, dispute window, finalization
-                            </li>
-                            <li>
-                              <strong>Release:</strong> A finalized event referencing the incentive releases the
-                              tranche to the beneficiary pool(s), claimable equally per verified member
-                            </li>
-                            <li>
-                              <strong>Refund:</strong> After expiry with no finalized event, the donor reclaims the
-                              deposit — everything recorded transparently on-chain
-                            </li>
-                          </ul>
-                        </CardContent>
-                      </Card>
-
-                      <Card>
-                        <CardHeader>
-                          <CardTitle>Integration with External Systems</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                          <p className="text-sm text-muted-foreground">
-                            The system integrates with external systems through secure, auditable channels:
-                          </p>
-                          <ul className="space-y-2 list-disc pl-6 text-sm text-muted-foreground">
-                            <li>
-                              <strong>Customs Systems:</strong> API integration with national customs systems for
-                              automatic tariff adjustments
-                            </li>
-                            <li>
-                              <strong>Export Control Systems:</strong> Secure integration with export license databases
-                              for automatic approvals
-                            </li>
-                            <li>
-                              <strong>Banking Networks:</strong> Secure messaging integration with international banking
-                              networks for financial access
-                            </li>
-                            <li>
-                              <strong>Aid Distribution Systems:</strong> Integration with aid distribution platforms for
-                              automatic disbursement
-                            </li>
-                          </ul>
-                        </CardContent>
-                      </Card>
-                    </div>
-
-                    <Card className="mt-6">
-                      <CardHeader>
-                        <CardTitle>Security and Verification</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div>
-                            <h4 className="font-medium mb-2">Multi-Source Verification</h4>
-                            <p className="text-sm text-muted-foreground">
-                              The system requires verification from multiple independent sources before triggering
-                              sanctions relief:
-                            </p>
-                            <ul className="space-y-1 list-disc pl-6 text-sm text-muted-foreground mt-2">
-                              <li>DKIM-signed newsletters from approved sources, proven with zkEmail by any subscriber</li>
-                              <li>Distinct-source thresholds: ≥1 source per community, ≥2 international</li>
-                              <li>Per-email nullifiers preventing double-counting</li>
-                              <li>48-hour dispute review by the DisputeCouncil</li>
-                              <li>Satellite imagery and observer oracles (future extension, out of v1 scope)</li>
-                            </ul>
-                          </div>
-
-                          <div>
-                            <h4 className="font-medium mb-2">Cryptographic Security</h4>
-                            <p className="text-sm text-muted-foreground">
-                              The system employs advanced cryptographic security measures:
-                            </p>
-                            <ul className="space-y-1 list-disc pl-6 text-sm text-muted-foreground mt-2">
-                              <li>Multi-signature authorization requirements</li>
-                              <li>Time-locked execution for major changes</li>
-                              <li>Zero-knowledge proofs for sensitive information</li>
-                              <li>Threshold cryptography for distributed trust</li>
-                              <li>Immutable audit trails on the blockchain</li>
-                            </ul>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="governance" className="mt-6 space-y-8">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-4">Governance & Oversight</h2>
-                    <p className="mb-6">
-                      The tokenized sanctions relief system includes robust governance and oversight mechanisms to
-                      ensure fairness, transparency, and accountability:
-                    </p>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Governance Structure</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                          <div className="bg-muted p-4 rounded-lg">
-                            <div className="flex items-center gap-2 mb-2">
-                              <FileText className="h-5 w-5 text-primary" />
-                              <h4 className="font-medium">Transparent Conditions</h4>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              All conditions for sanctions relief are publicly documented and immutably recorded on the
-                              blockchain, ensuring that all parties understand exactly what actions will trigger relief.
-                            </p>
-                          </div>
-
-                          <div className="bg-muted p-4 rounded-lg">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Users className="h-5 w-5 text-primary" />
-                              <h4 className="font-medium">Multi-Stakeholder Oversight</h4>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              A diverse council of stakeholders from participating nations, local communities, and
-                              independent organizations provides oversight of the system, ensuring that it operates
-                              fairly and as intended.
-                            </p>
-                          </div>
-
-                          <div className="bg-muted p-4 rounded-lg">
-                            <div className="flex items-center gap-2 mb-2">
-                              <Shield className="h-5 w-5 text-primary" />
-                              <h4 className="font-medium">Independent Verification</h4>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              Independent verification organizations ensure that peace-building actions are accurately
-                              assessed and that sanctions relief is triggered appropriately, preventing manipulation or
-                              false claims.
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="mt-6">
-                          <h4 className="font-medium mb-2">Dispute Resolution</h4>
-                          <p className="text-sm text-muted-foreground">
-                            The system includes a robust dispute resolution mechanism to address disagreements about
-                            verification or implementation.
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card className="mt-6">
-                      <CardHeader>
-                        <CardTitle>Maintaining Anti-Imperialist Principles</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="mb-4">
-                          While incorporating external nations' sanctions relief as incentives, the system maintains its
-                          anti-imperialist principles through several key mechanisms:
-                        </p>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          <div className="bg-muted p-4 rounded-lg">
-                            <h4 className="font-medium mb-2">Local Control</h4>
-                            <p className="text-sm text-muted-foreground">
-                              External nations can offer incentives, but cannot dictate the governance or operation of
-                              the peertopeertopeace system itself. Local token holders maintain full control over the
-                              core system.
-                            </p>
-                          </div>
-
-                          <div className="bg-muted p-4 rounded-lg">
-                            <h4 className="font-medium mb-2">Transparent Conditions</h4>
-                            <p className="text-sm text-muted-foreground">
-                              All conditions for sanctions relief are transparent and immutable, preventing the shifting
-                              goalposts and hidden agendas that often characterize imperial economic control.
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="bg-muted p-4 rounded-lg mt-6">
-                          <h4 className="font-medium">Transforming Power Dynamics</h4>
-                          <p className="text-sm text-muted-foreground mt-2">
-                            By tokenizing sanctions relief and making it conditional on verifiable peace-building
-                            actions, the system transforms traditional power dynamics. Instead of sanctions being
-                            wielded as opaque tools of imperial control, they become transparent incentives that empower
-                            local communities to build peace on their own terms.
-                          </p>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                </TabsContent>
-              </Tabs>
-
-          <div className="mt-12 flex flex-wrap justify-center gap-3">
+        {/* --------------------------------- CTA --------------------------------- */}
+        <div className="mx-auto mt-16 flex max-w-3xl flex-col items-center gap-4 rounded-3xl border-2 border-primary/40 bg-card p-8 text-center">
+          <h2 className="font-display text-2xl font-bold">Fund an outcome</h2>
+          <p className="text-sm text-muted-foreground">
+            The escrow is live on Gnosis: deposit a tranche against any passed incentive, watch it
+            release when the event finalizes — or reclaim it after expiry. In this demo, expiries
+            can be set minutes out so you can see both endings.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
             <Button size="lg" asChild>
-              <Link href="/incentives">Browse Active Incentives</Link>
+              <Link href="/escrow">Deposit a tranche — /escrow</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link href="/governance">Learn About Governance</Link>
+              <Link href="/economic-incentives">How incentives work</Link>
             </Button>
           </div>
         </div>

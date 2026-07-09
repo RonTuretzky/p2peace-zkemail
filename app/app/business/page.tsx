@@ -6,8 +6,10 @@ import { parseUnits } from "viem"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Store, Vote, HandCoins, FilePlus2, ThumbsUp, ThumbsDown, Gavel } from "lucide-react"
+import Link from "next/link"
+import { Store, Vote, HandCoins, FilePlus2, ThumbsUp, ThumbsDown, Gavel, ArrowRight } from "lucide-react"
 import { ConnectGate, FlowHeader, TxButton, useMembership } from "@/components/flow"
+import { HonestyNote, PrereqNote } from "@/components/explainer"
 import { contract } from "@/lib/contracts"
 import { Community } from "@/lib/chains"
 import { fmt, short, COMMUNITY_LABEL } from "@/lib/format"
@@ -56,9 +58,21 @@ export default function BusinessPage() {
         title="Peace-Abiding Businesses"
         blurb="Businesses earn certification through a one-member-one-vote poll that needs a majority in BOTH communities. Pay a certified business across the conflict line and the Treasury tops it up with a cooperation bonus."
       />
+      <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
+        This page sits <em>alongside</em> the main verify → mint → agree → attest → settle
+        journey rather than on it: pools punish harm after the fact, while certified businesses
+        reward everyday cooperation as it happens. Why it exists: peace that only pays out when
+        something goes wrong is half a peace — cross-line commerce is the other half.
+      </p>
       <ConnectGate>
         <BusinessInner />
       </ConnectGate>
+      <HonestyNote>
+        Honest limit: the cooperation bonus is best-effort and budgeted per epoch precisely so it
+        cannot be farmed — two colluding wallets ping-ponging payments would drain a fixed budget,
+        not an open tap, and oversized bonuses get trimmed to whatever budget remains. Dual-majority
+        certification (and revocation by the same rule) is the other anti-abuse gate.
+      </HonestyNote>
     </div>
   )
 }
@@ -108,14 +122,12 @@ function BusinessInner() {
 
   return (
     <div className="mx-auto mt-10 max-w-4xl">
-      {!isMember && (
-        <p className="mb-6 rounded-lg bg-muted p-3 text-sm text-muted-foreground">
-          You are not a verified member, so you can browse the directory but cannot vote or pay.{" "}
-          <a className="text-primary underline" href="/verify">Get verified</a> to participate.
-        </p>
-      )}
+      <PrereqNote met={isMember} href="/verify" cta="Verify">
+        You can browse the directory, but voting on certifications and paying businesses need a
+        verified membership — the dual-majority rule only works if each voter is one person.
+      </PrereqNote>
 
-      <Tabs defaultValue="directory">
+      <Tabs defaultValue="directory" className="mt-6">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="directory">Directory</TabsTrigger>
           <TabsTrigger value="apply">Apply</TabsTrigger>
@@ -540,7 +552,14 @@ function PayCard({
         {!isMember && (
           <p className="text-xs text-muted-foreground">Only verified members can pay businesses.</p>
         )}
-        {receipt.isSuccess && <p className="text-sm text-primary">Payment sent.</p>}
+        {receipt.isSuccess && (
+          <p className="rounded-lg bg-accent/40 p-3 text-sm text-accent-foreground">
+            Payment sent{crossLine ? " — the Treasury queues the cooperation bonus for this business" : ""}.{" "}
+            <Link href="/pools" className="inline-flex items-center gap-1 font-medium text-primary underline">
+              Next: back to the main journey <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          </p>
+        )}
         {error && (
           <p className="text-sm text-destructive">
             {(error as { shortMessage?: string }).shortMessage || error.message}

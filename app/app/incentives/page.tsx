@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import Link from "next/link"
 import {
   useAccount,
   useBlock,
@@ -13,8 +14,9 @@ import { keccak256, parseUnits, toBytes } from "viem"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Gavel, Vote, FilePlus2, Megaphone, ExternalLink, Undo2 } from "lucide-react"
+import { Gavel, Vote, FilePlus2, Megaphone, ExternalLink, Undo2, ArrowRight } from "lucide-react"
 import { ConnectGate, FlowHeader, TxButton, useMembership } from "@/components/flow"
+import { JourneyBar, HonestyNote, PrereqNote } from "@/components/explainer"
 import { contract } from "@/lib/contracts"
 import { Community, Direction, SourceCategory } from "@/lib/chains"
 import { demoSources, domainHashOf, NEWS_PATTERN } from "@/lib/demo"
@@ -64,11 +66,42 @@ export default function IncentivesPage() {
         title="Incentive Governance"
         blurb="Propose the news-event circuits that trigger cross-community redistribution, then approve them with quadratic votes. Voters approve a committed keyword circuit (patternHash), not prose."
       />
+      <IncentivesJourney />
+      <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
+        Why this step exists: money should never move because one side says so. Before any
+        newsletter can trigger a transfer, <em>both</em> communities have to vote, in advance and
+        in public, that this exact kind of event should — agreeing on the rule while nobody knows
+        who it will cost.
+      </p>
       <ConnectGate>
         <IncentivesInner />
       </ConnectGate>
+      <HonestyNote>
+        Honest limit: passing needs quorum plus a separate majority in <em>both</em> communities —
+        a proposal one side hates simply dies, and a low-turnout vote dies too. That deadlock is a
+        feature, not a bug: nothing can ever redistribute unless both sides agreed in advance that
+        it should.
+      </HonestyNote>
     </div>
   )
+}
+
+/** Journey state: verified ⇒ /verify done; holding community tokens ⇒ /mint done. */
+function IncentivesJourney() {
+  const { address } = useAccount()
+  const membership = useMembership()
+  const isCitizen = membership.isActiveMember && membership.community !== Community.None
+  const bal = useReadContract({
+    ...contract.token(isCitizen ? membership.community : Community.A),
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address && isCitizen },
+  })
+  const done = [
+    ...(isCitizen ? ["/verify"] : []),
+    ...(((bal.data as bigint | undefined) ?? 0n) > 0n ? ["/mint"] : []),
+  ]
+  return <JourneyBar current="/incentives" done={done} />
 }
 
 function IncentivesInner() {
@@ -106,7 +139,11 @@ function IncentivesInner() {
 
   return (
     <div className="mx-auto mt-10 max-w-5xl">
-      <p className="mb-6 rounded-lg bg-accent/40 p-3 text-center text-xs text-accent-foreground">
+      <PrereqNote met={membership.isActiveMember} href="/verify" cta="Verify first">
+        Browsing is open to everyone, but voting is one-person-one-ballot — so casting or
+        proposing needs a verified membership.
+      </PrereqNote>
+      <p className="mb-6 mt-6 rounded-lg bg-accent/40 p-3 text-center text-xs text-accent-foreground">
         {WINDOW_COPY}
       </p>
       <Tabs defaultValue="list">
@@ -221,6 +258,11 @@ function IncentiveCard({
         <Row label="Participants" value={state.participants.toString()} />
         <Row label="Redistribution" value={`${(state.redistributionBps / 100).toFixed(2)}%`} />
         <Row label="Triggers" value={`${state.triggerCount} / ${state.maxTriggers}`} />
+        <p className="rounded-lg bg-muted p-2 text-xs text-muted-foreground">
+          Read those numbers like this: each confirmed event moves at most{" "}
+          {(state.redistributionBps / 100).toFixed(2)}% of the responsible pool, and this rule can
+          only ever fire {state.maxTriggers} time{state.maxTriggers === 1 ? "" : "s"} total.
+        </p>
         <Row
           label="Circuit (patternHash)"
           value={
@@ -418,6 +460,12 @@ function VoteCard({
           <span className="w-6 text-center font-medium">{votes}</span>
         </div>
         <Row label="Locked cost" value={`${votes * votes} PEACE-${community === Community.A ? "A" : "B"}`} />
+        <p className="rounded-lg bg-muted p-2 text-xs text-muted-foreground">
+          Read it like this: {votes} vote{votes > 1 ? "s" : ""} lock{votes > 1 ? "" : "s"}{" "}
+          {votes * votes} token{votes * votes > 1 ? "s" : ""} — quadratic cost means shouting 5×
+          louder costs 25× more, so conviction counts but wealth hits a wall. You get the stake
+          back after finalize, win or lose.
+        </p>
         {needsApproval ? (
           <TxButton className="w-full" pending={pending} onClick={approve}>
             Approve {votes * votes} tokens
@@ -427,7 +475,12 @@ function VoteCard({
             Cast {votes} vote{votes > 1 ? "s" : ""}
           </TxButton>
         )}
-        {receipt.isSuccess && <p className="text-xs text-primary">Confirmed.</p>}
+        {receipt.isSuccess && (
+          <p className="text-xs text-primary">
+            Vote counted. When the window closes, finalize below — a passed incentive goes live
+            for attestation.
+          </p>
+        )}
         {error && (
           <p className="text-xs text-destructive">
             {(error as { shortMessage?: string }).shortMessage || error.message}
@@ -461,7 +514,14 @@ function FinalizeCard({ id, state, onDone }: { id: bigint; state: ProposalState;
         >
           <Gavel className="mr-2 h-4 w-4" /> Finalize #{id.toString()}
         </TxButton>
-        {receipt.isSuccess && <p className="text-xs text-primary">Finalized.</p>}
+        {receipt.isSuccess && (
+          <p className="text-xs text-primary">
+            Finalized. If it passed, the rule is live —{" "}
+            <Link href={`/attest?incentive=${id.toString()}`} className="inline-flex items-center gap-1 font-medium underline">
+              next: attest a matching newsletter <ArrowRight className="h-3 w-3" />
+            </Link>
+          </p>
+        )}
         {error && (
           <p className="text-xs text-destructive">
             {(error as { shortMessage?: string }).shortMessage || error.message}

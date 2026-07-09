@@ -6,9 +6,10 @@ import { useAccount, useReadContract, useReadContracts, useWriteContract, useWai
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Mail, ShieldCheck, CheckCircle2, Radio, ArrowRight } from "lucide-react"
-import { ConnectGate, FlowHeader, TxButton } from "@/components/flow"
+import { ConnectGate, FlowHeader, TxButton, useMembership } from "@/components/flow"
+import { JourneyBar, HonestyNote, PrereqNote } from "@/components/explainer"
 import { contract } from "@/lib/contracts"
-import { SourceCategory } from "@/lib/chains"
+import { Community, SourceCategory } from "@/lib/chains"
 import { buildNewsProof, demoSources } from "@/lib/demo"
 import { short, DIRECTION_LABEL } from "@/lib/format"
 
@@ -83,16 +84,49 @@ export default function AttestPage() {
         title="Attest an Event"
         blurb="Got the newsletter? You are the oracle. Any subscriber can prove a DKIM-signed news email matches an active incentive — nothing sensitive leaves the device. Enough distinct sources within the window confirm the event and open a 10-minute dispute window."
       />
+      <AttestJourney />
+      <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
+        Why this step exists: the protocol cannot read the news, so subscribers bring it the
+        receipts. A single outlet could lie, which is why nothing confirms until distinct sources
+        from community A, community B, <em>and</em> international wires all attest to the same
+        approved pattern inside one window.
+      </p>
       <ConnectGate>
         <AttestInner />
       </ConnectGate>
       <ProofExplainer />
+      <HonestyNote>
+        Honest limit: this demo&apos;s verifier accepts any well-formed Groth16 proof, so the
+        buttons below build structurally-real proofs from the chosen domain without touching your
+        inbox. Production swaps in compiled zkEmail circuits checked against real DKIM keys — the
+        on-chain rules you see enforced here (approved source sets, one nullifier per email, time
+        windows) are already the real thing.
+      </HonestyNote>
     </div>
   )
 }
 
+/** Journey state: verified ⇒ /verify done; holding community tokens ⇒ /mint done. */
+function AttestJourney() {
+  const { address } = useAccount()
+  const membership = useMembership()
+  const isCitizen = membership.isActiveMember && membership.community !== Community.None
+  const bal = useReadContract({
+    ...contract.token(isCitizen ? membership.community : Community.A),
+    functionName: "balanceOf",
+    args: address ? [address] : undefined,
+    query: { enabled: !!address && isCitizen },
+  })
+  const done = [
+    ...(isCitizen ? ["/verify"] : []),
+    ...(((bal.data as bigint | undefined) ?? 0n) > 0n ? ["/mint"] : []),
+  ]
+  return <JourneyBar current="/attest" done={done} />
+}
+
 function AttestInner() {
   const { address } = useAccount()
+  const membership = useMembership()
 
   // Pull ?incentive= from the URL once on mount.
   const [selected, setSelected] = useState<number | null>(null)
@@ -155,6 +189,10 @@ function AttestInner() {
 
   return (
     <div className="mx-auto mt-10 max-w-4xl space-y-6">
+      <PrereqNote met={membership.isActiveMember} href="/verify" cta="Verify">
+        Anyone holding the newsletter can attest — but the rewards a confirmed event unlocks are
+        claimed by verified pool members only. Verify so your side of the settlement includes you.
+      </PrereqNote>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -346,7 +384,9 @@ function IncentiveAttest({ incentiveId, address }: { incentiveId: number; addres
 
             {receipt.isSuccess && (
               <p className="rounded-lg bg-accent/40 p-3 text-sm text-accent-foreground">
-                Attestation counted. Round tallies updated above.
+                Attestation counted — round tallies updated above. Next: keep attesting from{" "}
+                <em>different</em> outlets until every category meets its threshold; the round then
+                confirms and hands off to the <Link href="/pools" className="font-medium text-primary underline">pools</Link>.
               </p>
             )}
             {errMsg && <p className="text-sm text-destructive">{errMsg}</p>}

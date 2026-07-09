@@ -1,12 +1,14 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi"
 import { parseUnits } from "viem"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { Coins, Droplets } from "lucide-react"
+import { Coins, Droplets, ArrowRight } from "lucide-react"
 import { ConnectGate, FlowHeader, TxButton, useMembership } from "@/components/flow"
+import { JourneyBar, HonestyNote, PrereqNote } from "@/components/explainer"
 import { contract } from "@/lib/contracts"
 import { Community } from "@/lib/chains"
 import { fmt } from "@/lib/format"
@@ -18,11 +20,29 @@ export default function MintPage() {
         title="Mint Peace Tokens"
         blurb="Verified citizens mint their community token 1:1 against the reserve — 90% to your wallet, 10% staked into your peace pool. Outsiders mint at a 2× premium that funds the shared Treasury."
       />
+      <MintJourney />
+      <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
+        Why this step exists: minting is how you put skin in the game. Every citizen mint quietly
+        sets aside 10% as a peace stake — collateral your community loses only if it starts a
+        verified harmful event. No stake, no vote, no dividend.
+      </p>
       <ConnectGate>
         <MintInner />
       </ConnectGate>
+      <HonestyNote>
+        Honest limit: every circulating token is matched by reserve sitting in the minter, and you
+        can redeem back to mUSD at any time — except the 10% peace stake. The stake is{" "}
+        <em>not withdrawable</em> by you: it either stays as your community&apos;s collateral or
+        moves to the other side after a verified harmful event. That one-way door is the whole
+        mechanism.
+      </HonestyNote>
     </div>
   )
+}
+
+function MintJourney() {
+  const membership = useMembership()
+  return <JourneyBar current="/mint" done={membership.isActiveMember ? ["/verify"] : []} />
 }
 
 function MintInner() {
@@ -90,7 +110,12 @@ function MintInner() {
   const pending = isPending || receipt.isLoading
 
   return (
-    <div className="mx-auto mt-10 grid max-w-4xl gap-6 lg:grid-cols-2">
+    <>
+      <PrereqNote met={isCitizen} href="/verify" cta="Verify first">
+        Outsiders can mint at 2× — but to mint 1:1, vote on incentives, and earn pool dividends,
+        verify first.
+      </PrereqNote>
+      <div className="mx-auto mt-10 grid max-w-4xl gap-6 lg:grid-cols-2">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -143,6 +168,23 @@ function MintInner() {
             onChange={(e) => setAmount(e.target.value)}
             className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
           />
+          <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+            {isCitizen ? (
+              <>
+                Read it like this: of your {amount || "0"} mUSD, {" "}
+                <span className="font-medium text-foreground">90% lands in your wallet</span> and{" "}
+                <span className="font-medium text-foreground">10% becomes your peace stake</span>.
+                The largest amount an event can ever move from the pool is 5% of it — and only if
+                your community&apos;s side causes a verified harmful event.
+              </>
+            ) : (
+              <>
+                Read it like this: as an outsider you pay {amount || "0"} mUSD and receive tokens
+                worth half that at par — the other half funds the shared Treasury that pays for
+                positive and joint events. It is a donation with a receipt, not an investment.
+              </>
+            )}
+          </p>
           {needsApproval ? (
             <TxButton className="w-full" pending={pending} onClick={approve}>
               Approve {amount || "0"} mUSD
@@ -153,9 +195,15 @@ function MintInner() {
             </TxButton>
           )}
           {receipt.isSuccess && (
-            <p className="text-sm text-primary" onClick={reset}>
-              Confirmed. Balances updated.
-            </p>
+            <div className="rounded-lg bg-accent/40 p-3 text-sm" onClick={reset}>
+              <p className="font-medium text-primary">Confirmed. Balances updated.</p>
+              <Link
+                href="/incentives"
+                className="mt-1 inline-flex items-center gap-1 font-medium text-primary underline"
+              >
+                Next step: help decide which news events move money <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
           )}
           {error && (
             <p className="text-sm text-destructive">
@@ -164,7 +212,8 @@ function MintInner() {
           )}
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </>
   )
 }
 
