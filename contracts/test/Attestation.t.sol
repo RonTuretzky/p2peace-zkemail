@@ -77,9 +77,10 @@ contract AttestationTest is BaseTest {
 
     function test_attest_reverts_unknownIncentive() public {
         vm.expectRevert(EventAttestation.IncentiveNotActive.selector);
-        d.attestation.attest(
-            999, mkProof(NEWS_A1, NEWS_PATTERN, emailNullifier("x"), uint64(block.timestamp))
-        );
+        d.attestation
+            .attest(
+                999, mkProof(NEWS_A1, NEWS_PATTERN, emailNullifier("x"), uint64(block.timestamp))
+            );
     }
 
     function test_attest_reverts_unfinalizedProposal() public {
@@ -88,9 +89,10 @@ contract AttestationTest is BaseTest {
         assertFalse(d.incentives.isActive(id2));
 
         vm.expectRevert(EventAttestation.IncentiveNotActive.selector);
-        d.attestation.attest(
-            id2, mkProof(NEWS_A1, NEWS_PATTERN, emailNullifier("x"), uint64(block.timestamp))
-        );
+        d.attestation
+            .attest(
+                id2, mkProof(NEWS_A1, NEWS_PATTERN, emailNullifier("x"), uint64(block.timestamp))
+            );
     }
 
     function test_attest_reverts_rejectedProposal() public {
@@ -102,27 +104,30 @@ contract AttestationTest is BaseTest {
         assertFalse(d.incentives.isActive(id2));
 
         vm.expectRevert(EventAttestation.IncentiveNotActive.selector);
-        d.attestation.attest(
-            id2, mkProof(NEWS_A1, NEWS_PATTERN, emailNullifier("x"), uint64(block.timestamp))
-        );
+        d.attestation
+            .attest(
+                id2, mkProof(NEWS_A1, NEWS_PATTERN, emailNullifier("x"), uint64(block.timestamp))
+            );
     }
 
     // ============================================================== proof checks
 
     function test_attest_reverts_patternMismatch() public {
         vm.expectRevert(EventAttestation.PatternMismatch.selector);
-        d.attestation.attest(
-            incId,
-            mkProof(NEWS_A1, CITIZENSHIP_PATTERN, emailNullifier("x"), uint64(block.timestamp))
-        );
+        d.attestation
+            .attest(
+                incId,
+                mkProof(NEWS_A1, CITIZENSHIP_PATTERN, emailNullifier("x"), uint64(block.timestamp))
+            );
     }
 
     function test_attest_reverts_unknownSource() public {
         // GOV_A has a registered DKIM key but is not one of the incentive's sources.
         vm.expectRevert(EventAttestation.UnknownSource.selector);
-        d.attestation.attest(
-            incId, mkProof(GOV_A, NEWS_PATTERN, emailNullifier("x"), uint64(block.timestamp))
-        );
+        d.attestation
+            .attest(
+                incId, mkProof(GOV_A, NEWS_PATTERN, emailNullifier("x"), uint64(block.timestamp))
+            );
     }
 
     function test_attest_emailTooOld_boundary() public {
@@ -166,17 +171,18 @@ contract AttestationTest is BaseTest {
     function test_attest_reverts_invalidProof_vetoedInputs() public {
         uint64 ts = uint64(block.timestamp);
         EmailProof memory p = mkProof(NEWS_A1, NEWS_PATTERN, emailNullifier("vetoed"), ts);
-        d.groth16.setVetoed(
-            [
-                uint256(p.dkimPubkeyHash),
-                uint256(p.domainHash),
-                uint256(p.nullifier),
-                uint256(p.patternHash),
-                uint256(p.emailTimestamp),
-                0 // extraData is 0 for event attestations
-            ],
-            true
-        );
+        d.groth16
+            .setVetoed(
+                [
+                    uint256(p.dkimPubkeyHash),
+                    uint256(p.domainHash),
+                    uint256(p.nullifier),
+                    uint256(p.patternHash),
+                    uint256(p.emailTimestamp),
+                    0 // extraData is 0 for event attestations
+                ],
+                true
+            );
 
         vm.expectRevert(EventAttestation.InvalidProof.selector);
         d.attestation.attest(incId, p);
@@ -264,8 +270,14 @@ contract AttestationTest is BaseTest {
         _attest(NEWS_A1, "first", emailTs);
 
         assertEq(d.attestation.currentRound(incId), 1);
-        (uint64 firstTs, uint64 openedAt, uint16 cA, uint16 cB, uint16 cI,
-            EventAttestation.RoundStatus status) = _round(incId, 1);
+        (
+            uint64 firstTs,
+            uint64 openedAt,
+            uint16 cA,
+            uint16 cB,
+            uint16 cI,
+            EventAttestation.RoundStatus status
+        ) = _round(incId, 1);
         assertEq(firstTs, emailTs, "anchored on email ts, not wall clock");
         assertEq(openedAt, uint64(block.timestamp));
         assertEq(cA, 1);
@@ -290,8 +302,7 @@ contract AttestationTest is BaseTest {
         vm.expectRevert(EventAttestation.OutsideEventWindow.selector);
         _attest(NEWS_I2, "lo-out", firstTs - WINDOW - 1);
 
-        (,, uint16 cA, uint16 cB, uint16 cI, EventAttestation.RoundStatus status) =
-            _round(incId, 1);
+        (,, uint16 cA, uint16 cB, uint16 cI, EventAttestation.RoundStatus status) = _round(incId, 1);
         assertEq(cA, 1);
         assertEq(cB, 1);
         assertEq(cI, 1);
@@ -384,8 +395,7 @@ contract AttestationTest is BaseTest {
         _attest(NEWS_B1, "b1", ts);
         _attest(NEWS_I1, "i1", ts);
 
-        (,, uint16 cA, uint16 cB, uint16 cI, EventAttestation.RoundStatus status) =
-            _round(incId, 1);
+        (,, uint16 cA, uint16 cB, uint16 cI, EventAttestation.RoundStatus status) = _round(incId, 1);
         assertEq(cA, 2);
         assertEq(cB, 1);
         assertEq(cI, 1);
@@ -402,8 +412,7 @@ contract AttestationTest is BaseTest {
         _attest(NEWS_I2, "i2", ts);
         _attest(NEWS_I3, "i3", ts);
 
-        (,, uint16 cA, uint16 cB, uint16 cI, EventAttestation.RoundStatus status) =
-            _round(incId, 1);
+        (,, uint16 cA, uint16 cB, uint16 cI, EventAttestation.RoundStatus status) = _round(incId, 1);
         assertEq(cA, 0, "B/Intl attestations never leak into the A count");
         assertEq(cB, 2);
         assertEq(cI, 3);
@@ -438,8 +447,14 @@ contract AttestationTest is BaseTest {
         // Engine holds the pending event with the snapshotted planned amount:
         // 5% of the 200e18 pool-A corpus (2 members x 1000e18 x 10%).
         assertEq(d.engine.eventCount(), 1);
-        (uint256 evtIncentive, uint256 evtRound, Direction dir, uint256 planned,
-            uint64 confirmedAt, RedistributionEngine.EventStatus evtStatus) = d.engine.events(1);
+        (
+            uint256 evtIncentive,
+            uint256 evtRound,
+            Direction dir,
+            uint256 planned,
+            uint64 confirmedAt,
+            RedistributionEngine.EventStatus evtStatus
+        ) = d.engine.events(1);
         assertEq(evtIncentive, incId);
         assertEq(evtRound, 1);
         assertEq(uint8(dir), uint8(Direction.HarmfulByA));

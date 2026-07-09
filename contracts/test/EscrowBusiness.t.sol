@@ -111,17 +111,22 @@ contract EscrowBusinessTest is BaseTest {
     function _poll(uint256 id)
         internal
         view
-        returns (uint64 votingEnd, uint64 session, uint256 yesA, uint256 noA, uint256 yesB,
-            uint256 noB)
+        returns (
+            uint64 votingEnd,
+            uint64 session,
+            uint256 yesA,
+            uint256 noA,
+            uint256 yesB,
+            uint256 noB
+        )
     {
         (,,,, votingEnd, session, yesA, noA, yesB, noB) = d.business.businesses(id);
     }
 
     function _pay(address payer, uint256 bizId, uint256 amount) internal {
         vm.startPrank(payer);
-        (d.identity.communityOf(payer) == Community.A ? d.tokenA : d.tokenB).approve(
-            address(d.business), amount
-        );
+        (d.identity.communityOf(payer) == Community.A ? d.tokenA : d.tokenB)
+        .approve(address(d.business), amount);
         d.business.payBusiness(bizId, amount);
         vm.stopPrank();
     }
@@ -132,9 +137,10 @@ contract EscrowBusinessTest is BaseTest {
 
     function test_deposit_zeroAmountReverts() public {
         vm.expectRevert(SanctionsEscrow.BadTranche.selector);
-        d.escrow.deposit(
-            jointId, SanctionsEscrow.Beneficiary.PoolA, 0, uint64(block.timestamp + 1 days)
-        );
+        d.escrow
+            .deposit(
+                jointId, SanctionsEscrow.Beneficiary.PoolA, 0, uint64(block.timestamp + 1 days)
+            );
     }
 
     function test_deposit_expiryBoundary() public {
@@ -144,13 +150,11 @@ contract EscrowBusinessTest is BaseTest {
 
         // expiry == now is already "past" (expiry <= block.timestamp reverts)
         vm.expectRevert(SanctionsEscrow.BadTranche.selector);
-        d.escrow.deposit(jointId, SanctionsEscrow.Beneficiary.PoolA, 1e18,
-            uint64(block.timestamp));
+        d.escrow.deposit(jointId, SanctionsEscrow.Beneficiary.PoolA, 1e18, uint64(block.timestamp));
 
         // expiry == now + 1 is the minimum valid expiry
-        uint256 id = d.escrow.deposit(
-            jointId, SanctionsEscrow.Beneficiary.PoolA, 1e18, uint64(block.timestamp + 1)
-        );
+        uint256 id = d.escrow
+            .deposit(jointId, SanctionsEscrow.Beneficiary.PoolA, 1e18, uint64(block.timestamp + 1));
         vm.stopPrank();
         assertEq(id, 1);
     }
@@ -255,7 +259,8 @@ contract EscrowBusinessTest is BaseTest {
 
         assertEq(d.usd.balanceOf(address(d.escrow)), 0, "escrow drained");
         assertEq(
-            d.tokenA.balanceOf(address(d.poolA)), poolTokensBefore + 100e18,
+            d.tokenA.balanceOf(address(d.poolA)),
+            poolTokensBefore + 100e18,
             "tokens minted into pool A"
         );
         assertEq(d.poolA.corpusBalance(), corpusBefore, "corpus untouched - rewards bucket");
@@ -317,8 +322,7 @@ contract EscrowBusinessTest is BaseTest {
 
     function test_release_treasury_sendsUsdStraight() public {
         uint256 trancheId = _deposit(
-            jointId, SanctionsEscrow.Beneficiary.Treasury, 77e18,
-            uint64(block.timestamp + 60 days)
+            jointId, SanctionsEscrow.Beneficiary.Treasury, 77e18, uint64(block.timestamp + 60 days)
         );
         uint256 eventId = _finalizedEvent(jointId, "evt-treasury");
 
@@ -336,8 +340,7 @@ contract EscrowBusinessTest is BaseTest {
 
     function test_release_byAnyCaller() public {
         uint256 trancheId = _deposit(
-            jointId, SanctionsEscrow.Beneficiary.Treasury, 10e18,
-            uint64(block.timestamp + 60 days)
+            jointId, SanctionsEscrow.Beneficiary.Treasury, 10e18, uint64(block.timestamp + 60 days)
         );
         uint256 eventId = _finalizedEvent(jointId, "evt-any-caller");
 
@@ -362,8 +365,7 @@ contract EscrowBusinessTest is BaseTest {
 
     function test_release_twiceReverts() public {
         uint256 trancheId = _deposit(
-            jointId, SanctionsEscrow.Beneficiary.Treasury, 10e18,
-            uint64(block.timestamp + 60 days)
+            jointId, SanctionsEscrow.Beneficiary.Treasury, 10e18, uint64(block.timestamp + 60 days)
         );
         uint256 eventId = _finalizedEvent(jointId, "evt-double");
         d.escrow.release(trancheId, eventId);
@@ -418,8 +420,7 @@ contract EscrowBusinessTest is BaseTest {
 
     function test_reclaim_afterReleaseReverts() public {
         uint256 trancheId = _deposit(
-            jointId, SanctionsEscrow.Beneficiary.Treasury, 10e18,
-            uint64(block.timestamp + 1 days)
+            jointId, SanctionsEscrow.Beneficiary.Treasury, 10e18, uint64(block.timestamp + 1 days)
         );
         uint256 eventId = _finalizedEvent(jointId, "evt-release-then-reclaim"); // warps 48h
         d.escrow.release(trancheId, eventId);
@@ -455,8 +456,8 @@ contract EscrowBusinessTest is BaseTest {
         assertEq(id, 1);
         assertEq(d.business.businessCount(), 1);
         assertEq(uint8(_status(id)), uint8(BusinessRegistry.BizStatus.CertVote));
-        (uint64 votingEnd, uint64 session, uint256 yesA, uint256 noA, uint256 yesB, uint256 noB)
-            = _poll(id);
+        (uint64 votingEnd, uint64 session, uint256 yesA, uint256 noA, uint256 yesB, uint256 noB) =
+            _poll(id);
         assertEq(votingEnd, uint64(block.timestamp) + d.business.votingPeriod());
         assertEq(session, 1);
         assertEq(yesA + noA + yesB + noB, 0);
@@ -745,9 +746,7 @@ contract EscrowBusinessTest is BaseTest {
 
         // non-owner cannot set
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         d.business.setCooperationBonus(100);
 
         // max bound accepted, zero accepted

@@ -105,7 +105,8 @@ contract RedistributionEngine is Ownable, Guarded, IRedistributionEngine {
     }
 
     function setDisputeWindow(uint32 window) external onlyOwner {
-        if (window < 1 hours || window > 7 days) revert BadWindow();
+        // 5-minute floor for demo/testnet cycles; production stays at 48h.
+        if (window < 5 minutes || window > 7 days) revert BadWindow();
         disputeWindow = window;
         emit DisputeWindowSet(window);
     }

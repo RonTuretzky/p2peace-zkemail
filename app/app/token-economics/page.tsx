@@ -7,28 +7,26 @@ import { Badge } from "@/components/ui/badge"
 
 export default function TokenEconomicsPage() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b bg-background">
-        <div className="container flex h-16 items-center justify-between py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Home</span>
-          </Link>
+    <>
+      <section className="container mx-auto px-4 py-14">
+        <div className="mx-auto max-w-3xl space-y-3 text-center">
+          <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">Token Economics</h1>
+          <p className="text-muted-foreground md:text-lg">
+            How the peer-to-peer-to-peace system creates economic incentives for peace: citizens mint
+            1:1 with a 90/10 split, 10% opting into a slashable peace pool, and a shared Treasury funds
+            every positive reward.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
+            <Button asChild>
+              <Link href="/mint">Mint tokens</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/pools">View the peace pools</Link>
+            </Button>
+          </div>
         </div>
-      </header>
-      <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Token Economics</h1>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  How the peertopeertopeace system creates economic incentives for peace through innovative tokenomics.
-                </p>
-              </div>
-            </div>
 
-            <div className="mx-auto max-w-5xl mt-12">
+        <div className="mx-auto max-w-5xl mt-12">
               <Card className="mb-8">
                 <CardHeader>
                   <CardTitle>The Dual-Token System</CardTitle>
@@ -247,7 +245,7 @@ export default function TokenEconomicsPage() {
                       </Link>
                     </Button>
                     <Button asChild>
-                      <Link href="/propose-incentive">
+                      <Link href="/incentives">
                         Propose an Incentive
                         <ArrowRight className="ml-2 h-4 w-4" />
                       </Link>
@@ -255,26 +253,8 @@ export default function TokenEconomicsPage() {
                   </div>
                 </CardFooter>
               </Card>
-            </div>
-          </div>
-        </section>
-      </main>
-      <footer className="w-full border-t py-6 md:py-0">
-        <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
-          <p className="text-sm text-muted-foreground">© 2025 peertopeertopeace Initiative. All rights reserved.</p>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Terms
-            </Link>
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Privacy
-            </Link>
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Contact
-            </Link>
-          </nav>
         </div>
-      </footer>
-    </div>
+      </section>
+    </>
   )
 }

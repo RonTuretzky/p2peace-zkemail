@@ -89,22 +89,23 @@ abstract contract BaseTest is Test {
     /// @notice Enroll `wallet` in `community` with a fresh proof dated `now`.
     function registerMember(address wallet, Community community, string memory seed) internal {
         bytes32 domain = community == Community.A ? GOV_A : GOV_B;
-        EmailProof memory p = mkProof(
-            domain, CITIZENSHIP_PATTERN, idNullifier(seed), uint64(block.timestamp)
-        );
+        EmailProof memory p =
+            mkProof(domain, CITIZENSHIP_PATTERN, idNullifier(seed), uint64(block.timestamp));
         d.identity.register(p, wallet);
     }
 
     /// @notice Enroll and fund a member, and mint `usdAmount` of their community
     ///         token (so 10% lands in their pool as corpus).
-    function registerAndMint(address wallet, Community community, string memory seed,
-        uint256 usdAmount) internal {
+    function registerAndMint(
+        address wallet,
+        Community community,
+        string memory seed,
+        uint256 usdAmount
+    ) internal {
         registerMember(wallet, community, seed);
         d.usd.mint(wallet, usdAmount);
         vm.startPrank(wallet);
-        d.usd.approve(
-            community == Community.A ? address(d.minterA) : address(d.minterB), usdAmount
-        );
+        d.usd.approve(community == Community.A ? address(d.minterA) : address(d.minterB), usdAmount);
         (community == Community.A ? d.minterA : d.minterB).mintCitizen(usdAmount);
         vm.stopPrank();
     }
@@ -154,9 +155,7 @@ abstract contract BaseTest is Test {
     /// @notice Drive a proposal through discussion + unanimous 1-vote-each approval
     ///         by `votersA` and `votersB` (already members holding >= 1e18 tokens),
     ///         then finalize. Reverts if it does not pass.
-    function passProposal(uint256 id, address[] memory votersA, address[] memory votersB)
-        internal
-    {
+    function passProposal(uint256 id, address[] memory votersA, address[] memory votersB) internal {
         vm.warp(block.timestamp + d.incentives.discussionPeriod());
         for (uint256 i = 0; i < votersA.length; i++) {
             vm.startPrank(votersA[i]);
@@ -182,15 +181,16 @@ abstract contract BaseTest is Test {
     {
         bytes32[4] memory sources = [NEWS_A1, NEWS_B1, NEWS_I1, NEWS_I2];
         for (uint256 i = 0; i < sources.length; i++) {
-            d.attestation.attest(
-                incentiveId,
-                mkProof(
-                    sources[i],
-                    NEWS_PATTERN,
-                    emailNullifier(string.concat(eventSeed, vm.toString(i))),
-                    emailTs
-                )
-            );
+            d.attestation
+                .attest(
+                    incentiveId,
+                    mkProof(
+                        sources[i],
+                        NEWS_PATTERN,
+                        emailNullifier(string.concat(eventSeed, vm.toString(i))),
+                        emailTs
+                    )
+                );
         }
     }
 }

@@ -78,11 +78,12 @@ contract EventAttestation is Ownable, Guarded {
     error EmailAlreadyCounted();
     error OutsideEventWindow();
 
-    constructor(address owner_, address guardian_, IZKEmailVerifier verifier_,
-        IIncentiveRegistry incentives_)
-        Ownable(owner_)
-        Guarded(guardian_)
-    {
+    constructor(
+        address owner_,
+        address guardian_,
+        IZKEmailVerifier verifier_,
+        IIncentiveRegistry incentives_
+    ) Ownable(owner_) Guarded(guardian_) {
         verifier = verifier_;
         incentives = incentives_;
     }

@@ -1,36 +1,33 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, User, Vote, FileText, Globe, CheckCircle } from "lucide-react"
+import { User, Vote, FileText, Globe, CheckCircle } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 
 export default function UserDemosPage() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b bg-background">
-        <div className="container flex h-16 items-center justify-between py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Home</span>
-          </Link>
+    <>
+      <section className="container mx-auto px-4 py-14">
+        <div className="mx-auto max-w-3xl space-y-3 text-center">
+          <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            User Flow Demonstrations
+          </h1>
+          <p className="text-muted-foreground md:text-lg">
+            Step-by-step walkthroughs of every user action in the peer-to-peer-to-peace system — from
+            zkEmail verification to the equal-per-member peace dividend.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
+            <Button asChild>
+              <Link href="/verify">Try the live verify flow</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/mint">Mint tokens</Link>
+            </Button>
+          </div>
         </div>
-      </header>
-      <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                  User Flow Demonstrations
-                </h1>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Step-by-step demonstrations of all user actions in the peertopeertopeace system.
-                </p>
-              </div>
-            </div>
 
-            <div className="mx-auto max-w-5xl mt-12">
+        <div className="mx-auto max-w-5xl mt-12">
               <Tabs defaultValue="verification" className="w-full">
                 <TabsList className="grid w-full grid-cols-6">
                   <TabsTrigger value="verification">Identity Verification</TabsTrigger>
@@ -820,50 +817,39 @@ export default function UserDemosPage() {
                 </CardHeader>
                 <CardContent className="text-center">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                    <Button variant="outline" className="h-auto p-4 bg-transparent">
-                      <div className="flex flex-col items-center gap-2">
-                        <User className="h-6 w-6" />
-                        <span>Try Identity Verification</span>
-                      </div>
+                    <Button variant="outline" className="h-auto p-4 bg-transparent" asChild>
+                      <Link href="/verify">
+                        <div className="flex flex-col items-center gap-2">
+                          <User className="h-6 w-6" />
+                          <span>Try Identity Verification</span>
+                        </div>
+                      </Link>
                     </Button>
-                    <Button variant="outline" className="h-auto p-4 bg-transparent">
-                      <div className="flex flex-col items-center gap-2">
-                        <FileText className="h-6 w-6" />
-                        <span>Create Sample Proposal</span>
-                      </div>
+                    <Button variant="outline" className="h-auto p-4 bg-transparent" asChild>
+                      <Link href="/incentives">
+                        <div className="flex flex-col items-center gap-2">
+                          <FileText className="h-6 w-6" />
+                          <span>Propose an Incentive</span>
+                        </div>
+                      </Link>
                     </Button>
-                    <Button variant="outline" className="h-auto p-4 bg-transparent">
-                      <div className="flex flex-col items-center gap-2">
-                        <Vote className="h-6 w-6" />
-                        <span>Simulate Voting</span>
-                      </div>
+                    <Button variant="outline" className="h-auto p-4 bg-transparent" asChild>
+                      <Link href="/incentives">
+                        <div className="flex flex-col items-center gap-2">
+                          <Vote className="h-6 w-6" />
+                          <span>Vote on Incentives</span>
+                        </div>
+                      </Link>
                     </Button>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    All demos run in a safe sandbox environment with test tokens and simulated events.
+                    These are live flows on the Gnosis demo deployment — the MockGroth16Verifier accepts
+                    demo proofs, and governance and dispute windows run in 10 minutes, not days.
                   </p>
                 </CardContent>
               </Card>
-            </div>
-          </div>
-        </section>
-      </main>
-      <footer className="w-full border-t py-6 md:py-0">
-        <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
-          <p className="text-sm text-muted-foreground">© 2025 peertopeertopeace Initiative. All rights reserved.</p>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Terms
-            </Link>
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Privacy
-            </Link>
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Contact
-            </Link>
-          </nav>
         </div>
-      </footer>
-    </div>
+      </section>
+    </>
   )
 }

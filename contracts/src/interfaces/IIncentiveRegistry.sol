@@ -21,10 +21,7 @@ interface IIncentiveRegistry {
 
     function getIncentive(uint256 id) external view returns (IncentiveView memory);
     function isActive(uint256 id) external view returns (bool);
-    function sourceCategory(uint256 id, bytes32 domainHash)
-        external
-        view
-        returns (SourceCategory);
+    function sourceCategory(uint256 id, bytes32 domainHash) external view returns (SourceCategory);
     /// @notice Bump trigger bookkeeping when a round confirms. EventAttestation only.
     function onTriggered(uint256 id) external;
     /// @notice Roll back a trigger count when the council reverses an event.

@@ -1,34 +1,43 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
-import { ArrowLeft, FileText, Search, Newspaper, Vote, ArrowRight, Check, AlertTriangle } from "lucide-react"
+import { FileText, Search, Newspaper, Vote, ArrowRight, Check, AlertTriangle } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 
 export default function ProposeIncentivePage() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b bg-background">
-        <div className="container flex h-16 items-center justify-between py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Home</span>
-          </Link>
+    <>
+      <section className="container mx-auto px-4 py-14">
+        <div className="mx-auto max-w-3xl space-y-3 text-center">
+          <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">Propose an Incentive</h1>
+          <p className="text-muted-foreground md:text-lg">
+            How anyone — no tokens required — can propose a conflict-prevention or cooperation
+            incentive in the peer-to-peer-to-peace system.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
+            <Button asChild>
+              <Link href="/incentives">Propose live at /incentives</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/verify">Get verified to vote</Link>
+            </Button>
+          </div>
         </div>
-      </header>
-      <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Propose an Incentive</h1>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  How anyone can propose a conflict prevention or cooperation incentive in the peertopeertopeace system.
-                </p>
-              </div>
-            </div>
 
-            <div className="mx-auto max-w-5xl mt-12">
+        <div className="mx-auto mt-8 max-w-3xl rounded-lg border border-primary/30 bg-accent/40 p-4 text-center text-sm text-accent-foreground">
+          This is a conceptual explainer — try the live flow at{" "}
+          <Link href="/verify" className="font-medium underline underline-offset-4">
+            /verify
+          </Link>{" "}
+          (or{" "}
+          <Link href="/incentives" className="font-medium underline underline-offset-4">
+            /incentives
+          </Link>
+          ).
+        </div>
+
+        <div className="mx-auto max-w-5xl mt-12">
               <Card className="mb-8">
                 <CardHeader>
                   <CardTitle>The Incentive Proposal Process</CardTitle>
@@ -706,13 +715,17 @@ export default function ProposeIncentivePage() {
                   <CardDescription>Anyone can propose an incentive to foster peace and cooperation</CardDescription>
                 </CardHeader>
                 <CardContent className="text-center">
-                  <Button size="lg" className="mr-4">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Create New Proposal
+                  <Button size="lg" className="mr-4" asChild>
+                    <Link href="/incentives">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Create New Proposal
+                    </Link>
                   </Button>
-                  <Button size="lg" variant="outline">
-                    <FileText className="mr-2 h-4 w-4" />
-                    View Proposal Templates
+                  <Button size="lg" variant="outline" asChild>
+                    <Link href="/incentives">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Browse Incentives
+                    </Link>
                   </Button>
                 </CardContent>
                 <CardFooter className="flex justify-center border-t pt-6">
@@ -724,34 +737,19 @@ export default function ProposeIncentivePage() {
                 </CardFooter>
               </Card>
 
-              <div className="mt-12 text-center">
-                <Button size="lg" asChild>
-                  <Link href="/governance">
-                    Learn More About Governance
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
-            </div>
+          <div className="mt-12 flex flex-wrap justify-center gap-3">
+            <Button size="lg" asChild>
+              <Link href="/incentives">
+                Try the Live Incentives Flow
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/governance">Learn More About Governance</Link>
+            </Button>
           </div>
-        </section>
-      </main>
-      <footer className="w-full border-t py-6 md:py-0">
-        <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
-          <p className="text-sm text-muted-foreground">© 2025 peertopeertopeace Initiative. All rights reserved.</p>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Terms
-            </Link>
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Privacy
-            </Link>
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Contact
-            </Link>
-          </nav>
         </div>
-      </footer>
-    </div>
+      </section>
+    </>
   )
 }

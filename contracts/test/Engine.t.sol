@@ -52,10 +52,7 @@ contract EngineTest is BaseTest {
     }
 
     /// @dev Confirm one default event (1 A + 1 B + 2 intl sources, emails 1h old).
-    function _confirm(uint256 incentiveId, string memory seed)
-        internal
-        returns (uint256 eventId)
-    {
+    function _confirm(uint256 incentiveId, string memory seed) internal returns (uint256 eventId) {
         confirmDefaultEvent(incentiveId, uint64(block.timestamp - 1 hours), seed);
         eventId = d.engine.eventCount();
     }
@@ -66,11 +63,7 @@ contract EngineTest is BaseTest {
         d.treasury.donate(amount);
     }
 
-    function _evt(uint256 id)
-        internal
-        view
-        returns (RedistributionEngine.PendingEvent memory e)
-    {
+    function _evt(uint256 id) internal view returns (RedistributionEngine.PendingEvent memory e) {
         (e.incentiveId, e.roundId, e.direction, e.planned, e.confirmedAt, e.status) =
             d.engine.events(id);
     }
@@ -681,18 +674,16 @@ contract EngineTest is BaseTest {
 
     function test_setDisputeWindow_boundsAndAuth() public {
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         d.engine.setDisputeWindow(2 days);
 
         vm.expectRevert(RedistributionEngine.BadWindow.selector);
-        d.engine.setDisputeWindow(1 hours - 1);
+        d.engine.setDisputeWindow(5 minutes - 1);
         vm.expectRevert(RedistributionEngine.BadWindow.selector);
         d.engine.setDisputeWindow(7 days + 1);
 
-        d.engine.setDisputeWindow(1 hours);
-        assertEq(d.engine.disputeWindow(), 1 hours);
+        d.engine.setDisputeWindow(5 minutes);
+        assertEq(d.engine.disputeWindow(), 5 minutes);
         d.engine.setDisputeWindow(7 days);
         assertEq(d.engine.disputeWindow(), 7 days);
     }
@@ -719,9 +710,7 @@ contract EngineTest is BaseTest {
 
         // and non-owners cannot even try
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         d.engine.wire(makeAddr("x"), makeAddr("y"));
     }
 }

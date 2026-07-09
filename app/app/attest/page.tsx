@@ -1,18 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
-import { Button } from "@/components/ui/button"
+import { useAccount, useReadContract, useReadContracts, useWriteContract, useWaitForTransactionReceipt } from "wagmi"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Mail, Cpu, Send, CheckCircle, Upload, RotateCcw, ShieldCheck } from "lucide-react"
+import { Mail, ShieldCheck, CheckCircle2, Radio, ArrowRight } from "lucide-react"
+import { ConnectGate, FlowHeader, TxButton } from "@/components/flow"
+import { contract } from "@/lib/contracts"
+import { SourceCategory } from "@/lib/chains"
+import { buildNewsProof, demoSources } from "@/lib/demo"
+import { short, DIRECTION_LABEL } from "@/lib/format"
 
-const STEPS = [
-  { title: "Upload .eml", icon: Upload, description: "Load the DKIM-signed newsletter from your inbox" },
-  { title: "Prove locally", icon: Cpu, description: "The zkEmail circuit runs in your browser (WASM)" },
-  { title: "Submit proof", icon: Send, description: "EmailProof goes to the EventAttestation contract" },
-  { title: "Tallied", icon: CheckCircle, description: "Your source counts toward the event thresholds" },
-]
+const incentiveContract = contract.incentive()
+const attestationContract = contract.attestation()
 
 const DEMO_PROOF = [
   {
@@ -22,13 +23,13 @@ const DEMO_PROOF = [
   },
   {
     field: "domainHash",
-    value: "keccak256(“newsletters.reuters.com”)",
-    note: "The sender domain, matched against the incentive's approved source set (tagged International)",
+    value: "keccak256(sender domain)",
+    note: "The sender domain, matched against the incentive's approved source set and tagged A / B / International",
   },
   {
     field: "nullifier",
     value: "Poseidon(dkimSignature)",
-    note: "Unique per physical email — this newsletter can never be attested twice",
+    note: "Unique per physical email — this newsletter can never be counted twice in a round",
   },
   {
     field: "patternHash",
@@ -37,8 +38,8 @@ const DEMO_PROOF = [
   },
   {
     field: "emailTimestamp",
-    value: "1791571200 (Date header)",
-    note: "DKIM-covered send time — must fall inside the 7-day event window",
+    value: "Date header (DKIM-covered)",
+    note: "Must be within 30 days of now and inside the event span of the round's first report",
   },
   {
     field: "proof[8]",
@@ -47,207 +48,381 @@ const DEMO_PROOF = [
   },
 ]
 
-export default function AttestPage() {
-  const [step, setStep] = useState(0)
+const CATEGORY_META: Record<number, { label: string; blurb: string }> = {
+  [SourceCategory.CommunityA]: { label: "Community A sources", blurb: "Outlets aligned with community A" },
+  [SourceCategory.CommunityB]: { label: "Community B sources", blurb: "Outlets aligned with community B" },
+  [SourceCategory.International]: { label: "International sources", blurb: "Neutral third-party wire services" },
+}
 
-  const advance = () => setStep((s) => Math.min(s + 1, STEPS.length))
-  const reset = () => setStep(0)
+const ATTEST_ERRORS: Record<string, string> = {
+  UnknownSource: "That domain is not in this incentive's approved source set.",
+  DomainAlreadyCounted: "This outlet has already been counted in the current round.",
+  EmailAlreadyCounted: "This exact email (nullifier) was already attested in this round.",
+  CooldownActive: "The incentive is on its post-trigger cooldown; attestation is paused for now.",
+  IncentiveNotActive: "This incentive is not active — it must pass governance first.",
+  PatternMismatch: "The proof's keyword pattern doesn't match this incentive.",
+  OutsideEventWindow: "This report falls outside the current round's event window.",
+  EmailTooOld: "The email is older than the 30-day submission limit.",
+  EmailInFuture: "The email's timestamp is in the future.",
+}
+
+function decodeError(error: unknown): string | null {
+  if (!error) return null
+  const e = error as { shortMessage?: string; message?: string }
+  const text = e.shortMessage || e.message || String(error)
+  for (const [name, msg] of Object.entries(ATTEST_ERRORS)) {
+    if (text.includes(name)) return msg
+  }
+  return e.shortMessage || text
+}
+
+export default function AttestPage() {
+  return (
+    <div className="container mx-auto px-4 py-14">
+      <FlowHeader
+        title="Attest an Event"
+        blurb="Got the newsletter? You are the oracle. Any subscriber can prove a DKIM-signed news email matches an active incentive — nothing sensitive leaves the device. Enough distinct sources within the window confirm the event and open a 10-minute dispute window."
+      />
+      <ConnectGate>
+        <AttestInner />
+      </ConnectGate>
+      <ProofExplainer />
+    </div>
+  )
+}
+
+function AttestInner() {
+  const { address } = useAccount()
+
+  // Pull ?incentive= from the URL once on mount.
+  const [selected, setSelected] = useState<number | null>(null)
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("incentive")
+    if (q !== null && q !== "" && !Number.isNaN(Number(q))) setSelected(Number(q))
+  }, [])
+
+  const count = useReadContract({
+    ...incentiveContract,
+    functionName: "incentiveCount",
+  })
+  const total = Number(count.data ?? BigInt(0))
+
+  // Incentive ids are 1-indexed (id = ++incentiveCount). Read proposalState for
+  // each and keep the ones whose `active` flag is set (passed governance).
+  const states = useReadContracts({
+    contracts: Array.from({ length: total }, (_, i) => ({
+      ...incentiveContract,
+      functionName: "proposalState" as const,
+      args: [BigInt(i + 1)] as const,
+    })),
+    query: { enabled: total > 0 },
+  })
+
+  const activeIds = useMemo(() => {
+    const out: { id: number; direction: number }[] = []
+    states.data?.forEach((r, i) => {
+      if (r.status === "success") {
+        const s = r.result as { active: boolean; direction: number }
+        if (s.active) out.push({ id: i + 1, direction: Number(s.direction) })
+      }
+    })
+    return out
+  }, [states.data])
+
+  // Default the selection to the first active incentive if none came from the URL.
+  useEffect(() => {
+    if (selected === null && activeIds.length > 0) setSelected(activeIds[0].id)
+  }, [selected, activeIds])
+
+  if (count.isLoading) {
+    return <p className="mt-10 text-center text-muted-foreground">Loading incentives…</p>
+  }
+  if (total === 0 || activeIds.length === 0) {
+    return (
+      <Card className="mx-auto mt-8 max-w-md">
+        <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
+          <Radio className="h-8 w-8 text-muted-foreground" />
+          <p className="text-muted-foreground">
+            No active incentives to attest against yet.
+          </p>
+          <Link className="text-sm text-primary underline" href="/propose-incentive">
+            Propose an incentive
+          </Link>
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b bg-background">
-        <div className="container flex h-16 items-center justify-between py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Home</span>
-          </Link>
-        </div>
-      </header>
-      <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Attest an Event</h1>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Got the newsletter? You are the oracle. Any subscriber can prove a DKIM-signed news email matches
-                  an active incentive — right from their inbox, with nothing sensitive leaving their device.
-                </p>
-              </div>
-            </div>
-
-            <div className="mx-auto max-w-5xl mt-12 space-y-8">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <Mail className="h-5 w-5 text-primary" />
-                    <CardTitle>Interactive Walkthrough (Demo)</CardTitle>
-                  </div>
-                  <CardDescription>
-                    A static simulation of the attestation flow — no wallet or real email needed. In production this
-                    page runs the zk-email SDK prover in your browser.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    {STEPS.map((s, i) => {
-                      const Icon = s.icon
-                      const state = i < step ? "done" : i === step ? "active" : "todo"
-                      return (
-                        <div
-                          key={s.title}
-                          className={`p-4 rounded-lg border flex flex-col items-center text-center gap-2 ${
-                            state === "done"
-                              ? "bg-primary/10 border-primary/40"
-                              : state === "active"
-                                ? "bg-muted border-primary"
-                                : "bg-muted/40 border-transparent"
-                          }`}
-                        >
-                          <div className={`p-3 rounded-full ${state === "todo" ? "bg-muted" : "bg-primary/10"}`}>
-                            <Icon className={`h-6 w-6 ${state === "todo" ? "text-muted-foreground" : "text-primary"}`} />
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Badge variant={state === "done" ? "default" : "outline"}>{i + 1}</Badge>
-                            <h4 className="font-medium text-sm">{s.title}</h4>
-                          </div>
-                          <p className="text-xs text-muted-foreground">{s.description}</p>
-                        </div>
-                      )
-                    })}
-                  </div>
-
-                  <div className="bg-muted p-4 rounded-lg min-h-[96px]">
-                    {step === 0 && (
-                      <div className="text-sm text-muted-foreground space-y-2">
-                        <p className="font-medium text-foreground">Step 1 — Upload the newsletter .eml</p>
-                        <p>
-                          Download the raw email (with headers) from your mail client. It must be directly received —
-                          forwarding breaks DKIM alignment for the original sender. The demo pretends you uploaded a
-                          Reuters breaking-news alert reporting a checkpoint removal in the Jordan Valley, matching
-                          incentive #42.
-                        </p>
-                      </div>
-                    )}
-                    {step === 1 && (
-                      <div className="text-sm text-muted-foreground space-y-2">
-                        <p className="font-medium text-foreground">Step 2 — Prove locally</p>
-                        <p>
-                          The prover loads the news-event blueprint pinned by incentive #42&apos;s patternHash, verifies
-                          the DKIM RSA signature in-circuit, checks the compiled keyword regexes against the signed
-                          body, and derives the nullifier from the DKIM signature. Takes ~10–60 seconds of WASM
-                          computation; the email itself never leaves this tab.
-                        </p>
-                      </div>
-                    )}
-                    {step === 2 && (
-                      <div className="text-sm text-muted-foreground space-y-2">
-                        <p className="font-medium text-foreground">Step 3 — Submit the EmailProof</p>
-                        <p>
-                          The six public signals plus the Groth16 proof are submitted as
-                          <code className="mx-1 text-xs bg-background px-1 py-0.5 rounded">attest(incentiveId, EmailProof)</code>
-                          to the EventAttestation contract — by you or any relayer, since the proof reveals nothing
-                          sensitive and cannot be altered.
-                        </p>
-                      </div>
-                    )}
-                    {step >= 3 && (
-                      <div className="text-sm text-muted-foreground space-y-2">
-                        <p className="font-medium text-foreground">
-                          {step === 3 ? "Step 4 — Tallied" : "Done — attestation counted"}
-                        </p>
-                        <p>
-                          The contract verified the proof, confirmed newsletters.reuters.com is in the approved source
-                          set, consumed the nullifier, and counted one distinct International source for this event
-                          window. When thresholds are met (≥1 community-A source, ≥1 community-B source, ≥2
-                          international within 7 days) the event becomes CONFIRMED and the 48-hour dispute window
-                          opens before any funds move.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex gap-4 justify-center">
-                    {step < STEPS.length ? (
-                      <Button onClick={advance}>
-                        {step === 0 && "Upload sample .eml"}
-                        {step === 1 && "Generate proof"}
-                        {step === 2 && "Submit to EventAttestation"}
-                        {step === 3 && "Finish"}
-                      </Button>
-                    ) : (
-                      <Button variant="outline" onClick={reset}>
-                        <RotateCcw className="mr-2 h-4 w-4" />
-                        Restart demo
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="h-5 w-5 text-primary" />
-                    <CardTitle>What Goes On-Chain: the EmailProof</CardTitle>
-                  </div>
-                  <CardDescription>
-                    Both proof types (citizenship and news-event) share this exact public-signal layout, checked by
-                    the ZKEmailVerifier contract
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {DEMO_PROOF.map((row) => (
-                      <div key={row.field} className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-1 md:gap-4 border-b pb-3 last:border-b-0">
-                        <code className="text-sm font-mono text-primary">{row.field}</code>
-                        <div>
-                          <p className="text-sm font-mono">{row.value}</p>
-                          <p className="text-xs text-muted-foreground mt-1">{row.note}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="bg-muted p-4 rounded-lg mt-6">
-                    <h4 className="font-medium">Why this beats a monitoring service</h4>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Under the original zkTLS design, someone had to run a notary session against each news site
-                      while the article was live — a single choke point to censor, bribe, or DDoS. With zkEmail,
-                      every newsletter subscriber on earth holds durable, independently provable evidence, and the
-                      DKIM signature stays valid even if the article is edited or taken down.
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="text-center flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" variant="outline" asChild>
-                  <Link href="/verification">How Verification Works</Link>
-                </Button>
-                <Button size="lg" asChild>
-                  <Link href="/propose-incentive">Propose an Incentive</Link>
-                </Button>
-              </div>
-            </div>
+    <div className="mx-auto mt-10 max-w-4xl space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Radio className="h-5 w-5 text-primary" /> Choose an active incentive
+          </CardTitle>
+          <CardDescription>
+            Only incentives that passed governance are open for attestation.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {activeIds.map((a) => (
+              <button
+                key={a.id}
+                onClick={() => setSelected(a.id)}
+                className={`rounded-lg border px-3 py-2 text-left text-sm transition-colors ${
+                  selected === a.id
+                    ? "border-primary bg-accent/40"
+                    : "border-border hover:border-primary/50"
+                }`}
+              >
+                <div className="font-medium">Incentive #{a.id}</div>
+                <div className="mt-0.5 text-xs text-muted-foreground">
+                  {DIRECTION_LABEL[a.direction]}
+                </div>
+              </button>
+            ))}
           </div>
-        </section>
-      </main>
-      <footer className="w-full border-t py-6 md:py-0">
-        <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
-          <p className="text-sm text-muted-foreground">© 2025 p2p2p Initiative. All rights reserved.</p>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Terms
+        </CardContent>
+      </Card>
+
+      {selected !== null && (
+        <IncentiveAttest key={selected} incentiveId={selected} address={address} />
+      )}
+    </div>
+  )
+}
+
+function IncentiveAttest({ incentiveId, address }: { incentiveId: number; address?: `0x${string}` }) {
+  const id = BigInt(incentiveId)
+
+  const incentive = useReadContract({
+    ...incentiveContract,
+    functionName: "getIncentive",
+    args: [id],
+  })
+  const roundId = useReadContract({
+    ...attestationContract,
+    functionName: "currentRound",
+    args: [id],
+  })
+  const round = useReadContract({
+    ...attestationContract,
+    functionName: "rounds",
+    args: roundId.data !== undefined ? [id, roundId.data as bigint] : undefined,
+    query: { enabled: roundId.data !== undefined },
+  })
+
+  const { writeContract, data: hash, isPending, error, reset } = useWriteContract()
+  const receipt = useWaitForTransactionReceipt({ hash })
+  useEffect(() => {
+    if (receipt.isSuccess) {
+      roundId.refetch()
+      round.refetch()
+      incentive.refetch()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [receipt.isSuccess])
+
+  const inc = incentive.data as
+    | { requiredA: number; requiredB: number; requiredIntl: number; attestationWindow: number }
+    | undefined
+  // rounds(...) has named outputs, so wagmi returns an object, not a positional tuple.
+  const r = round.data as
+    | { firstTs: bigint; openedAt: bigint; countA: number; countB: number; countIntl: number; status: number }
+    | undefined
+  const countA = r ? Number(r.countA) : 0
+  const countB = r ? Number(r.countB) : 0
+  const countIntl = r ? Number(r.countIntl) : 0
+  const status = r ? Number(r.status) : 0 // 0 NoRound, 1 Open, 2 Confirmed, 3 Failed
+  const confirmed = status === 2
+
+  const reqA = inc ? Number(inc.requiredA) : 0
+  const reqB = inc ? Number(inc.requiredB) : 0
+  const reqIntl = inc ? Number(inc.requiredIntl) : 0
+
+  const sources = demoSources()
+  const grouped: Record<number, typeof sources> = {
+    [SourceCategory.CommunityA]: sources.filter((s) => s.category === SourceCategory.CommunityA),
+    [SourceCategory.CommunityB]: sources.filter((s) => s.category === SourceCategory.CommunityB),
+    [SourceCategory.International]: sources.filter((s) => s.category === SourceCategory.International),
+  }
+
+  const [attesting, setAttesting] = useState<string | null>(null)
+  const pending = isPending || receipt.isLoading
+
+  const attest = (domain: string) => {
+    if (!address) return
+    reset()
+    setAttesting(domain)
+    writeContract({
+      ...attestationContract,
+      functionName: "attest",
+      args: [id, buildNewsProof(domain, address, id)],
+    })
+  }
+
+  const errMsg = decodeError(error)
+
+  return (
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" /> Round progress — incentive #{incentiveId}
+          </CardTitle>
+          <CardDescription>
+            Live from EventAttestation on Gnosis. Round #{roundId.data?.toString() ?? "—"} · window{" "}
+            {inc ? `${Number(inc.attestationWindow)}s` : "—"}. A round confirms once every category
+            hits its distinct-source threshold.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <Progress label="Community A sources" have={countA} need={reqA} />
+          <Progress label="Community B sources" have={countB} need={reqB} />
+          <Progress label="International sources" have={countIntl} need={reqIntl} />
+          <div className="flex items-center justify-between border-t border-border pt-3 text-sm">
+            <span className="text-muted-foreground">Round status</span>
+            <Badge variant={confirmed ? "default" : status === 3 ? "outline" : "outline"}>
+              {["No round", "Open", "Confirmed", "Failed"][status] ?? "—"}
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
+
+      {confirmed ? (
+        <Card>
+          <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
+            <CheckCircle2 className="h-10 w-10 text-primary" />
+            <p className="font-medium">Event confirmed and handed to the RedistributionEngine.</p>
+            <p className="max-w-md text-sm text-muted-foreground">
+              A candidate event is now live under a <strong>10-minute dispute window</strong> (short
+              for this demo — days in production). If unchallenged, the redistribution can be
+              finalized to move funds through the pools.
+            </p>
+            <Link
+              href="/pools"
+              className="inline-flex items-center gap-1 text-sm font-medium text-primary underline"
+            >
+              Go to pools to finalize <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Privacy
-            </Link>
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Contact
-            </Link>
-          </nav>
-        </div>
-      </footer>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-primary" /> Attest from a source
+            </CardTitle>
+            <CardDescription>
+              Pick a newsletter you received. The demo builds a structurally-real EmailProof from
+              that domain that the on-chain checks accept — one distinct domain per outlet, one
+              nullifier per physical email. Need ≥{reqA} A, ≥{reqB} B, ≥{reqIntl} International.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {(
+              [SourceCategory.CommunityA, SourceCategory.CommunityB, SourceCategory.International] as const
+            ).map((cat) => (
+              <div key={cat} className="space-y-2">
+                <div className="text-sm font-medium">{CATEGORY_META[cat].label}</div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {grouped[cat].map((s) => (
+                    <TxButton
+                      key={s.domain}
+                      variant="outline"
+                      className="h-auto justify-start whitespace-normal py-2 text-left text-xs"
+                      pending={pending && attesting === s.domain}
+                      disabled={pending}
+                      onClick={() => attest(s.domain)}
+                    >
+                      <Mail className="mr-2 h-3.5 w-3.5 shrink-0 text-primary" />
+                      <span className="break-all">{s.domain}</span>
+                    </TxButton>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {receipt.isSuccess && (
+              <p className="rounded-lg bg-accent/40 p-3 text-sm text-accent-foreground">
+                Attestation counted. Round tallies updated above.
+              </p>
+            )}
+            {errMsg && <p className="text-sm text-destructive">{errMsg}</p>}
+            <p className="text-xs text-muted-foreground">
+              Signed in as {short(address)}. Distinct-source thresholds and the per-round dedup are
+              enforced on-chain; re-clicking the same outlet in one round reverts with
+              DomainAlreadyCounted.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+    </>
+  )
+}
+
+function Progress({ label, have, need }: { label: string; have: number; need: number }) {
+  const met = need === 0 || have >= need
+  const pct = need === 0 ? 100 : Math.min(100, (have / need) * 100)
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-muted-foreground">{label}</span>
+        <span className={`font-medium ${met ? "text-primary" : ""}`}>
+          {have} / {need}
+        </span>
+      </div>
+      <div className="h-2 overflow-hidden rounded-full bg-muted">
+        <div
+          className={`h-full rounded-full ${met ? "bg-primary" : "bg-primary/50"}`}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function ProofExplainer() {
+  return (
+    <div className="mx-auto mt-10 max-w-4xl">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" /> What Goes On-Chain: the EmailProof
+          </CardTitle>
+          <CardDescription>
+            Both proof types (citizenship and news-event) share this exact public-signal layout,
+            checked by the ZKEmailVerifier contract.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {DEMO_PROOF.map((row) => (
+              <div
+                key={row.field}
+                className="grid grid-cols-1 gap-1 border-b border-border pb-3 last:border-0 md:grid-cols-[180px_1fr] md:gap-4"
+              >
+                <code className="font-mono text-sm text-primary">{row.field}</code>
+                <div>
+                  <p className="font-mono text-sm">{row.value}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{row.note}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-6 rounded-lg bg-muted p-4">
+            <h4 className="font-medium">Why this beats a monitoring service</h4>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Under the original zkTLS design, someone had to run a notary session against each news
+              site while the article was live — a single choke point to censor, bribe, or DDoS. With
+              zkEmail, every newsletter subscriber on earth holds durable, independently provable
+              evidence, and the DKIM signature stays valid even if the article is edited or taken
+              down.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

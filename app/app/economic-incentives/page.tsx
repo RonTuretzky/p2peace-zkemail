@@ -1,35 +1,32 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, Handshake, AlertTriangle, Check } from "lucide-react"
+import { Handshake, AlertTriangle, Check } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export default function EconomicIncentivesPage() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b bg-background">
-        <div className="container flex h-16 items-center justify-between py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Home</span>
-          </Link>
+    <>
+      <section className="container mx-auto px-4 py-14">
+        <div className="mx-auto max-w-3xl space-y-3 text-center">
+          <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            Economic Peace Incentives
+          </h1>
+          <p className="text-muted-foreground md:text-lg">
+            How peer-to-peer-to-peace turns proven events into pool-to-pool redistribution and
+            Treasury-funded rewards — all claimed as an equal-per-member peace dividend.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
+            <Button asChild>
+              <Link href="/pools">View the peace pools</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/incentives">Browse active incentives</Link>
+            </Button>
+          </div>
         </div>
-      </header>
-      <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                  Economic Peace Incentives
-                </h1>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  How peertopeertopeace creates economic incentives for peace-building and cooperation.
-                </p>
-              </div>
-            </div>
 
-            <div className="mx-auto max-w-5xl mt-12">
+        <div className="mx-auto max-w-5xl mt-12">
               <Card className="mb-8">
                 <CardHeader>
                   <CardTitle>How Token Redistribution Works</CardTitle>
@@ -349,31 +346,16 @@ export default function EconomicIncentivesPage() {
                 </CardContent>
               </Card>
 
-              <div className="mt-12 text-center">
-                <Button size="lg" asChild>
-                  <Link href="/governance">Learn About Governance</Link>
-                </Button>
-              </div>
-            </div>
+          <div className="mt-12 flex flex-wrap justify-center gap-3">
+            <Button size="lg" asChild>
+              <Link href="/pools">View the Peace Pools</Link>
+            </Button>
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/governance">Learn About Governance</Link>
+            </Button>
           </div>
-        </section>
-      </main>
-      <footer className="w-full border-t py-6 md:py-0">
-        <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
-          <p className="text-sm text-muted-foreground">© 2025 peertopeertopeace Initiative. All rights reserved.</p>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Terms
-            </Link>
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Privacy
-            </Link>
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Contact
-            </Link>
-          </nav>
         </div>
-      </footer>
-    </div>
+      </section>
+    </>
   )
 }

@@ -1,35 +1,43 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Shield, ArrowLeft, Lock, FileCheck, UserCheck, Mail } from "lucide-react"
+import { Shield, Lock, FileCheck, UserCheck, Mail } from "lucide-react"
 
 export default function VerificationPage() {
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b bg-background">
-        <div className="container flex h-16 items-center justify-between py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Home</span>
-          </Link>
+    <>
+      <section className="container mx-auto px-4 py-14">
+        <div className="mx-auto max-w-3xl space-y-3 text-center">
+          <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            zkEmail Verification System
+          </h1>
+          <p className="text-muted-foreground md:text-lg">
+            Identities and events are proven from DKIM-signed emails with zero-knowledge proofs —
+            nothing sensitive ever leaves your device.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
+            <Button asChild>
+              <Link href="/verify">Get verified now</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/attest">Attest an event</Link>
+            </Button>
+          </div>
         </div>
-      </header>
-      <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-                  zkEmail Verification System
-                </h1>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Identities and events are proven from DKIM-signed emails with zero-knowledge proofs — nothing
-                  sensitive ever leaves your device.
-                </p>
-              </div>
-            </div>
 
-            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:gap-12 mt-12">
+        <div className="mx-auto mt-8 max-w-3xl rounded-lg border border-primary/30 bg-accent/40 p-4 text-center text-sm text-accent-foreground">
+          This is a conceptual explainer — try the live flow at{" "}
+          <Link href="/verify" className="font-medium underline underline-offset-4">
+            /verify
+          </Link>{" "}
+          (or{" "}
+          <Link href="/incentives" className="font-medium underline underline-offset-4">
+            /incentives
+          </Link>
+          ).
+        </div>
+
+        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2 lg:gap-12 mt-12">
               <Card>
                 <CardHeader>
                   <div className="flex items-center gap-2">
@@ -173,39 +181,27 @@ export default function VerificationPage() {
               </Card>
             </div>
 
-            <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" asChild>
-                <Link href="/attest">
-                  Attest an Event
-                  <Mail className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/governance">
-                  Learn About Governance
-                  <Shield className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </section>
-      </main>
-      <footer className="w-full border-t py-6 md:py-0">
-        <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
-          <p className="text-sm text-muted-foreground">© 2025 p2p2p Initiative. All rights reserved.</p>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Terms
+        <div className="mt-12 flex flex-col sm:flex-row gap-4 justify-center">
+          <Button size="lg" asChild>
+            <Link href="/verify">
+              Get Verified
+              <UserCheck className="ml-2 h-4 w-4" />
             </Link>
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Privacy
+          </Button>
+          <Button size="lg" variant="outline" asChild>
+            <Link href="/attest">
+              Attest an Event
+              <Mail className="ml-2 h-4 w-4" />
             </Link>
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Contact
+          </Button>
+          <Button size="lg" variant="outline" asChild>
+            <Link href="/governance">
+              Learn About Governance
+              <Shield className="ml-2 h-4 w-4" />
             </Link>
-          </nav>
+          </Button>
         </div>
-      </footer>
-    </div>
+      </section>
+    </>
   )
 }

@@ -1,0 +1,76 @@
+{
+  "contracts": [
+    {
+      "sourcePathAndName": "src/MockUSD.sol:MockUSD",
+      "address": "0x9af75a83661885db1848511b345f5f8a4badb4c0"
+    },
+    {
+      "sourcePathAndName": "src/DKIMRegistry.sol:DKIMRegistry",
+      "address": "0x85cc25bb555f4bd82a9a36244094e88fd451b760"
+    },
+    {
+      "sourcePathAndName": "src/ZKEmailVerifier.sol:ZKEmailVerifier",
+      "address": "0x9239f82a992238ab9a69af374161c5c2e8ffea2c"
+    },
+    {
+      "sourcePathAndName": "src/MockGroth16Verifier.sol:MockGroth16Verifier",
+      "address": "0x631a37682e18d34bfcc1416cf23e84df30bef326"
+    },
+    {
+      "sourcePathAndName": "src/IdentityRegistry.sol:IdentityRegistry",
+      "address": "0x60feeb1453f0b06de75e3a1b66f681f563d40b3d"
+    },
+    {
+      "sourcePathAndName": "src/PeaceToken.sol:PeaceToken",
+      "address": "0x01b1a42aa56a623a437a7a55046784f43e8e27f0"
+    },
+    {
+      "sourcePathAndName": "src/PeaceToken.sol:PeaceToken",
+      "address": "0x64ddd68c9656e660531bc1fc7ece156e066aa0d7"
+    },
+    {
+      "sourcePathAndName": "src/Treasury.sol:Treasury",
+      "address": "0xf335fd10b0cadbfa7c0c6d41c7d8936621df8b81"
+    },
+    {
+      "sourcePathAndName": "src/CommunityPool.sol:CommunityPool",
+      "address": "0x6a1c3f73444030ca5884454d58a40ad4e01319dc"
+    },
+    {
+      "sourcePathAndName": "src/CommunityPool.sol:CommunityPool",
+      "address": "0x72a5f2a70fb10843dc3cb17057fe6a860ca55605"
+    },
+    {
+      "sourcePathAndName": "src/PeaceMinter.sol:PeaceMinter",
+      "address": "0x7a76cfa8668a425b3f0e598c27019cd9d0e922f9"
+    },
+    {
+      "sourcePathAndName": "src/PeaceMinter.sol:PeaceMinter",
+      "address": "0x7d21e680becdd1b9909d61ac5af0221bea13ddf2"
+    },
+    {
+      "sourcePathAndName": "src/IncentiveRegistry.sol:IncentiveRegistry",
+      "address": "0x559b6fa3673cbd822d411d4cb921f1db8528d8af"
+    },
+    {
+      "sourcePathAndName": "src/EventAttestation.sol:EventAttestation",
+      "address": "0x92ce3f819f2c2e588b7c3f3a609c0f70809f8640"
+    },
+    {
+      "sourcePathAndName": "src/RedistributionEngine.sol:RedistributionEngine",
+      "address": "0xfdadb1d595e2bf55ac471f8a334ab73a2d191043"
+    },
+    {
+      "sourcePathAndName": "src/DisputeCouncil.sol:DisputeCouncil",
+      "address": "0x907df415d4a0f25cfa7c787420e6a5dda3bb30b7"
+    },
+    {
+      "sourcePathAndName": "src/SanctionsEscrow.sol:SanctionsEscrow",
+      "address": "0x76ae564ab2509bacd266c1a460795fb9a11757f7"
+    },
+    {
+      "sourcePathAndName": "src/BusinessRegistry.sol:BusinessRegistry",
+      "address": "0xcb8beb77bb449fbe717eead2511e1b045952b5f7"
+    }
+  ]
+}

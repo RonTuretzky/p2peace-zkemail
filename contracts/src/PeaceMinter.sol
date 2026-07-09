@@ -80,8 +80,7 @@ contract PeaceMinter is Ownable, IPeaceMinter {
     ///         staked into the community pool — buying in *is* signing the
     ///         rebalancing agreement.
     function mintCitizen(uint256 usdAmount) external {
-        if (!registry.isActiveMember(msg.sender) || registry.communityOf(msg.sender) != community)
-        {
+        if (!registry.isActiveMember(msg.sender) || registry.communityOf(msg.sender) != community) {
             revert NotCitizen();
         }
         usd.safeTransferFrom(msg.sender, address(this), usdAmount);
@@ -99,8 +98,7 @@ contract PeaceMinter is Ownable, IPeaceMinter {
     ///         Treasury. No pool stake, no vote — outsider skin-in-the-game is the
     ///         premium itself.
     function mintOutsider(uint256 usdAmount) external {
-        if (registry.isActiveMember(msg.sender) && registry.communityOf(msg.sender) == community)
-        {
+        if (registry.isActiveMember(msg.sender) && registry.communityOf(msg.sender) == community) {
             revert CitizenMustUseCitizenMint();
         }
         usd.safeTransferFrom(msg.sender, address(this), usdAmount);

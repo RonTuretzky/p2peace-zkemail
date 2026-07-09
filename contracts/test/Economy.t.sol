@@ -82,9 +82,7 @@ contract EconomyTest is BaseTest {
         PeaceToken fresh = new PeaceToken("Fresh", "FRSH", Community.B, address(this));
         assertEq(uint8(fresh.community()), uint8(Community.B));
         vm.prank(rando);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, rando)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, rando));
         fresh.setMinter(rando);
 
         // Owner sets once; the new minter works; a second set reverts.
@@ -253,9 +251,7 @@ contract EconomyTest is BaseTest {
 
         // setParMinter is owner-gated.
         vm.prank(rando);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, rando)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, rando));
         d.minterA.setParMinter(rando, true);
 
         // Need a member so the reward is distributed rather than buffered.
@@ -278,9 +274,7 @@ contract EconomyTest is BaseTest {
 
     function test_setParams_boundsAndAccess() public {
         vm.prank(rando);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, rando)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, rando));
         d.minterA.setParams(1_000, 20_000);
 
         // Each bound, one wei past the edge.
@@ -353,9 +347,7 @@ contract EconomyTest is BaseTest {
 
         // wire() is one-shot and owner-gated.
         vm.prank(rando);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, rando)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, rando));
         d.poolA.wire(rando, rando);
         vm.expectRevert(CommunityPool.AlreadyWired.selector);
         d.poolA.wire(rando, rando);
@@ -466,9 +458,8 @@ contract EconomyTest is BaseTest {
 
         // Renewal with a fresh proof re-enables the claim; the reward is keyed by
         // nullifier so nothing was lost while lapsed.
-        EmailProof memory p = mkProof(
-            GOV_B, CITIZENSHIP_PATTERN, idNullifier("basma"), uint64(block.timestamp)
-        );
+        EmailProof memory p =
+            mkProof(GOV_B, CITIZENSHIP_PATTERN, idNullifier("basma"), uint64(block.timestamp));
         d.identity.register(p, basma);
         assertEq(d.poolB.claimable(basma), 70e18, "rewards survived the lapse");
         vm.prank(basma);
@@ -487,9 +478,8 @@ contract EconomyTest is BaseTest {
         // Rotate the same email account (same nullifier) onto a new wallet.
         vm.warp(block.timestamp + 1 days);
         address basma2 = makeAddr("basma2");
-        EmailProof memory p = mkProof(
-            GOV_B, CITIZENSHIP_PATTERN, idNullifier("basma"), uint64(block.timestamp)
-        );
+        EmailProof memory p =
+            mkProof(GOV_B, CITIZENSHIP_PATTERN, idNullifier("basma"), uint64(block.timestamp));
         d.identity.register(p, basma2);
 
         // Old wallet is out; unclaimed rewards followed the nullifier.
@@ -595,9 +585,7 @@ contract EconomyTest is BaseTest {
 
     function test_treasury_setSpenderOnlyOwner() public {
         vm.prank(rando);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, rando)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, rando));
         d.treasury.setSpender(rando, true);
     }
 }

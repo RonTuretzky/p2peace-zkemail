@@ -52,7 +52,44 @@ contract Deploy is Script {
         address guardian = vm.envOr("GUARDIAN", msg.sender);
         vm.startBroadcast();
         d = deploy(admin, guardian, msg.sender);
+        // DEMO_SETUP=true configures a usable public demo: mock proofs accepted for
+        // the well-known demo domains, and short governance cycles so the full
+        // propose → vote → attest → dispute → claim loop completes in under an
+        // hour. Requires ADMIN == the broadcasting key.
+        if (vm.envOr("DEMO_SETUP", false)) demoSetup(d);
         vm.stopBroadcast();
+    }
+
+    // ---- demo fixtures (mirrored in test/Base.t.sol and app/lib/demo.ts) ----
+    bytes32 internal constant CITIZENSHIP_PATTERN = keccak256("p2peace/citizenship-v1");
+    bytes32 internal constant NEWS_PATTERN = keccak256("p2peace/news-event-v1:demo-keywords");
+
+    function demoDomains() public pure returns (bytes32[9] memory) {
+        return [
+            keccak256("taxes.gov-a.example"), //          [0] gov A
+            keccak256("id.gov-b.example"), //             [1] gov B
+            keccak256("alerts.nation-a-news.example"), // [2..3] community-A press
+            keccak256("daily.nation-a-press.example"),
+            keccak256("newsletter.nation-b-news.example"), // [4..5] community-B press
+            keccak256("wire.nation-b-agency.example"),
+            keccak256("newsletters.intl-wire.example"), // [6..8] international
+            keccak256("breaking.global-press.example"),
+            keccak256("digest.world-report.example")
+        ];
+    }
+
+    function demoSetup(Deployment memory d) public {
+        bytes32[9] memory domains = demoDomains();
+        for (uint256 i = 0; i < domains.length; i++) {
+            d.dkim.setKey(domains[i], keccak256(abi.encode("dkim-key", domains[i])), 0, 0);
+        }
+        d.verifier.setVerifier(CITIZENSHIP_PATTERN, IGroth16Verifier(address(d.groth16)));
+        d.verifier.setVerifier(NEWS_PATTERN, IGroth16Verifier(address(d.groth16)));
+        d.identity.setCitizenshipPattern(CITIZENSHIP_PATTERN, true);
+        d.identity.setDomain(domains[0], Community.A);
+        d.identity.setDomain(domains[1], Community.B);
+        d.incentives.setParams(10 minutes, 10 minutes, 3_000, 500);
+        d.engine.setDisputeWindow(10 minutes);
     }
 
     /// @dev Also called from tests so the wiring is exercised end to end.
@@ -97,8 +134,9 @@ contract Deploy is Script {
             d.minterB
         );
         d.council = new DisputeCouncil(admin, d.engine);
-        d.escrow =
-            new SanctionsEscrow(IERC20(address(d.usd)), d.engine, d.minterA, d.minterB, address(d.treasury));
+        d.escrow = new SanctionsEscrow(
+            IERC20(address(d.usd)), d.engine, d.minterA, d.minterB, address(d.treasury)
+        );
         d.business = new BusinessRegistry(
             admin, d.identity, d.treasury, IERC20(address(d.tokenA)), IERC20(address(d.tokenB))
         );

@@ -161,8 +161,7 @@ contract IdentityTest is BaseTest {
 
     function test_verifier_unknownPatternHash_false() public {
         vm.warp(T0);
-        EmailProof memory p =
-            mkProof(GOV_A, keccak256("no-such-pattern"), idNullifier("x"), T0);
+        EmailProof memory p = mkProof(GOV_A, keccak256("no-such-pattern"), idNullifier("x"), T0);
         assertFalse(d.verifier.verify(p, 0));
     }
 
@@ -192,8 +191,7 @@ contract IdentityTest is BaseTest {
     function test_verifier_dkimKeyOutsideWindow_false() public {
         // Key valid only for emailTimestamps in [T0, T0 + 1 days].
         d.dkim.setKey(TEST_DOMAIN, dkimKeyOf(TEST_DOMAIN), T0, T0 + 1 days);
-        EmailProof memory p =
-            mkProof(TEST_DOMAIN, CITIZENSHIP_PATTERN, idNullifier("x"), T0 - 1);
+        EmailProof memory p = mkProof(TEST_DOMAIN, CITIZENSHIP_PATTERN, idNullifier("x"), T0 - 1);
         assertFalse(d.verifier.verify(p, 0), "before window");
         p.emailTimestamp = T0;
         assertTrue(d.verifier.verify(p, 0), "window start");
@@ -352,8 +350,7 @@ contract IdentityTest is BaseTest {
         registerMember(alice, Community.A, "alice");
 
         vm.warp(T0 + 1 days);
-        EmailProof memory p =
-            mkProof(GOV_A, CITIZENSHIP_PATTERN, idNullifier("alice"), T0 + 1 days);
+        EmailProof memory p = mkProof(GOV_A, CITIZENSHIP_PATTERN, idNullifier("alice"), T0 + 1 days);
         d.identity.register(p, bob);
 
         // Old wallet fully deleted.
@@ -386,8 +383,7 @@ contract IdentityTest is BaseTest {
         uint256 checkpointBefore = d.poolA.rewardCheckpoint(idNullifier("alice"));
 
         vm.warp(T0 + 1 days);
-        EmailProof memory p =
-            mkProof(GOV_A, CITIZENSHIP_PATTERN, idNullifier("alice"), T0 + 1 days);
+        EmailProof memory p = mkProof(GOV_A, CITIZENSHIP_PATTERN, idNullifier("alice"), T0 + 1 days);
         d.identity.register(p, bob);
 
         // Rotation must NOT re-init the checkpoint: unclaimed rewards survive.
@@ -401,8 +397,7 @@ contract IdentityTest is BaseTest {
         // Same email nullifier, but the new proof comes from the other community's
         // government domain: forbidden.
         registerMember(alice, Community.A, "alice");
-        EmailProof memory p =
-            mkProof(GOV_B, CITIZENSHIP_PATTERN, idNullifier("alice"), T0 + 1);
+        EmailProof memory p = mkProof(GOV_B, CITIZENSHIP_PATTERN, idNullifier("alice"), T0 + 1);
         vm.expectRevert(IdentityRegistry.CommunityMismatch.selector);
         d.identity.register(p, bob);
     }
@@ -413,8 +408,7 @@ contract IdentityTest is BaseTest {
         registerMember(bob, Community.A, "bob");
 
         // alice's email account cannot capture bob's already-enrolled wallet.
-        EmailProof memory p =
-            mkProof(GOV_A, CITIZENSHIP_PATTERN, idNullifier("alice"), T0 + 1);
+        EmailProof memory p = mkProof(GOV_A, CITIZENSHIP_PATTERN, idNullifier("alice"), T0 + 1);
         vm.expectRevert(IdentityRegistry.WalletAlreadyMember.selector);
         d.identity.register(p, bob);
     }
@@ -443,8 +437,7 @@ contract IdentityTest is BaseTest {
         vm.warp(T0);
         registerMember(alice, Community.A, "alice"); // consumed emailTs = T0
 
-        EmailProof memory p =
-            mkProof(GOV_A, CITIZENSHIP_PATTERN, idNullifier("alice"), T0 - 1);
+        EmailProof memory p = mkProof(GOV_A, CITIZENSHIP_PATTERN, idNullifier("alice"), T0 - 1);
         vm.expectRevert(IdentityRegistry.ProofReplayed.selector);
         d.identity.register(p, alice);
     }
@@ -454,8 +447,7 @@ contract IdentityTest is BaseTest {
         registerMember(alice, Community.A, "alice");
 
         // A strictly newer email (even 1 second) is a fresh action.
-        EmailProof memory p =
-            mkProof(GOV_A, CITIZENSHIP_PATTERN, idNullifier("alice"), T0 + 1);
+        EmailProof memory p = mkProof(GOV_A, CITIZENSHIP_PATTERN, idNullifier("alice"), T0 + 1);
         d.identity.register(p, alice);
         assertEq(d.identity.lastProofTimestamp(idNullifier("alice")), T0 + 1);
     }
@@ -471,8 +463,7 @@ contract IdentityTest is BaseTest {
 
         // One second past: stale.
         vm.warp(T0 + maxAge + 1);
-        EmailProof memory stale =
-            mkProof(GOV_A, CITIZENSHIP_PATTERN, idNullifier("edge2"), T0);
+        EmailProof memory stale = mkProof(GOV_A, CITIZENSHIP_PATTERN, idNullifier("edge2"), T0);
         vm.expectRevert(IdentityRegistry.StaleProof.selector);
         d.identity.register(stale, bob);
     }
@@ -496,8 +487,7 @@ contract IdentityTest is BaseTest {
         vm.warp(T0);
         // NEWS_A1 has a registered DKIM key and the pattern has a verifier, so the
         // ZK layer passes - but the domain maps to Community.None.
-        EmailProof memory p =
-            mkProof(NEWS_A1, CITIZENSHIP_PATTERN, idNullifier("alice"), T0);
+        EmailProof memory p = mkProof(NEWS_A1, CITIZENSHIP_PATTERN, idNullifier("alice"), T0);
         vm.expectRevert(IdentityRegistry.DomainNotAllowlisted.selector);
         d.identity.register(p, alice);
     }
@@ -572,8 +562,7 @@ contract IdentityTest is BaseTest {
 
         // New maxProofAge enforced.
         vm.warp(T0 + 1 days + 1);
-        EmailProof memory stale =
-            mkProof(GOV_A, CITIZENSHIP_PATTERN, idNullifier("alice"), T0);
+        EmailProof memory stale = mkProof(GOV_A, CITIZENSHIP_PATTERN, idNullifier("alice"), T0);
         vm.expectRevert(IdentityRegistry.StaleProof.selector);
         d.identity.register(stale, alice);
 
@@ -591,8 +580,7 @@ contract IdentityTest is BaseTest {
 
         // Owner can pull a domain off the allowlist; future proofs from it fail.
         d.identity.setDomain(GOV_A, Community.None);
-        EmailProof memory p =
-            mkProof(GOV_A, CITIZENSHIP_PATTERN, idNullifier("bob"), T0 + 1);
+        EmailProof memory p = mkProof(GOV_A, CITIZENSHIP_PATTERN, idNullifier("bob"), T0 + 1);
         vm.expectRevert(IdentityRegistry.DomainNotAllowlisted.selector);
         d.identity.register(p, bob);
     }

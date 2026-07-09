@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ArrowLeft, FileText, GitBranch } from "lucide-react"
+import { FileText, GitBranch } from "lucide-react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MermaidDiagram } from "@/components/mermaid-diagram"
 
@@ -190,29 +190,27 @@ export default function DocsPage() {
     end`
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-40 border-b bg-background">
-        <div className="container flex h-16 items-center justify-between py-4">
-          <Link href="/" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Home</span>
-          </Link>
+    <>
+      <section className="container mx-auto px-4 py-14">
+        <div className="mx-auto max-w-3xl space-y-3 text-center">
+          <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            Technical Documentation
+          </h1>
+          <p className="text-muted-foreground md:text-lg">
+            Sequence diagrams for the p2p2p (peer to peer to peace) system as implemented — zkEmail
+            proofs, peace pools with a 10% opt-in stake, and the two-phase event state machine.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
+            <Button asChild>
+              <Link href="/user-demos">View Interactive Demos</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/verify">Get Verified</Link>
+            </Button>
+          </div>
         </div>
-      </header>
-      <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Technical Documentation</h1>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Sequence diagrams for the p2p2p (peer to peer to peace) system as implemented — zkEmail proofs,
-                  peace pools, and the two-phase event state machine.
-                </p>
-              </div>
-            </div>
 
-            <div className="mx-auto max-w-6xl mt-12">
+        <div className="mx-auto max-w-6xl mt-12">
               <Tabs defaultValue="verification" className="w-full">
                 <TabsList className="grid w-full grid-cols-6">
                   <TabsTrigger value="verification">Identity Verification</TabsTrigger>
@@ -384,26 +382,8 @@ export default function DocsPage() {
                   </div>
                 </CardContent>
               </Card>
-            </div>
-          </div>
-        </section>
-      </main>
-      <footer className="w-full border-t py-6 md:py-0">
-        <div className="container flex flex-col items-center justify-between gap-4 md:h-24 md:flex-row">
-          <p className="text-sm text-muted-foreground">© 2025 p2p2p Initiative. All rights reserved.</p>
-          <nav className="flex items-center gap-4 text-sm">
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Terms
-            </Link>
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Privacy
-            </Link>
-            <Link href="#" className="text-muted-foreground hover:underline underline-offset-4">
-              Contact
-            </Link>
-          </nav>
         </div>
-      </footer>
-    </div>
+      </section>
+    </>
   )
 }

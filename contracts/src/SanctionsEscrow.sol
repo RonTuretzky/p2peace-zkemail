@@ -73,12 +73,10 @@ contract SanctionsEscrow {
         treasury = treasury_;
     }
 
-    function deposit(
-        uint256 incentiveId,
-        Beneficiary beneficiary,
-        uint256 amount,
-        uint64 expiry
-    ) external returns (uint256 trancheId) {
+    function deposit(uint256 incentiveId, Beneficiary beneficiary, uint256 amount, uint64 expiry)
+        external
+        returns (uint256 trancheId)
+    {
         if (amount == 0 || expiry <= block.timestamp) revert BadTranche();
         usd.safeTransferFrom(msg.sender, address(this), amount);
         trancheId = ++trancheCount;

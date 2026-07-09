@@ -22,7 +22,10 @@ contract IncentivesTest is BaseTest {
     // Redeclared events for vm.expectEmit.
     event Proposed(uint256 indexed id, address indexed proposer, bytes32 patternHash);
     event Voted(
-        uint256 indexed id, bytes32 indexed nullifier, Community community, bool support,
+        uint256 indexed id,
+        bytes32 indexed nullifier,
+        Community community,
+        bool support,
         uint256 votes
     );
     event Finalized(uint256 indexed id, bool passed);
@@ -102,9 +105,7 @@ contract IncentivesTest is BaseTest {
         // Second proposal gets the next id; source maps are per-id.
         uint256 id2 = d.incentives.propose(defaultProposal(Direction.Joint));
         assertEq(id2, 2);
-        assertEq(
-            uint8(d.incentives.sourceCategory(id2, NEWS_A1)), uint8(SourceCategory.CommunityA)
-        );
+        assertEq(uint8(d.incentives.sourceCategory(id2, NEWS_A1)), uint8(SourceCategory.CommunityA));
     }
 
     // ======================================================= propose: validation
@@ -312,9 +313,7 @@ contract IncentivesTest is BaseTest {
         address eng = makeAddr("eng");
 
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         fresh.wire(att, eng);
 
         vm.expectEmit(false, false, false, true, address(fresh));
@@ -331,18 +330,16 @@ contract IncentivesTest is BaseTest {
 
     function test_setParams_onlyOwner() public {
         vm.prank(alice);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice)
-        );
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
         d.incentives.setParams(7 days, 3 days, 3000, 500);
     }
 
     function test_setParams_bounds() public {
         vm.expectRevert(IncentiveRegistry.BadProposal.selector);
-        d.incentives.setParams(1 days - 1, 3 days, 3000, 500);
+        d.incentives.setParams(5 minutes - 1, 3 days, 3000, 500);
 
         vm.expectRevert(IncentiveRegistry.BadProposal.selector);
-        d.incentives.setParams(7 days, 1 days - 1, 3000, 500);
+        d.incentives.setParams(7 days, 5 minutes - 1, 3000, 500);
 
         vm.expectRevert(IncentiveRegistry.BadProposal.selector);
         d.incentives.setParams(7 days, 3 days, 10_001, 500);
@@ -351,9 +348,9 @@ contract IncentivesTest is BaseTest {
         d.incentives.setParams(7 days, 3 days, 3000, 2001);
 
         // All extremes accepted at the boundary.
-        d.incentives.setParams(1 days, 1 days, 10_000, 2000);
-        assertEq(d.incentives.discussionPeriod(), 1 days);
-        assertEq(d.incentives.votingPeriod(), 1 days);
+        d.incentives.setParams(5 minutes, 5 minutes, 10_000, 2000);
+        assertEq(d.incentives.discussionPeriod(), 5 minutes);
+        assertEq(d.incentives.votingPeriod(), 5 minutes);
         assertEq(d.incentives.quorumBps(), 10_000);
         assertEq(d.incentives.maxRedistributionBps(), 2000);
 

@@ -77,7 +77,10 @@ contract IncentiveRegistry is Ownable, IIncentiveRegistry {
 
     event Proposed(uint256 indexed id, address indexed proposer, bytes32 patternHash);
     event Voted(
-        uint256 indexed id, bytes32 indexed nullifier, Community community, bool support,
+        uint256 indexed id,
+        bytes32 indexed nullifier,
+        Community community,
+        bool support,
         uint256 votes
     );
     event Finalized(uint256 indexed id, bool passed);
@@ -122,8 +125,10 @@ contract IncentiveRegistry is Ownable, IIncentiveRegistry {
         uint16 quorumBps_,
         uint16 maxRedistributionBps_
     ) external onlyOwner {
+        // 5-minute floor keeps demo/testnet cycles usable; production deployments
+        // are expected to run days-long periods (the defaults).
         require(
-            discussionPeriod_ >= 1 days && votingPeriod_ >= 1 days && quorumBps_ <= BPS
+            discussionPeriod_ >= 5 minutes && votingPeriod_ >= 5 minutes && quorumBps_ <= BPS
                 && maxRedistributionBps_ <= 2_000,
             BadProposal()
         );
@@ -222,9 +227,8 @@ contract IncentiveRegistry is Ownable, IIncentiveRegistry {
 
         Community community = registry.communityOf(msg.sender);
         uint256 cost = votes * votes * 1e18;
-        (community == Community.A ? tokenA : tokenB).safeTransferFrom(
-            msg.sender, address(this), cost
-        );
+        (community == Community.A ? tokenA : tokenB)
+        .safeTransferFrom(msg.sender, address(this), cost);
 
         ballot.voter = msg.sender;
         ballot.community = community;
@@ -270,9 +274,7 @@ contract IncentiveRegistry is Ownable, IIncentiveRegistry {
             revert NothingToWithdraw();
         }
         ballot.refunded = true;
-        (ballot.community == Community.A ? tokenA : tokenB).safeTransfer(
-            msg.sender, ballot.locked
-        );
+        (ballot.community == Community.A ? tokenA : tokenB).safeTransfer(msg.sender, ballot.locked);
         emit StakeWithdrawn(id, nullifier, ballot.locked);
     }
 
@@ -322,11 +324,7 @@ contract IncentiveRegistry is Ownable, IIncentiveRegistry {
         return inc.finalized && inc.passed && inc.triggerCount < inc.maxTriggers;
     }
 
-    function sourceCategory(uint256 id, bytes32 domainHash)
-        external
-        view
-        returns (SourceCategory)
-    {
+    function sourceCategory(uint256 id, bytes32 domainHash) external view returns (SourceCategory) {
         return sourceOf[id][domainHash];
     }
 
@@ -337,5 +335,52 @@ contract IncentiveRegistry is Ownable, IIncentiveRegistry {
     {
         Incentive storage inc = _incentives[id];
         return (inc.yesA, inc.noA, inc.yesB, inc.noB, inc.participants);
+    }
+
+    /// @notice Everything a UI needs to render a proposal's phase, tally, and
+    ///         result in a single call (getIncentive omits the lifecycle fields).
+    struct ProposalState {
+        address proposer;
+        Direction direction;
+        bytes32 patternHash;
+        uint64 createdAt;
+        uint64 discussionEnd;
+        uint64 votingEnd;
+        bool finalized;
+        bool passed;
+        bool active;
+        uint256 yesA;
+        uint256 noA;
+        uint256 yesB;
+        uint256 noB;
+        uint256 participants;
+        uint16 triggerCount;
+        uint16 maxTriggers;
+        uint16 redistributionBps;
+        string descriptionURI;
+    }
+
+    function proposalState(uint256 id) external view returns (ProposalState memory s) {
+        Incentive storage inc = _incentives[id];
+        s = ProposalState({
+            proposer: inc.proposer,
+            direction: inc.direction,
+            patternHash: inc.patternHash,
+            createdAt: inc.createdAt,
+            discussionEnd: inc.createdAt + discussionPeriod,
+            votingEnd: inc.createdAt + discussionPeriod + votingPeriod,
+            finalized: inc.finalized,
+            passed: inc.passed,
+            active: inc.finalized && inc.passed && inc.triggerCount < inc.maxTriggers,
+            yesA: inc.yesA,
+            noA: inc.noA,
+            yesB: inc.yesB,
+            noB: inc.noB,
+            participants: inc.participants,
+            triggerCount: inc.triggerCount,
+            maxTriggers: inc.maxTriggers,
+            redistributionBps: inc.redistributionBps,
+            descriptionURI: inc.descriptionURI
+        });
     }
 }
