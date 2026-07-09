@@ -1,10 +1,24 @@
 # p2peace — peer to peer to peace, on zkEmail
 
+**Live demo:** <https://ronturetzky.github.io/p2peace-zkemail/> · **Contracts:** Gnosis
+Chain ([addresses](DEPLOYMENT.md)) · branded with the
+[Decentral Park UI kit](https://github.com/decentralparknyc/decentralpark-ui-kit) ·
+CI/CD by [etherform](https://github.com/BreadchainCoop/etherform)
+
 A full implementation of the **p2p2p** concept ([communetxyz/p2peace @ `v0/ronturetzky-f0bece5e`](https://github.com/communetxyz/p2peace/tree/v0/ronturetzky-f0bece5e)):
 a decentralized protocol that builds economic interdependence between citizens of
 conflicting nations — re-founded on **zkEmail** (DKIM zero-knowledge proofs) instead of
 the zkTLS sketch in the original, with the mechanism design audited and hardened along
 the way.
+
+Every flow on the live site executes against the deployed contracts: **verify**
+(zkEmail demo-proof registration) → **mint** (faucet + citizen/outsider) →
+**incentives** (propose + quadratic dual-majority vote) → **attest** (multi-source
+newsletter proofs) → **pools** (dispute-window countdown, finalize, claim) →
+**business** (certification polls, cross-community payments). Demo governance windows
+are compressed to 10 minutes so the whole loop completes in under an hour. Contract
+addresses hydrate at runtime from the [`addresses` branch](../../tree/addresses)
+(crowdstake.fun convention) — a redeploy goes live without rebuilding the site.
 
 ## What it does
 
