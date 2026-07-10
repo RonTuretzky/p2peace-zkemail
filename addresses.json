@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "chains": {
+    "100": {
+      "deployer": "0x6636A1CCBdf54485067304C1a590DE016DeaD9F0",
+      "contracts": {
+        "reserveToken": "0xaf204776c7245bf4147c2612bf6e5972ee483701",
+        "dkimRegistry": "0x0aae0d2af6f73d3034490e4bbb17e897c57ae977",
+        "zkEmailVerifier": "0xd43380d3639096a2450b1e0ef235b4ddca8796f8",
+        "mockGroth16Verifier": "0xaed7cf0fd62b547a02309b134a2cc89d053b2019",
+        "identityRegistry": "0xab8758312f4dc3f50abb7f52ca4e65ecd19bd268",
+        "peaceTokenA": "0x63be2cee6cb79bd4ff960e1c8a2b58514f033c1b",
+        "peaceTokenB": "0x0b05d93822145f2f74dd59e10653fbd6a30d14b4",
+        "treasury": "0x63f166ab322cd26b195a57fe283284a5d8adb186",
+        "communityPoolA": "0x12785f81624e8c303f2b8dfba33d1e88d7fbf5d1",
+        "communityPoolB": "0xf31599c4ec89cae2ff26265e53e7508bce5af0c0",
+        "peaceMinterA": "0xe4e5456878f4760e75a56ce2c657c27b4fd54d2d",
+        "peaceMinterB": "0x9c76dfa376bd2ed0ce14c90e09e31425ece42b42",
+        "incentiveRegistry": "0x2d552aac74e5229240dcf727d6edc3e2c3a3f42d",
+        "eventAttestation": "0x7150d600cf922eec337f0a0ada14b525f0dd530d",
+        "redistributionEngine": "0x241a51c7f3394538c883dce28af433c6908ce032",
+        "sanctionsEscrow": "0x4f931f24462d4b53a0475c98a00cad74d32d0a70",
+        "realEmailVerifier": "0x0e707f9e969c0b61d48e9efb62fbecf54e628a8b"
+      }
+    }
+  }
+}
