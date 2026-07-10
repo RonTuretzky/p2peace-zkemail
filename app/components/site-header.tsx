@@ -6,15 +6,11 @@ import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { OliveBranchIcon } from "@/components/olive-branch-icon"
 import { cn } from "@/lib/utils"
 
+// Four doors, no more: the story (home), doing it live, everything else in
+// chronological order under /tools, and the technical docs.
 const NAV = [
-  { href: "/verify", label: "Get Verified" },
-  { href: "/mint", label: "Mint" },
-  { href: "/incentives", label: "Incentives" },
-  { href: "/attest", label: "Attest" },
-  { href: "/pools", label: "Pools" },
-  { href: "/business", label: "Business" },
-  { href: "/escrow", label: "Escrow" },
-  { href: "/council", label: "Council" },
+  { href: "/verify", label: "Try it live" },
+  { href: "/tools", label: "Tools" },
   { href: "/docs", label: "Docs" },
 ]
 
@@ -30,7 +26,7 @@ export function SiteHeader() {
             on zkEmail
           </span>
         </Link>
-        <nav className="hidden items-center gap-5 lg:flex">
+        <nav className="hidden items-center gap-6 sm:flex">
           {NAV.map((item) => (
             <Link
               key={item.href}
