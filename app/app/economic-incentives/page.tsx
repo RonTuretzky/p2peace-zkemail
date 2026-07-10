@@ -79,7 +79,7 @@ const WORKED_STEPS = [
   { t: "Day 0", body: "The incentive is live: direction positive-for-A, 2% of the Treasury per event, max 3 triggers, 30-day cooldown, pattern committed for (“checkpoint removal” OR “checkpoint dismantled”) AND “Jordan Valley”." },
   { t: "Day 1", body: "The checkpoint comes down. Newsletters go out. A subscriber proves an A-press newsletter matches the committed pattern and attests — the reporting window opens. Source tally: 1 A / 0 B / 0 international." },
   { t: "Day 2", body: "A B-press subscriber attests (1 A / 1 B / 0 intl), then two international wire subscribers attest (1 / 1 / 2). Thresholds met — the event is CONFIRMED and the planned amount is computed: 2% of the 250,000 mUSD Treasury = 5,000." },
-  { t: "Day 2–4", body: "The 48-hour dispute window runs. The council (75% supermajority required) finds nothing wrong and does nothing — which is the normal case." },
+  { t: "Day 2–4", body: "The 48-hour notice window runs: the event sits in public view, and the guardian can pause settlement if something is wrong (the pause expires on its own)." },
   { t: "Day 4", body: "Anyone finalizes. The Treasury pays 5,000 at par into community A's pool rewards. With 1,000 verified A members, every member's claimable dividend rises by exactly 5 tokens. Trigger count: 1 of 3; cooldown starts." },
 ]
 
@@ -169,7 +169,7 @@ export default function EconomicIncentivesPage() {
             ))}
           </div>
           <div className="mx-auto mt-8 grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-4">
-            <StatPill label="Treasury before" value="250,000" hint="mUSD" />
+            <StatPill label="Treasury before" value="250,000" hint="sDAI" />
             <StatPill label="Event moves" value="5,000" hint="2% of Treasury (≤5% cap)" />
             <StatPill label="A members" value="1,000" hint="verified identities" />
             <StatPill label="Each claims" value="5" hint="tokens — equal per member" tone="positive" />

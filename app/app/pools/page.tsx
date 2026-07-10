@@ -23,7 +23,7 @@ export default function PoolsPage() {
       <PoolsJourney />
       <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
         Why this step exists: this is where promises are kept. A confirmed event sits out a
-        dispute window so the council can catch a bad round, then anyone can finalize it — the
+        notice window so anything wrong can be caught in daylight, then anyone can finalize it — the
         pledge does what both sides said it would, and your membership becomes your community's
         claimable share.
       </p>
@@ -36,10 +36,11 @@ export default function PoolsPage() {
         <PoolsInner />
       </ConnectGate>
       <HonestyNote>
-        Honest limit: two brakes sit on every slash — the per-event cap (an event can move at most
-        its incentive&apos;s redistribution share, 5% of the corpus here) and the Dispute Council,
-        which can reverse a confirmed event during the window. Neither brake can create funds or
-        redirect them to itself; they can only stop or shrink a move.
+        Honest limit: two brakes sit on every slash — the per-event cap (an event can move at
+        most its incentive&apos;s redistribution share, 5% of the pledge here) and the
+        guardian&apos;s auto-expiring pause, which can halt settlement while something suspicious
+        is investigated. Neither brake can create funds or redirect them; they can only stop or
+        shrink a move.
       </HonestyNote>
     </div>
   )
@@ -257,10 +258,10 @@ function PoolsInner() {
                     Claimed — your share is in your wallet. That completes the journey.
                   </p>
                   <Link
-                    href="/business"
+                    href="/escrow"
                     className="mt-1 inline-flex items-center gap-1 font-medium text-primary underline"
                   >
-                    Next: spend it across the line at a certified business for a cooperation bonus{" "}
+                    Next: see how outside donors pre-commit relief at /escrow{" "}
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
@@ -290,9 +291,9 @@ function PoolsInner() {
             <Timer className="h-5 w-5 text-primary" /> Pending events
           </CardTitle>
           <CardDescription>
-            Confirmed events wait out a {Math.round(disputeWindow / 60)}-minute dispute window (demo
-            timing — 48h in production) during which the Dispute Council may reverse them. After it
-            passes, anyone can finalize to move the value on-chain.
+            Confirmed events wait out a {Math.round(disputeWindow / 60)}-minute notice window (demo
+            timing — 48h in production) in which the event sits in public view and the guardian
+            can pause settlement. After it passes, anyone can finalize to move the value on-chain.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">

@@ -4,24 +4,22 @@
     "100": {
       "deployer": "0x6636A1CCBdf54485067304C1a590DE016DeaD9F0",
       "contracts": {
-        "mockUsd": "0x9af75a83661885db1848511b345f5f8a4badb4c0",
-        "dkimRegistry": "0x85cc25bb555f4bd82a9a36244094e88fd451b760",
-        "zkEmailVerifier": "0x9239f82a992238ab9a69af374161c5c2e8ffea2c",
-        "mockGroth16Verifier": "0x631a37682e18d34bfcc1416cf23e84df30bef326",
-        "identityRegistry": "0x60feeb1453f0b06de75e3a1b66f681f563d40b3d",
-        "peaceTokenA": "0x01b1a42aa56a623a437a7a55046784f43e8e27f0",
-        "peaceTokenB": "0x64ddd68c9656e660531bc1fc7ece156e066aa0d7",
-        "treasury": "0xf335fd10b0cadbfa7c0c6d41c7d8936621df8b81",
-        "communityPoolA": "0x6a1c3f73444030ca5884454d58a40ad4e01319dc",
-        "communityPoolB": "0x72a5f2a70fb10843dc3cb17057fe6a860ca55605",
-        "peaceMinterA": "0x7a76cfa8668a425b3f0e598c27019cd9d0e922f9",
-        "peaceMinterB": "0x7d21e680becdd1b9909d61ac5af0221bea13ddf2",
-        "incentiveRegistry": "0x559b6fa3673cbd822d411d4cb921f1db8528d8af",
-        "eventAttestation": "0x92ce3f819f2c2e588b7c3f3a609c0f70809f8640",
-        "redistributionEngine": "0xfdadb1d595e2bf55ac471f8a334ab73a2d191043",
-        "disputeCouncil": "0x907df415d4a0f25cfa7c787420e6a5dda3bb30b7",
-        "sanctionsEscrow": "0x76ae564ab2509bacd266c1a460795fb9a11757f7",
-        "businessRegistry": "0xcb8beb77bb449fbe717eead2511e1b045952b5f7"
+        "reserveToken": "0xaf204776c7245bf4147c2612bf6e5972ee483701",
+        "dkimRegistry": "0x43f2e6b56ee3cf61c3e8e6b9f9cca71fb188cd66",
+        "zkEmailVerifier": "0xb4f9ffa1215b462a6661626d0dce1f47cba5fb19",
+        "mockGroth16Verifier": "0x32c2fe41a8f23611eb494748cdb086e7c4cef2ea",
+        "identityRegistry": "0x25568a8bbedbe159b28650a64e068dc7de40b77e",
+        "peaceTokenA": "0x665b7b61d0bb1f196d58355664e32b34f44553a5",
+        "peaceTokenB": "0x850a0e366727866bcffed4954b2bbfaa42ea85f1",
+        "treasury": "0x1a69d7149f2e0841d18b98213ca78f1cc41a8b90",
+        "communityPoolA": "0x950f15d5fd65534dc62b357787eecd7455146aef",
+        "communityPoolB": "0xfeb17043e4c8665eb903b17c9c3511d9f3274e71",
+        "peaceMinterA": "0xa8aa119634a7fe9f6b34f7911a8cdfe3ac4cd6ca",
+        "peaceMinterB": "0x07f951d3cfa9a8747e9e2d1a12f1f527ecb3b148",
+        "incentiveRegistry": "0xc1a08810bf50963023dd803dda0f84986324b2f3",
+        "eventAttestation": "0x81f24c3d6eaadb9d612395d0d399d863ba9c80b1",
+        "redistributionEngine": "0xcdc2737707b974f0a33af17ced55511348ac38e1",
+        "sanctionsEscrow": "0xfecb1f5b1a917493055f3e94c564ff8e58f6b12d"
       }
     }
   }

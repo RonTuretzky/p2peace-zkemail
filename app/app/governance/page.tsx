@@ -27,8 +27,8 @@ const MECHANISMS = [
     body: "A leaked DKIM key could forge evidence, so someone must be able to act in minutes, not days. The guardian can revoke compromised keys instantly and pause attestation and redistribution — but never touch funds — and its pause auto-expires. It is an emergency brake with a dead-man's switch: useful in a crisis, incapable of becoming a permanent power.",
   },
   {
-    title: "Dispute council — courts before bailiffs",
-    body: "A confirmed event waits out a 48-hour dispute window before any value moves. During that window a council seated from both communities can reverse it with a 75% supermajority — high enough that neither side's members can reverse alone. Once an event finalizes it is irreversible, in both directions: no retroactive confiscations, and no retroactive pardons either.",
+    title: "Daylight before settlement",
+    body: "A confirmed event waits out a 48-hour public-notice window before any value moves — time for anyone to inspect it, and for the guardian to pause settlement if something looks wrong. During that window a council seated from both communities can reverse it with a 75% supermajority — high enough that neither side's members can reverse alone. Once an event finalizes it is irreversible, in both directions: no retroactive confiscations, and no retroactive pardons either.",
   },
 ]
 
@@ -58,9 +58,6 @@ export default function GovernancePage() {
           <div className="flex flex-wrap justify-center gap-3 pt-2">
             <Button asChild>
               <Link href="/incentives">Vote on live incentives</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/council">See the dispute council</Link>
             </Button>
           </div>
         </div>
@@ -142,14 +139,11 @@ export default function GovernancePage() {
           <h2 className="font-display text-2xl font-bold">See governance running, not described</h2>
           <p className="text-sm text-muted-foreground">
             Every mechanism on this page is live on Gnosis right now: propose and vote at
-            /incentives, and watch the council's reversal power (and its limits) at /council.
+            /incentives, and watch events settle in daylight at /pouncil.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Button size="lg" asChild>
               <Link href="/incentives">Propose &amp; vote — /incentives</Link>
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/council">The dispute council — /council</Link>
             </Button>
           </div>
         </div>

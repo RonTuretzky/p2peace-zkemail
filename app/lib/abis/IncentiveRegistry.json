@@ -139,19 +139,6 @@
   },
   {
     "type": "function",
-    "name": "engine",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "finalize",
     "inputs": [
       {
@@ -288,19 +275,6 @@
       }
     ],
     "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "onReversed",
-    "inputs": [
-      {
-        "name": "id",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -741,11 +715,6 @@
         "name": "attestation_",
         "type": "address",
         "internalType": "address"
-      },
-      {
-        "name": "engine_",
-        "type": "address",
-        "internalType": "address"
       }
     ],
     "outputs": [],
@@ -890,25 +859,6 @@
   },
   {
     "type": "event",
-    "name": "TriggerReversed",
-    "inputs": [
-      {
-        "name": "id",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      },
-      {
-        "name": "triggerCount",
-        "type": "uint16",
-        "indexed": false,
-        "internalType": "uint16"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "Triggered",
     "inputs": [
       {
@@ -972,12 +922,6 @@
         "type": "address",
         "indexed": false,
         "internalType": "address"
-      },
-      {
-        "name": "engine",
-        "type": "address",
-        "indexed": false,
-        "internalType": "address"
       }
     ],
     "anonymous": false
@@ -1010,11 +954,6 @@
   {
     "type": "error",
     "name": "NotAttestation",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "NotEngine",
     "inputs": []
   },
   {

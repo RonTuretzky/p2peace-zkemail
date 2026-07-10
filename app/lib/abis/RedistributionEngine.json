@@ -78,19 +78,6 @@
   },
   {
     "type": "function",
-    "name": "council",
-    "inputs": [],
-    "outputs": [
-      {
-        "name": "",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
     "name": "disputeWindow",
     "inputs": [],
     "outputs": [
@@ -360,19 +347,6 @@
   },
   {
     "type": "function",
-    "name": "reverse",
-    "inputs": [
-      {
-        "name": "eventId",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ],
-    "outputs": [],
-    "stateMutability": "nonpayable"
-  },
-  {
-    "type": "function",
     "name": "setDisputeWindow",
     "inputs": [
       {
@@ -451,11 +425,6 @@
         "name": "attestation_",
         "type": "address",
         "internalType": "address"
-      },
-      {
-        "name": "council_",
-        "type": "address",
-        "internalType": "address"
       }
     ],
     "outputs": [],
@@ -526,19 +495,6 @@
   },
   {
     "type": "event",
-    "name": "EventReversed",
-    "inputs": [
-      {
-        "name": "eventId",
-        "type": "uint256",
-        "indexed": true,
-        "internalType": "uint256"
-      }
-    ],
-    "anonymous": false
-  },
-  {
-    "type": "event",
     "name": "GuardianSet",
     "inputs": [
       {
@@ -597,12 +553,6 @@
         "type": "address",
         "indexed": false,
         "internalType": "address"
-      },
-      {
-        "name": "council",
-        "type": "address",
-        "indexed": false,
-        "internalType": "address"
       }
     ],
     "anonymous": false
@@ -624,22 +574,12 @@
   },
   {
     "type": "error",
-    "name": "DisputeWindowClosed",
-    "inputs": []
-  },
-  {
-    "type": "error",
     "name": "DisputeWindowOpen",
     "inputs": []
   },
   {
     "type": "error",
     "name": "NotAttestation",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "NotCouncil",
     "inputs": []
   },
   {

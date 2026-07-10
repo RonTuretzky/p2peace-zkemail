@@ -30,7 +30,7 @@ const HONEST_FRAMING = [
   },
   {
     title: "What external money cannot buy",
-    body: "Power. Depositing into the escrow grants no votes, no council seats, no parameter access, no veto. Which incentives exist — and therefore which outcomes can even be funded — is decided solely by dual-majority votes of the two communities. Donors fund the menu; they never write it.",
+    body: "Power. Depositing into the escrow grants no votes, no special powers, no parameter access, no veto. Which incentives exist — and therefore which outcomes can even be funded — is decided solely by dual-majority votes of the two communities. Donors fund the menu; they never write it.",
   },
   {
     title: "Why the conditions are immutable",

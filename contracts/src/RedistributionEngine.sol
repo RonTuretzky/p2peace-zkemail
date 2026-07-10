@@ -16,7 +16,8 @@ import {IRedistributionEngine} from "./interfaces/IRedistributionEngine.sol";
 ///
 ///         State machine per event:
 ///           CONFIRMED (by EventAttestation, amount planned & snapshotted)
-///             → 48h dispute window: DisputeCouncil may reverse (75% supermajority)
+///             → 48h public-notice window: anyone can inspect the event; the
+///               guardian's auto-expiring pause is the emergency brake
 ///             → FINALIZED: value moves — and only here does value move.
 ///
 ///         Value routes (reserve backing preserved on both sides):
@@ -32,8 +33,7 @@ contract RedistributionEngine is Ownable, Guarded, IRedistributionEngine {
     enum EventStatus {
         None,
         Pending,
-        Finalized,
-        Reversed
+        Finalized
     }
 
     struct PendingEvent {
@@ -54,27 +54,23 @@ contract RedistributionEngine is Ownable, Guarded, IRedistributionEngine {
     PeaceMinter public immutable minterB;
 
     address public attestation;
-    address public council;
     uint32 public disputeWindow = 48 hours;
 
     uint256 public eventCount;
     mapping(uint256 => PendingEvent) public events;
 
-    event Wired(address attestation, address council);
+    event Wired(address attestation);
     event EventConfirmed(
         uint256 indexed eventId, uint256 indexed incentiveId, Direction direction, uint256 planned
     );
     event EventFinalized(uint256 indexed eventId, uint256 moved);
-    event EventReversed(uint256 indexed eventId);
     event DisputeWindowSet(uint32 window);
 
     error AlreadyWired();
     error NotAttestation();
-    error NotCouncil();
     error UnknownEvent();
     error NotPending();
     error DisputeWindowOpen();
-    error DisputeWindowClosed();
     error BadWindow();
 
     constructor(
@@ -97,11 +93,10 @@ contract RedistributionEngine is Ownable, Guarded, IRedistributionEngine {
         minterB = minterB_;
     }
 
-    function wire(address attestation_, address council_) external onlyOwner {
+    function wire(address attestation_) external onlyOwner {
         if (attestation != address(0)) revert AlreadyWired();
         attestation = attestation_;
-        council = council_;
-        emit Wired(attestation_, council_);
+        emit Wired(attestation_);
     }
 
     function setDisputeWindow(uint32 window) external onlyOwner {
@@ -172,21 +167,6 @@ contract RedistributionEngine is Ownable, Guarded, IRedistributionEngine {
             moved = _treasuryInto(minterA, half) + _treasuryInto(minterB, evt.planned - half);
         }
         emit EventFinalized(eventId, moved);
-    }
-
-    /// @notice Council reversal during the dispute window. The trigger slot is
-    ///         returned to the incentive; the cooldown clock is not.
-    function reverse(uint256 eventId) external {
-        if (msg.sender != council) revert NotCouncil();
-        PendingEvent storage evt = events[eventId];
-        if (evt.status == EventStatus.None) revert UnknownEvent();
-        if (evt.status != EventStatus.Pending) revert NotPending();
-        if (block.timestamp >= uint256(evt.confirmedAt) + disputeWindow) {
-            revert DisputeWindowClosed();
-        }
-        evt.status = EventStatus.Reversed;
-        incentives.onReversed(evt.incentiveId);
-        emit EventReversed(eventId);
     }
 
     // -------------------------------------------------------------- internals

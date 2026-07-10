@@ -24,7 +24,4 @@ interface IIncentiveRegistry {
     function sourceCategory(uint256 id, bytes32 domainHash) external view returns (SourceCategory);
     /// @notice Bump trigger bookkeeping when a round confirms. EventAttestation only.
     function onTriggered(uint256 id) external;
-    /// @notice Roll back a trigger count when the council reverses an event.
-    ///         RedistributionEngine only. Cooldown is deliberately not rolled back.
-    function onReversed(uint256 id) external;
 }

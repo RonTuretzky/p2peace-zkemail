@@ -6,6 +6,7 @@ import {Deploy} from "../script/Deploy.s.sol";
 import {Community, Direction, EmailProof, SourceCategory} from "../src/Types.sol";
 import {IncentiveRegistry} from "../src/IncentiveRegistry.sol";
 import {IGroth16Verifier} from "../src/interfaces/IGroth16Verifier.sol";
+import {MockUSD} from "../src/mocks/MockUSD.sol";
 
 /// @notice Shared harness: full system deployed via the real Deploy script, DKIM
 ///         keys and blueprint patterns pre-registered, plus helpers to fabricate
@@ -37,6 +38,11 @@ abstract contract BaseTest is Test {
     // -- one DKIM key hash per domain (rotation tests can add more)
     function dkimKeyOf(bytes32 domainHash) internal pure returns (bytes32) {
         return keccak256(abi.encode("dkim-key", domainHash));
+    }
+
+    /// @dev Faucet for the test reserve (the test deployment always uses MockUSD).
+    function mintUsd(address to, uint256 amount) internal {
+        MockUSD(address(d.usd)).mint(to, amount);
     }
 
     function setUp() public virtual {
@@ -103,7 +109,7 @@ abstract contract BaseTest is Test {
         uint256 usdAmount
     ) internal {
         registerMember(wallet, community, seed);
-        d.usd.mint(wallet, usdAmount);
+        mintUsd(wallet, usdAmount);
         vm.startPrank(wallet);
         d.usd.approve(community == Community.A ? address(d.minterA) : address(d.minterB), usdAmount);
         (community == Community.A ? d.minterA : d.minterB).mintCitizen(usdAmount);

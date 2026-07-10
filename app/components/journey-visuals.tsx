@@ -279,7 +279,7 @@ export function VizDaylight() {
           </span>
         ))}
         <span className="ml-1 inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-1 text-[10px] font-bold text-primary">
-          <Scales size={12} weight="bold" /> council watching · 75% can reverse
+          <Scales size={12} weight="bold" /> public notice · guardian can pause
         </span>
       </div>
     </div>

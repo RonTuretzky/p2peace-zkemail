@@ -73,14 +73,14 @@ DDoSed.
        ▼                                 │                          ▼
 ┌──────────────┐                ┌────────┴─────────┐     ┌──────────────────────┐
 │CommunityPool │◀── slash/pay ──│ IncentiveRegistry │────▶│ RedistributionEngine │
-│  A and B     │                │ quadratic voting, │     │ 48h dispute window,  │
+│  A and B     │                │ quadratic voting, │     │ 48h notice window,   │
 │ equal-share  │                │ dual majority     │     │ pool-to-pool moves   │
 │  claims      │                └──────────────────┘     └──────────┬───────────┘
 └──────────────┘                                                    │
-       ▲                    ┌──────────────────┐         ┌──────────┴───────────┐
-       └────────────────────│  SanctionsEscrow │◀────────│   DisputeCouncil     │
-         milestone release  │  external donors │ reverse │   75% supermajority  │
-                            └──────────────────┘         └──────────────────────┘
+       ▲                    ┌──────────────────┐
+       └────────────────────│  SanctionsEscrow │
+         milestone release  │  external donors │
+                            └──────────────────┘
 ```
 
 Two ERC-20 **PeaceTokens** exist (Community A, Community B). A shared **Treasury**
@@ -231,9 +231,9 @@ We replace it with **opt-in staked exposure**:
 
 ```
 attestation thresholds met (within window)
-  → CONFIRMED, 48h dispute window opens, pools frozen for this event's amount
-  → DisputeCouncil may reverse with 75% supermajority during window
-  → else FINALIZED: pool transfer / treasury payout executes,
+  → CONFIRMED, 48h public-notice window opens (amount snapshotted)
+  → guardian may pause settlement (pause auto-expires; funds never at guardian's reach)
+  → FINALIZED: pool transfer / treasury payout executes,
     SanctionsEscrow milestones referencing this incentive release
 ```
 
@@ -261,21 +261,7 @@ to the beneficiary pool(s). After expiry with no trigger, the donor may reclaim.
 is the original's "escrow contracts + verification contracts + execution contracts"
 collapsed into one auditable primitive, with zkEmail as the verification layer.
 
-## 10. Peace-abiding businesses
-
-`BusinessRegistry`: a business applies with its wallet + metadata URI; certification is
-granted per community roll by member vote (simple majority of each community, 3-day
-vote — lighter-weight than incentives since it's reversible), revocable the same way.
-`PeaceToken.payBusiness(business, amount)` pays a certified business; if payer and
-business communities **differ**, the Treasury adds a `cooperationBonusBps` bonus to the
-business — the original's "cooperation bonus" on cross-border commerce. Total bonus
-outflow is budgeted at `epochBudgetBps` of the Treasury per `bonusEpoch`, so
-wash-trading a certified business skims at most ~1%/month before the revocation poll
-catches up (THREAT-MODEL.md §5.4).
-
----
-
-## 11. Repository layout
+## 10. Repository layout
 
 ```
 contracts/   Foundry project — all of the above, plus mocks and full test suite
@@ -286,7 +272,7 @@ app/         Next.js site: original concept site adapted to the zkEmail design,
 docs/        this file, IMPROVEMENTS.md, ZKEMAIL-DESIGN.md, THREAT-MODEL.md
 ```
 
-## 12. Deployment topology & parameters
+## 11. Deployment topology & parameters
 
 One `Deployment` (see `contracts/script/Deploy.s.sol`) wires:
 
@@ -297,9 +283,6 @@ One `Deployment` (see `contracts/script/Deploy.s.sol`) wires:
 | `maxRedistributionBps` per event | 500 (5% of pool) | yes |
 | discussion / voting period | 7d / 3d | yes |
 | participation quorum | 3000 (30%) | yes |
-| dispute window | 48h | yes |
-| council reversal threshold | 7500 (75%) | fixed |
+| public-notice window | 48h | yes |
 | membership duration / proof freshness | 365d / 90d | yes |
-| `cooperationBonusBps` | 200 (2%) | yes |
-| bonus `epochBudgetBps` / `bonusEpoch` | 100 (1% of Treasury) / 30d | yes |
 | guardian pause max duration | 14d | fixed |

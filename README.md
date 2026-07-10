@@ -40,13 +40,11 @@ addresses hydrate at runtime from the [`addresses` branch](../../tree/addresses)
   participation. Neither side can impose rules on the other.
 - **Events** — any newsletter subscriber on earth can attest: a zkEmail proof that a
   DKIM-signed email from an approved news source matches the incentive's pattern.
-  Confirmed events wait out a 48h dispute window (75% council supermajority can
-  reverse) before value moves.
+  Confirmed events sit in a 48h public-notice window (guardian pause is the
+  emergency brake) before value moves.
 - **External incentives** — states/NGOs/diaspora escrow funds against specific
   incentives ("tokenized sanctions relief"); tranches release automatically on
   finalized events, or return to the donor at expiry.
-- **Peace-abiding businesses** — dual-majority-certified merchants receive a Treasury
-  bonus on every cross-community payment.
 
 ## Why zkEmail beats zkTLS here
 
@@ -73,11 +71,11 @@ they already send DKIM-signed email. Full analysis: [docs/IMPROVEMENTS.md](docs/
 ZKEmailVerifier ── DKIMRegistry            (proof + key archive, pluggable Groth16 per blueprint)
 IdentityRegistry                           (nullifier roll, rotation/renewal, member counts)
 PeaceToken A/B ── PeaceMinter A/B          (reserve-backed 1:1, outsider premium, par flows)
-CommunityPool A/B                          (slashable corpus vs equal-per-member rewards)
+CommunityPool A/B                          (slashable pledge vs equal-per-member rewards)
 IncentiveRegistry                          (proposals, quadratic dual-majority voting)
 EventAttestation                           (newsletter proofs, rounds, distinct-source tally)
-RedistributionEngine ── DisputeCouncil     (48h dispute window, 75% reversal, execution)
-Treasury · SanctionsEscrow · BusinessRegistry
+RedistributionEngine                       (48h public-notice window, guarded execution)
+Treasury · SanctionsEscrow
 ```
 
 ### Build & test

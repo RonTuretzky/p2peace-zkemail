@@ -8,13 +8,11 @@ import { PeaceCalculator } from "@/components/home/peace-calculator"
  */
 const LIVE_TOOLS = [
   { day: "Day 0", href: "/verify", title: "Verify", body: "Prove citizenship from a government email — one inbox, one anonymous membership." },
-  { day: "Day 0", href: "/mint", title: "Join", body: "Get free demo dollars, then convert one-for-one — 90% stays yours, 10% becomes your community's pledge. Supporters abroad join at 2×." },
+  { day: "Day 0", href: "/mint", title: "Join", body: "Convert sDAI one-for-one — 90% stays yours, 10% becomes your community's pledge. Supporters abroad join at 2×." },
   { day: "Day 1–8", href: "/incentives", title: "Incentives", body: "Propose rules, vote quadratically, and see the dual-majority tallies both sides must pass." },
   { day: "Day 40", href: "/attest", title: "Attest", body: "Submit newsletter proofs source-by-source and watch the event tally fill." },
-  { day: "Day 40–42", href: "/council", title: "Council", body: "The dispute docket: countdowns, 75% reversal threshold, member voting." },
   { day: "Day 42", href: "/pools", title: "Pools", body: "Pool balances, event settlement countdowns, finalize, and claim your share." },
   { day: "Ongoing", href: "/escrow", title: "Escrow", body: "Donors lock sanctions relief against specific incentives; finalized events release it." },
-  { day: "Ongoing", href: "/business", title: "Business", body: "Dual-community certification and cross-community payments with a Treasury bonus." },
 ] as const
 
 const EXPLAINERS = [

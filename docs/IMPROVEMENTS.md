@@ -135,10 +135,10 @@ uncertain.
 - Proposal lifecycle: open proposing, no fee, 30-day rejection cooldown, 7-day
   discussion, 3-day vote.
 - Source-category thresholds and the 7-day same-event window.
-- 48h dispute window; 75% council supermajority.
+- 48h waiting window before settlement. *(The 75% dispute council was later removed; the guardian's auto-expiring pause is the remaining brake.)*
 - Sanctions-relief escrow with milestone release on verified events + donor expiry
   refund.
-- Business certification with cross-community cooperation bonus.
+- ~~Business certification with cross-community cooperation bonus~~ *(implemented, then removed by owner decision in July 2026).*
 - Guardian/emergency pause and timelocked parameter changes ("multi-sig requirements
   for system updates" in the original).
 

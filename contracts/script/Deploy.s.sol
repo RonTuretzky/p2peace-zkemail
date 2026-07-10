@@ -14,20 +14,28 @@ import {PeaceMinter} from "../src/PeaceMinter.sol";
 import {IncentiveRegistry} from "../src/IncentiveRegistry.sol";
 import {EventAttestation} from "../src/EventAttestation.sol";
 import {RedistributionEngine} from "../src/RedistributionEngine.sol";
-import {DisputeCouncil} from "../src/DisputeCouncil.sol";
 import {SanctionsEscrow} from "../src/SanctionsEscrow.sol";
-import {BusinessRegistry} from "../src/BusinessRegistry.sol";
 import {MockUSD} from "../src/mocks/MockUSD.sol";
 import {MockGroth16Verifier} from "../src/mocks/MockGroth16Verifier.sol";
 import {IGroth16Verifier} from "../src/interfaces/IGroth16Verifier.sol";
 
-/// @notice Full demo topology on a fresh chain. `admin` stands in for the timelocked
-///         governance owner; `guardian` for the emergency pauser. Real deployments
-///         replace the MockGroth16Verifier with per-blueprint compiled verifiers
-///         (see circuits/README.md) — nothing else changes.
+/// @notice Full topology on a fresh chain. `admin` stands in for the timelocked
+///         governance owner; `guardian` for the emergency pauser (the auto-expiring
+///         pause is the emergency brake on settlement).
+///
+///         Env knobs:
+///           RESERVE_TOKEN — address of an existing ERC20 to use as the reserve
+///                           (e.g. sDAI on Gnosis, 0xaf204776c7245bF4147c2612BF6e5972Ee483701);
+///                           unset → a MockUSD faucet token is deployed.
+///           DEMO_SETUP    — true → register the real-world demo domains below,
+///                           route both blueprints to the MockGroth16Verifier, and
+///                           compress governance windows to 10 minutes.
+///
+///         Real Groth16 verifiers (see circuits/README.md) replace the mock without
+///         touching anything else.
 contract Deploy is Script {
     struct Deployment {
-        MockUSD usd;
+        IERC20 usd;
         DKIMRegistry dkim;
         ZKEmailVerifier verifier;
         MockGroth16Verifier groth16;
@@ -42,64 +50,38 @@ contract Deploy is Script {
         IncentiveRegistry incentives;
         EventAttestation attestation;
         RedistributionEngine engine;
-        DisputeCouncil council;
         SanctionsEscrow escrow;
-        BusinessRegistry business;
     }
 
     function run() external returns (Deployment memory d) {
         address admin = vm.envOr("ADMIN", msg.sender);
         address guardian = vm.envOr("GUARDIAN", msg.sender);
+        address reserve = vm.envOr("RESERVE_TOKEN", address(0));
         vm.startBroadcast();
-        d = deploy(admin, guardian, msg.sender);
-        // DEMO_SETUP=true configures a usable public demo: mock proofs accepted for
-        // the well-known demo domains, and short governance cycles so the full
-        // propose → vote → attest → dispute → claim loop completes in under an
+        d = deploy(admin, guardian, msg.sender, reserve);
+        // DEMO_SETUP=true configures a walkable public demo: mock proofs accepted
+        // for the configured domains, and short governance cycles so the full
+        // propose → vote → attest → settle → claim loop completes in under an
         // hour. Requires ADMIN == the broadcasting key.
         if (vm.envOr("DEMO_SETUP", false)) demoSetup(d);
         vm.stopBroadcast();
     }
 
-    // ---- demo fixtures (mirrored in test/Base.t.sol and app/lib/demo.ts) ----
-    bytes32 internal constant CITIZENSHIP_PATTERN = keccak256("p2peace/citizenship-v1");
-    bytes32 internal constant NEWS_PATTERN = keccak256("p2peace/news-event-v1:demo-keywords");
-
-    function demoDomains() public pure returns (bytes32[9] memory) {
-        return [
-            keccak256("taxes.gov-a.example"), //          [0] gov A
-            keccak256("id.gov-b.example"), //             [1] gov B
-            keccak256("alerts.nation-a-news.example"), // [2..3] community-A press
-            keccak256("daily.nation-a-press.example"),
-            keccak256("newsletter.nation-b-news.example"), // [4..5] community-B press
-            keccak256("wire.nation-b-agency.example"),
-            keccak256("newsletters.intl-wire.example"), // [6..8] international
-            keccak256("breaking.global-press.example"),
-            keccak256("digest.world-report.example")
-        ];
-    }
-
-    function demoSetup(Deployment memory d) public {
-        bytes32[9] memory domains = demoDomains();
-        for (uint256 i = 0; i < domains.length; i++) {
-            d.dkim.setKey(domains[i], keccak256(abi.encode("dkim-key", domains[i])), 0, 0);
-        }
-        d.verifier.setVerifier(CITIZENSHIP_PATTERN, IGroth16Verifier(address(d.groth16)));
-        d.verifier.setVerifier(NEWS_PATTERN, IGroth16Verifier(address(d.groth16)));
-        d.identity.setCitizenshipPattern(CITIZENSHIP_PATTERN, true);
-        d.identity.setDomain(domains[0], Community.A);
-        d.identity.setDomain(domains[1], Community.B);
-        d.incentives.setParams(10 minutes, 10 minutes, 3_000, 500);
-        d.engine.setDisputeWindow(10 minutes);
-    }
-
-    /// @dev Also called from tests so the wiring is exercised end to end.
+    /// @dev Test-friendly overload: fresh MockUSD reserve.
     function deploy(address admin, address guardian, address deployer)
+        public
+        returns (Deployment memory d)
+    {
+        return deploy(admin, guardian, deployer, address(0));
+    }
+
+    function deploy(address admin, address guardian, address deployer, address reserve)
         public
         returns (Deployment memory d)
     {
         // Ownable contracts are constructed with the deployer as interim owner so
         // this function can wire them, then handed to `admin`.
-        d.usd = new MockUSD();
+        d.usd = reserve == address(0) ? IERC20(address(new MockUSD())) : IERC20(reserve);
         d.dkim = new DKIMRegistry(deployer, guardian);
         d.verifier = new ZKEmailVerifier(deployer, d.dkim);
         d.groth16 = new MockGroth16Verifier();
@@ -107,16 +89,14 @@ contract Deploy is Script {
 
         d.tokenA = new PeaceToken("Peace Token A", "PEACE-A", Community.A, deployer);
         d.tokenB = new PeaceToken("Peace Token B", "PEACE-B", Community.B, deployer);
-        d.treasury = new Treasury(deployer, IERC20(address(d.usd)));
+        d.treasury = new Treasury(deployer, d.usd);
 
         d.poolA = new CommunityPool(deployer, d.tokenA, Community.A, d.identity);
         d.poolB = new CommunityPool(deployer, d.tokenB, Community.B, d.identity);
-        d.minterA = new PeaceMinter(
-            deployer, IERC20(address(d.usd)), d.tokenA, d.poolA, d.identity, address(d.treasury)
-        );
-        d.minterB = new PeaceMinter(
-            deployer, IERC20(address(d.usd)), d.tokenB, d.poolB, d.identity, address(d.treasury)
-        );
+        d.minterA =
+            new PeaceMinter(deployer, d.usd, d.tokenA, d.poolA, d.identity, address(d.treasury));
+        d.minterB =
+            new PeaceMinter(deployer, d.usd, d.tokenB, d.poolB, d.identity, address(d.treasury));
 
         d.incentives = new IncentiveRegistry(
             deployer, d.identity, IERC20(address(d.tokenA)), IERC20(address(d.tokenB))
@@ -125,7 +105,7 @@ contract Deploy is Script {
         d.engine = new RedistributionEngine(
             deployer,
             guardian,
-            IERC20(address(d.usd)),
+            d.usd,
             d.incentives,
             d.treasury,
             d.poolA,
@@ -133,13 +113,7 @@ contract Deploy is Script {
             d.minterA,
             d.minterB
         );
-        d.council = new DisputeCouncil(admin, d.engine);
-        d.escrow = new SanctionsEscrow(
-            IERC20(address(d.usd)), d.engine, d.minterA, d.minterB, address(d.treasury)
-        );
-        d.business = new BusinessRegistry(
-            admin, d.identity, d.treasury, IERC20(address(d.tokenA)), IERC20(address(d.tokenB))
-        );
+        d.escrow = new SanctionsEscrow(d.usd, d.engine, d.minterA, d.minterB, address(d.treasury));
 
         // ---- wiring
         d.tokenA.setMinter(address(d.minterA));
@@ -151,11 +125,10 @@ contract Deploy is Script {
         d.minterA.setParMinter(address(d.escrow), true);
         d.minterB.setParMinter(address(d.engine), true);
         d.minterB.setParMinter(address(d.escrow), true);
-        d.incentives.wire(address(d.attestation), address(d.engine));
+        d.incentives.wire(address(d.attestation));
         d.attestation.setEngine(d.engine);
-        d.engine.wire(address(d.attestation), address(d.council));
+        d.engine.wire(address(d.attestation));
         d.treasury.setSpender(address(d.engine), true);
-        d.treasury.setSpender(address(d.business), true);
 
         // ---- hand ownership to governance
         d.dkim.transferOwnership(admin);
@@ -171,5 +144,42 @@ contract Deploy is Script {
         d.incentives.transferOwnership(admin);
         d.attestation.transferOwnership(admin);
         d.engine.transferOwnership(admin);
+    }
+
+    // ---- demo fixtures (mirrored in app/lib/demo.ts) --------------------------
+    //
+    // Real-world domains for the live demo:
+    //   community A gov:  btl.gov.il          (Israeli National Insurance Institute,
+    //                                          sends from noreply@btl.gov.il)
+    //   community B gov:  gov.ps              (Palestinian Authority portal)
+    //   A-side press:     timesofisrael.com   (Times of Israel "Daily Edition" newsletter)
+    //   B-side press:     wafa.ps             (WAFA — Palestine News Agency)
+    //   international:    reuters.com, apnews.com  (both run daily email briefings)
+    bytes32 internal constant CITIZENSHIP_PATTERN = keccak256("p2peace/citizenship-v1");
+    bytes32 internal constant NEWS_PATTERN = keccak256("p2peace/news-event-v1:demo-keywords");
+
+    function demoDomains() public pure returns (bytes32[6] memory) {
+        return [
+            keccak256("btl.gov.il"), //        [0] gov A
+            keccak256("gov.ps"), //            [1] gov B
+            keccak256("timesofisrael.com"), // [2] A-side press
+            keccak256("wafa.ps"), //           [3] B-side press
+            keccak256("reuters.com"), //       [4] international
+            keccak256("apnews.com") //         [5] international
+        ];
+    }
+
+    function demoSetup(Deployment memory d) public {
+        bytes32[6] memory domains = demoDomains();
+        for (uint256 i = 0; i < domains.length; i++) {
+            d.dkim.setKey(domains[i], keccak256(abi.encode("dkim-key", domains[i])), 0, 0);
+        }
+        d.verifier.setVerifier(CITIZENSHIP_PATTERN, IGroth16Verifier(address(d.groth16)));
+        d.verifier.setVerifier(NEWS_PATTERN, IGroth16Verifier(address(d.groth16)));
+        d.identity.setCitizenshipPattern(CITIZENSHIP_PATTERN, true);
+        d.identity.setDomain(domains[0], Community.A);
+        d.identity.setDomain(domains[1], Community.B);
+        d.incentives.setParams(10 minutes, 10 minutes, 3_000, 500);
+        d.engine.setDisputeWindow(10 minutes);
     }
 }

@@ -34,7 +34,7 @@ contract EconomyTest is BaseTest {
 
     /// @dev Fund `who` with mUSD approved for `spender`.
     function fund(address who, address spender, uint256 amount) internal {
-        d.usd.mint(who, amount);
+        mintUsd(who, amount);
         vm.prank(who);
         d.usd.approve(spender, amount);
     }
@@ -549,7 +549,7 @@ contract EconomyTest is BaseTest {
     // ============================================================== Treasury
 
     function test_treasury_releaseOnlySpenders() public {
-        d.usd.mint(address(d.treasury), 100e18);
+        mintUsd(address(d.treasury), 100e18);
 
         vm.prank(rando);
         vm.expectRevert(Treasury.NotSpender.selector);

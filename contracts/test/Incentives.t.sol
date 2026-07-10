@@ -10,7 +10,7 @@ import {IIncentiveRegistry} from "../src/interfaces/IIncentiveRegistry.sol";
 
 /// @notice Deep coverage of IncentiveRegistry: proposal validation, quadratic
 ///         voting, dual-majority + quorum finalization, stake withdrawal, and
-///         the attestation/engine trigger callbacks.
+///         the attestation trigger callback.
 contract IncentivesTest is BaseTest {
     address internal alice;
     address internal avi;
@@ -31,8 +31,7 @@ contract IncentivesTest is BaseTest {
     event Finalized(uint256 indexed id, bool passed);
     event StakeWithdrawn(uint256 indexed id, bytes32 indexed nullifier, uint256 amount);
     event Triggered(uint256 indexed id, uint16 triggerCount);
-    event TriggerReversed(uint256 indexed id, uint16 triggerCount);
-    event Wired(address attestation, address engine);
+    event Wired(address attestation);
 
     function setUp() public override {
         super.setUp();
@@ -299,31 +298,27 @@ contract IncentivesTest is BaseTest {
     // ================================================================== wiring
 
     function test_wire_onceOnly_andOnlyOwner() public {
-        // Deploy script already wired the live registry.
         assertEq(d.incentives.attestation(), address(d.attestation));
-        assertEq(d.incentives.engine(), address(d.engine));
         vm.expectRevert(IncentiveRegistry.AlreadyWired.selector);
-        d.incentives.wire(makeAddr("att2"), makeAddr("eng2"));
+        d.incentives.wire(makeAddr("att2"));
 
-        // Fresh instance: non-owner blocked, owner wires once, second wire reverts.
         IncentiveRegistry fresh = new IncentiveRegistry(
             address(this), d.identity, IERC20(address(d.tokenA)), IERC20(address(d.tokenB))
         );
         address att = makeAddr("att");
-        address eng = makeAddr("eng");
+        vm.prank(makeAddr("stranger"));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                Ownable.OwnableUnauthorizedAccount.selector, makeAddr("stranger")
+            )
+        );
+        fresh.wire(att);
 
-        vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
-        fresh.wire(att, eng);
-
-        vm.expectEmit(false, false, false, true, address(fresh));
-        emit Wired(att, eng);
-        fresh.wire(att, eng);
+        fresh.wire(att);
         assertEq(fresh.attestation(), att);
-        assertEq(fresh.engine(), eng);
 
         vm.expectRevert(IncentiveRegistry.AlreadyWired.selector);
-        fresh.wire(att, eng);
+        fresh.wire(att);
     }
 
     // ================================================================ setParams
@@ -726,7 +721,7 @@ contract IncentivesTest is BaseTest {
         assertEq(d.tokenA.balanceOf(alice), before + 1e18);
     }
 
-    // ==================================================== onTriggered/onReversed
+    // =============================================================== onTriggered
 
     function test_onTriggered_accessAndBookkeeping() public {
         uint256 id = d.incentives.propose(defaultProposal(Direction.HarmfulByA));
@@ -751,35 +746,6 @@ contract IncentivesTest is BaseTest {
         assertEq(v.lastTriggeredAt, uint64(t0 + 12345));
     }
 
-    function test_onReversed_accessAndFloorAtZero() public {
-        uint256 id = d.incentives.propose(defaultProposal(Direction.HarmfulByA));
-
-        vm.prank(makeAddr("intruder"));
-        vm.expectRevert(IncentiveRegistry.NotEngine.selector);
-        d.incentives.onReversed(id);
-
-        // Even the attestation contract may not reverse.
-        vm.prank(address(d.attestation));
-        vm.expectRevert(IncentiveRegistry.NotEngine.selector);
-        d.incentives.onReversed(id);
-
-        // Reversal at zero does not underflow.
-        vm.expectEmit(true, false, false, true, address(d.incentives));
-        emit TriggerReversed(id, 0);
-        vm.prank(address(d.engine));
-        d.incentives.onReversed(id);
-        assertEq(d.incentives.getIncentive(id).triggerCount, 0);
-
-        // Trigger twice, reverse once -> net 1.
-        vm.startPrank(address(d.attestation));
-        d.incentives.onTriggered(id);
-        d.incentives.onTriggered(id);
-        vm.stopPrank();
-        vm.prank(address(d.engine));
-        d.incentives.onReversed(id);
-        assertEq(d.incentives.getIncentive(id).triggerCount, 1);
-    }
-
     function test_isActive_falseAtMaxTriggers_reversalReactivates() public {
         uint256 id = d.incentives.propose(defaultProposal(Direction.HarmfulByA)); // maxTriggers 3
         address[] memory votersA = new address[](2);
@@ -798,10 +764,5 @@ contract IncentivesTest is BaseTest {
         d.incentives.onTriggered(id);
         vm.stopPrank();
         assertFalse(d.incentives.isActive(id), "exhausted at 3/3");
-
-        // Council reversal frees a slot again.
-        vm.prank(address(d.engine));
-        d.incentives.onReversed(id);
-        assertTrue(d.incentives.isActive(id), "2/3 after reversal");
     }
 }

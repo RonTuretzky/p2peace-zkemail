@@ -61,7 +61,6 @@ contract IncentiveRegistry is Ownable, IIncentiveRegistry {
     IERC20 public immutable tokenB;
 
     address public attestation; // may bump trigger bookkeeping
-    address public engine; //      may roll back on reversal
 
     uint32 public discussionPeriod = 7 days;
     uint32 public votingPeriod = 3 days;
@@ -86,8 +85,7 @@ contract IncentiveRegistry is Ownable, IIncentiveRegistry {
     event Finalized(uint256 indexed id, bool passed);
     event StakeWithdrawn(uint256 indexed id, bytes32 indexed nullifier, uint256 amount);
     event Triggered(uint256 indexed id, uint16 triggerCount);
-    event TriggerReversed(uint256 indexed id, uint16 triggerCount);
-    event Wired(address attestation, address engine);
+    event Wired(address attestation);
     event ParamsSet(uint32 discussion, uint32 voting, uint16 quorumBps, uint16 maxBps);
 
     error AlreadyWired();
@@ -102,7 +100,6 @@ contract IncentiveRegistry is Ownable, IIncentiveRegistry {
     error NotFinalized();
     error NothingToWithdraw();
     error NotAttestation();
-    error NotEngine();
 
     constructor(address owner_, IIdentityRegistry registry_, IERC20 tokenA_, IERC20 tokenB_)
         Ownable(owner_)
@@ -112,11 +109,10 @@ contract IncentiveRegistry is Ownable, IIncentiveRegistry {
         tokenB = tokenB_;
     }
 
-    function wire(address attestation_, address engine_) external onlyOwner {
+    function wire(address attestation_) external onlyOwner {
         if (attestation != address(0)) revert AlreadyWired();
         attestation = attestation_;
-        engine = engine_;
-        emit Wired(attestation_, engine_);
+        emit Wired(attestation_);
     }
 
     function setParams(
@@ -286,17 +282,6 @@ contract IncentiveRegistry is Ownable, IIncentiveRegistry {
         inc.triggerCount += 1;
         inc.lastTriggeredAt = uint64(block.timestamp);
         emit Triggered(id, inc.triggerCount);
-    }
-
-    /// @dev Council reversal invalidates the event, so it should not consume a
-    ///      trigger slot. The cooldown clock deliberately stays — it is the
-    ///      anti-refire throttle, and a reversed event is exactly the moment to
-    ///      throttle.
-    function onReversed(uint256 id) external {
-        if (msg.sender != engine) revert NotEngine();
-        Incentive storage inc = _incentives[id];
-        if (inc.triggerCount > 0) inc.triggerCount -= 1;
-        emit TriggerReversed(id, inc.triggerCount);
     }
 
     // ------------------------------------------------------------------ views

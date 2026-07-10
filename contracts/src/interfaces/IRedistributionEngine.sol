@@ -7,8 +7,6 @@ interface IRedistributionEngine {
     function onEventConfirmed(uint256 incentiveId, uint256 roundId)
         external
         returns (uint256 eventId);
-    /// @notice Council reversal during the dispute window.
-    function reverse(uint256 eventId) external;
     function isFinalized(uint256 eventId) external view returns (bool);
     function incentiveOf(uint256 eventId) external view returns (uint256);
 }

@@ -193,12 +193,13 @@ export function Story() {
                 <VizDaylight />
               </VisualFrame>
             }
-            link={{ href: "/council", label: "See the council docket" }}
+            link={{ href: "/pools", label: "Watch the clock live" }}
           >
             <p>
               Confirmation starts a clock, not a transfer. For 48 hours the event sits in
-              daylight, and a dispute council seated from both communities can reverse it with a
-              75% supermajority. Cryptography narrows what needs judging; humans still judge.
+              daylight where anyone can inspect it, and a guardian can pause settlement if
+              something looks wrong — a brake that expires on its own, so no one can hold the
+              system hostage. Cryptography narrows what needs judging; daylight does the rest.
             </p>
           </Chapter>
 
@@ -251,16 +252,14 @@ export function Story() {
               <Link href="/mint" className="font-medium text-primary hover:underline">
                 supporters worldwide can join at double the rate
               </Link>{" "}
-              (half backs their money, half supports the shared Treasury — support, not a say),{" "}
+              (half backs their money, half supports the shared Treasury — support, not a say),
+              and{" "}
               <Link href="/escrow" className="font-medium text-primary hover:underline">
                 donors pre-commit sanctions relief
               </Link>{" "}
-              that releases automatically on verified milestones,{" "}
-              <Link href="/business" className="font-medium text-primary hover:underline">
-                businesses certified by both communities
-              </Link>{" "}
-              earn a bonus on every cross-community sale — and whole towns can join too, twin
-              municipalities pooling for shared water, roads, and schools.
+              that releases automatically on verified milestones. Businesses on both sides can
+              simply accept the money — and whole towns can join too, twin municipalities pooling
+              for shared water, roads, and schools.
             </p>
           </Chapter>
 
@@ -275,8 +274,8 @@ export function Story() {
           >
             <p>
               Amira's greengrocer takes community money. So does Boaz's mechanic, then a
-              pharmacy, then a landlord or two. Every certified business makes it a little more
-              normal, and every cross-line sale earns that small bonus from the Treasury.
+              pharmacy, then a landlord or two. Every shop that accepts it makes it a little
+              more normal — especially the ones serving customers from both sides of the line.
             </p>
             <p>
               Here is the quiet part: every purchase made in community money is value that now

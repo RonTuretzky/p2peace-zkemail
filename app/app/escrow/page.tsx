@@ -103,7 +103,7 @@ const STEPS: ExplainerStep[] = [
     key: "watch",
     short: "Watch",
     title: "The chain watches the news, not a diplomat",
-    body: "The tranche just sits there, in public, waiting. The only key that fits its lock is a finalized event of that exact incentive — the same newsletter-proof pipeline the peace pools use: attestations from both communities and international press, then a dispute window the council can veto. No committee meets to decide whether conditions were 'really' met.",
+    body: "The tranche just sits there, in public, waiting. The only key that fits its lock is a finalized event of that exact incentive — the same newsletter-proof pipeline the peace pools use: attestations from both communities and international press, then a public-notice window before anything moves. No committee meets to decide whether conditions were 'really' met.",
     chip: "Same evidence pipeline as the peace pools",
     icon: Binoculars,
   },
@@ -399,13 +399,13 @@ function EscrowInner() {
 
   /* -------- balances / allowance -------- */
   const usdBal = useReadContract({
-    ...contract.mockUsd(),
+    ...contract.reserve(),
     functionName: "balanceOf",
     args: address ? [address] : undefined,
     query: { enabled: !!address },
   })
   const allowance = useReadContract({
-    ...contract.mockUsd(),
+    ...contract.reserve(),
     functionName: "allowance",
     args: address ? [address, escrow.address] : undefined,
     query: { enabled: !!address },
@@ -450,7 +450,7 @@ function EscrowInner() {
     reset()
     setLastAction("approve")
     writeContract({
-      ...contract.mockUsd(),
+      ...contract.reserve(),
       functionName: "approve",
       args: [escrow.address, amountWei],
     })
@@ -478,9 +478,9 @@ function EscrowInner() {
 
   return (
     <div className="mx-auto mt-10 max-w-5xl space-y-6">
-      <PrereqNote met={hasUsd} href="/mint" cta="Get test mUSD">
-        Escrow deposits are made in mUSD, the demo reserve asset — your balance is zero. Grab
-        1,000 test mUSD from the faucet on the mint page first.
+      <PrereqNote met={hasUsd} href="/mint" cta="Get test sDAI">
+        Escrow deposits are made in sDAI, the demo reserve asset — your balance is zero. Grab
+        sDAI first — swap xDAI on CoW (link on the mint page).
       </PrereqNote>
 
       {/* -------- deposit -------- */}
@@ -545,7 +545,7 @@ function EscrowInner() {
               </p>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Amount (mUSD)</label>
+              <label className="mb-1 block text-sm font-medium">Amount (sDAI)</label>
               <input
                 type="number"
                 min="0"
@@ -554,7 +554,7 @@ function EscrowInner() {
                 className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               />
               <p className="mt-1 text-xs text-muted-foreground">
-                Your balance: {fmt(usdBal.data as bigint | undefined)} mUSD
+                Your balance: {fmt(usdBal.data as bigint | undefined)} sDAI
               </p>
             </div>
           </div>
@@ -592,7 +592,7 @@ function EscrowInner() {
               disabled={amountWei === 0n}
               onClick={approve}
             >
-              Approve {amount || "0"} mUSD for escrow
+              Approve {amount || "0"} sDAI for escrow
             </TxButton>
           ) : (
             <TxButton
@@ -601,7 +601,7 @@ function EscrowInner() {
               disabled={amountWei === 0n || !incentiveId}
               onClick={deposit}
             >
-              Escrow {amount || "0"} mUSD against incentive #{incentiveId || "—"}
+              Escrow {amount || "0"} sDAI against incentive #{incentiveId || "—"}
             </TxButton>
           )}
 
@@ -675,7 +675,7 @@ function EscrowInner() {
             </p>
           )}
           {receipt.isSuccess && lastAction === "reclaim" && (
-            <p className="text-sm text-primary">Reclaimed — the mUSD is back in your wallet.</p>
+            <p className="text-sm text-primary">Reclaimed — the sDAI is back in your wallet.</p>
           )}
         </CardContent>
       </Card>
@@ -748,7 +748,7 @@ function TrancheRow({
             {isDonor && <Badge variant="outline">Your deposit</Badge>}
           </div>
           <div className="text-xs text-muted-foreground">
-            {fmt(t.amount)} mUSD → {BENEFICIARY_LABEL[t.beneficiary]} · conditioned on incentive #
+            {fmt(t.amount)} sDAI → {BENEFICIARY_LABEL[t.beneficiary]} · conditioned on incentive #
             {t.incentiveId.toString()}
             {incentive?.descriptionURI ? ` (“${incentive.descriptionURI}”)` : ""} · donor{" "}
             {short(t.donor)}

@@ -15,16 +15,21 @@ import { Community, SourceCategory } from "./chains"
 // keccak256(lowercase domain) — must match Deploy.s.sol demoDomains().
 const domainHash = (d: string) => keccak256(toBytes(d))
 
+/**
+ * Real-world demo domains (registered on the live deployment):
+ *  - govA: btl.gov.il — Israeli National Insurance Institute (sends from
+ *    noreply@btl.gov.il — the email virtually every Israeli resident receives)
+ *  - govB: gov.ps — Palestinian Authority portal
+ *  - newsA: timesofisrael.com — Times of Israel "Daily Edition" email newsletter
+ *  - newsB: wafa.ps — WAFA, Palestine News Agency
+ *  - intl: reuters.com, apnews.com — both run daily email briefings
+ */
 export const DEMO_DOMAINS = {
-  govA: "taxes.gov-a.example",
-  govB: "id.gov-b.example",
-  newsA: ["alerts.nation-a-news.example", "daily.nation-a-press.example"],
-  newsB: ["newsletter.nation-b-news.example", "wire.nation-b-agency.example"],
-  intl: [
-    "newsletters.intl-wire.example",
-    "breaking.global-press.example",
-    "digest.world-report.example",
-  ],
+  govA: "btl.gov.il",
+  govB: "gov.ps",
+  newsA: ["timesofisrael.com"],
+  newsB: ["wafa.ps"],
+  intl: ["reuters.com", "apnews.com"],
 } as const
 
 export const CITIZENSHIP_PATTERN = keccak256(toBytes("p2peace/citizenship-v1"))

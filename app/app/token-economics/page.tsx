@@ -20,7 +20,7 @@ const POOL_RULES = [
   {
     can: false,
     title: "Your wallet balance is untouchable",
-    body: "The 90% in your wallet is never slashable, never freezable, never votable-away. No incentive, no council decision, no governance vote can reach it. If you don't like where things are heading, redeem 1:1 and walk.",
+    body: "The 90% in your wallet is never slashable, never freezable, never votable-away. No incentive and no governance vote can reach it. If you don't like where things are heading, redeem 1:1 and walk.",
   },
   {
     can: false,
@@ -96,7 +96,7 @@ export default function TokenEconomicsPage() {
           <SectionHeading
             chip="Follow the money"
             title="Two ways in, two very different splits"
-            lede="The same 100 mUSD deposit does different work depending on who you are. Citizens get full value with a peace stake; outsiders get half value and half solidarity."
+            lede="The same 100 sDAI deposit does different work depending on who you are. Citizens get full value with a peace stake; outsiders get half value and half solidarity."
           />
 
           <div className="mx-auto mt-10 grid gap-6 lg:grid-cols-2">
@@ -127,7 +127,7 @@ export default function TokenEconomicsPage() {
               <h3 className="font-display text-lg font-bold">An outsider mints 100 mUSD</h3>
               <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
                 No identity proof, so the rate is 2× par: 50 tokens are minted 1:1 against half the
-                payment, and the other 50 mUSD goes to the shared Treasury — the fund that pays
+                payment, and the other 50 sDAI goes to the shared Treasury — the fund that pays
                 every positive-event reward and cooperation bonus. Money in, no governance power:
                 outsiders hold, pay, and redeem, but never vote.
               </p>
@@ -135,7 +135,7 @@ export default function TokenEconomicsPage() {
                 <Bar
                   segments={[
                     { pct: 50, label: "50 tokens → your wallet (backed 1:1)", cls: "bg-accent/70 text-accent-foreground" },
-                    { pct: 50, label: "50 mUSD → Treasury", cls: "bg-primary text-primary-foreground" },
+                    { pct: 50, label: "50 sDAI → Treasury", cls: "bg-primary text-primary-foreground" },
                   ]}
                 />
                 <p className="mt-2 text-xs text-muted-foreground">
@@ -147,8 +147,8 @@ export default function TokenEconomicsPage() {
           </div>
           <HonestyNote>
             Numbers are the demo defaults (10% stake, 2× outsider premium) read from the deployed
-            PeaceMinter contracts; a production deployment would set its own via governance. mUSD is
-            the demo's mock reserve asset — grab some from the faucet on the mint page.
+            PeaceMinter contracts; a production deployment would set its own via governance. The
+            reserve is real sDAI on Gnosis — swap a little xDAI to try it, and keep amounts small.
           </HonestyNote>
         </div>
 
@@ -183,7 +183,7 @@ export default function TokenEconomicsPage() {
         <div className="mx-auto mt-20 max-w-5xl">
           <SectionHeading
             chip="Where value lands"
-            title="Equal dividends and subsidized cooperation"
+            title="Equal shares, per person"
             lede="Everything that flows into a pool leaves it the same way: one equal share per verified person."
           />
           <div className="mx-auto mt-10 grid gap-6 sm:grid-cols-2">
@@ -195,20 +195,6 @@ export default function TokenEconomicsPage() {
                 tokens to a pool with 1,000 members is exactly 5 tokens each. Peace revenue is a
                 dividend of citizenship, not a return on capital, and claims follow your identity
                 even if you rotate wallets.
-              </p>
-            </div>
-            <div className="rounded-3xl border-2 border-border bg-card p-6">
-              <h3 className="font-display text-lg font-bold">The cooperation bonus, budget-capped</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                Pay a certified business across the community line and the Treasury adds a 2% bonus
-                on top — commerce across the divide is subsidized, not taxed. To keep enthusiasm
-                from draining the fund, each epoch snapshots a budget of 1% of the Treasury; once an
-                epoch's budget is spent, payments still clear but bonuses pause until the next epoch
-                rolls. Try it live at{" "}
-                <Link href="/business" className="font-medium text-primary underline underline-offset-4">
-                  /business
-                </Link>
-                .
               </p>
             </div>
           </div>
@@ -239,7 +225,7 @@ export default function TokenEconomicsPage() {
                 The design borrows a hard lesson from game theory: peace holds when conflict
                 costs both sides more every year. Each verified harmful event moves the
                 responsible side&apos;s pledge; each year of adoption makes the national
-                currency matter less; each certified business deepens what both sides would
+                currency matter less; each business that accepts community money deepens what both sides would
                 lose. Escalation becomes a choice that punishes its chooser twice — immediately
                 through the pledge, and structurally through an economy that keeps walking away.
               </p>
@@ -269,7 +255,7 @@ export default function TokenEconomicsPage() {
         <div className="mx-auto mt-16 flex max-w-3xl flex-col items-center gap-4 rounded-3xl border-2 border-primary/40 bg-card p-8 text-center">
           <h2 className="font-display text-2xl font-bold">Watch the splits happen on-chain</h2>
           <p className="text-sm text-muted-foreground">
-            Get free demo dollars and see the 90/10 split land in real balances, then watch both
+            Convert a little sDAI and see the 90/10 split land in real balances, then watch both
             pools' pledges and claimable shares move as events settle.
           </p>
           <div className="flex flex-wrap justify-center gap-3">

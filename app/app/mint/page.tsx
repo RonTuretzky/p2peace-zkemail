@@ -11,7 +11,7 @@ import { ConnectGate, FlowHeader, TxButton, useMembership } from "@/components/f
 import { JourneyBar, HonestyNote, PrereqNote } from "@/components/explainer"
 import { VisualFrame, VizPledge } from "@/components/journey-visuals"
 import { contract } from "@/lib/contracts"
-import { Community } from "@/lib/chains"
+import { Community, RESERVE } from "@/lib/chains"
 import { fmt } from "@/lib/format"
 
 export default function MintPage() {
@@ -38,7 +38,7 @@ export default function MintPage() {
       </ConnectGate>
       <HonestyNote>
         Honest limit: every unit of community money is matched by real money sitting in reserve,
-        and you can cash back out at any time — except the 10% pledge. The pledge is{" "}
+        and you can cash back out to sDAI at any time — except the 10% pledge. The pledge is{" "}
         <em>not withdrawable</em> by you: it stays as your community&apos;s promise, or goes
         toward repair on the other side after a verified harmful event. That one-way door is what
         makes the promise worth believing.
@@ -60,7 +60,7 @@ function MintInner() {
   const community = isCitizen ? membership.community : Community.A
 
   const usdBal = useReadContract({
-    ...contract.mockUsd(),
+    ...contract.reserve(),
     functionName: "balanceOf",
     args: address ? [address] : undefined,
     query: { enabled: !!address },
@@ -72,7 +72,7 @@ function MintInner() {
     query: { enabled: !!address },
   })
   const allowance = useReadContract({
-    ...contract.mockUsd(),
+    ...contract.reserve(),
     functionName: "allowance",
     args: address ? [address, contract.minter(community).address] : undefined,
     query: { enabled: !!address },
@@ -95,15 +95,9 @@ function MintInner() {
   })()
   const needsApproval = (allowance.data ?? 0n) < amountWei
 
-  const faucet = () =>
-    writeContract({
-      ...contract.mockUsd(),
-      functionName: "mint",
-      args: [address!, parseUnits("1000", 18)],
-    })
   const approve = () =>
     writeContract({
-      ...contract.mockUsd(),
+      ...contract.reserve(),
       functionName: "approve",
       args: [contract.minter(community).address, amountWei],
     })
@@ -128,10 +122,10 @@ function MintInner() {
           <CardTitle className="flex items-center gap-2">
             <Coins className="h-5 w-5 text-primary" /> Balances
           </CardTitle>
-          <CardDescription>Demo dollars and your community money.</CardDescription>
+          <CardDescription>Your sDAI and your community money.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Row label="Demo dollars (mUSD)" value={fmt(usdBal.data as bigint)} />
+          <Row label="sDAI (reserve)" value={fmt(usdBal.data as bigint)} />
           <Row
             label={community === Community.A ? "Community A money (PEACE-A)" : "Community B money (PEACE-B)"}
             value={fmt(tokBal.data as bigint)}
@@ -144,9 +138,14 @@ function MintInner() {
               </Badge>
             }
           />
-          <TxButton variant="outline" className="w-full" pending={pending} onClick={faucet}>
-            <Droplets className="mr-2 h-4 w-4" /> Get 1,000 free demo dollars
-          </TxButton>
+          <a
+            href={RESERVE.getUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:border-primary/50"
+          >
+            <Droplets className="h-4 w-4 text-primary" /> Get sDAI (swap xDAI on CoW)
+          </a>
           {!isCitizen && (
             <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
               You are not verified yet, so you join at the supporter rate and cannot
@@ -167,7 +166,7 @@ function MintInner() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <label className="block text-sm font-medium">Amount (mUSD)</label>
+          <label className="block text-sm font-medium">Amount (sDAI)</label>
           <input
             type="number"
             min="0"
@@ -178,7 +177,7 @@ function MintInner() {
           <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
             {isCitizen ? (
               <>
-                Read it like this: of your {amount || "0"} mUSD, {" "}
+                Read it like this: of your {amount || "0"} sDAI, {" "}
                 <span className="font-medium text-foreground">90% lands in your wallet</span> and{" "}
                 <span className="font-medium text-foreground">10% becomes your community&apos;s pledge</span>.
                 The largest amount an event can ever move from the pool is 5% of it — and only if
@@ -186,7 +185,7 @@ function MintInner() {
               </>
             ) : (
               <>
-                Read it like this: as a supporter you put in {amount || "0"} and receive community
+                Read it like this: as a supporter you put in {amount || "0"} sDAI and receive community
                 money worth half that — the other half supports the shared Treasury that rewards
                 steps toward peace. It is a donation with a receipt, not an investment.
               </>
@@ -194,7 +193,7 @@ function MintInner() {
           </p>
           {needsApproval ? (
             <TxButton className="w-full" pending={pending} onClick={approve}>
-              Approve {amount || "0"} mUSD
+              Approve {amount || "0"} sDAI
             </TxButton>
           ) : (
             <TxButton className="w-full" pending={pending} onClick={mint} disabled={amountWei === 0n}>

@@ -19,7 +19,7 @@ const JOURNEY_STEPS = [
 
 /* One-line role for every deployed contract, in ADDRESSES order. */
 const CONTRACTS: { key: keyof typeof ADDRESSES; name: string; role: string }[] = [
-  { key: "mockUsd", name: "MockUSD", role: "Demo reserve asset with an open faucet — stands in for a real stablecoin." },
+  { key: "reserveToken", name: "sDAI (reserve)", role: "Savings xDAI on Gnosis — the real reserve asset backing both community tokens; stands in for a real stablecoin." },
   { key: "dkimRegistry", name: "DKIMRegistry", role: "On-chain archive of mail-server signing keys per domain, with validity windows and instant revocation." },
   { key: "zkEmailVerifier", name: "ZKEmailVerifier", role: "Checks every email proof twice: DKIM key registered and unrevoked, then Groth16 proof valid for the pinned pattern." },
   { key: "mockGroth16Verifier", name: "MockGroth16Verifier", role: "Demo stand-in that accepts demo proofs — swapped for compiled circuit verifiers in production." },
@@ -34,9 +34,7 @@ const CONTRACTS: { key: keyof typeof ADDRESSES; name: string; role: string }[] =
   { key: "incentiveRegistry", name: "IncentiveRegistry", role: "Proposals, quadratic dual-majority voting, the 30% quorum, and the ≤5% per-event cap." },
   { key: "eventAttestation", name: "EventAttestation", role: "Accepts newsletter proofs, tallies distinct sources per category inside the reporting window." },
   { key: "redistributionEngine", name: "RedistributionEngine", role: "Two-phase settlement: confirm → 48h dispute window → finalize, then value moves." },
-  { key: "disputeCouncil", name: "DisputeCouncil", role: "Seated from both communities; reverses a confirmed event with a 75% supermajority — only inside the window." },
   { key: "sanctionsEscrow", name: "SanctionsEscrow", role: "Outcome-conditional tranches from outside donors: release on a finalized event, reclaim after expiry." },
-  { key: "businessRegistry", name: "BusinessRegistry", role: "Peace-abiding certification votes and the Treasury-funded cross-community cooperation bonus." },
 ]
 
 const REPO = "https://github.com/RonTuretzky/p2peace-zkemail"
@@ -167,43 +165,11 @@ export default function DocsPage() {
     end
     Note over M,IRg: Dual majority - neither community can impose rules on the other`
 
-  const businessFlow = `sequenceDiagram
-    participant B as Business
-    participant BR as BusinessRegistry
-    participant M as Community Members
-    participant Payer as Customer (community A)
-    participant PT as PeaceToken
-    participant T as Treasury
-
-    Note over B,M: Peace-abiding certification
-    B->>BR: apply(wallet, metadata URI)
-    BR->>M: Open 3-day certification vote
-    M->>BR: Simple majority of each community roll
-    alt Approved by both rolls
-        BR->>B: Certified (revocable by the same vote)
-    else Rejected
-        BR->>B: Not certified, may reapply
-    end
-
-    Note over Payer,T: Cross-community cooperation bonus
-    Payer->>PT: payBusiness(business, amount)
-    PT->>BR: Is business certified? Which community?
-    BR->>PT: Certified, community B
-    PT->>B: Transfer amount to business
-    alt Payer and business communities differ
-        PT->>T: Request cooperationBonusBps bonus
-        T->>B: Bonus paid from Treasury
-        Note over T: Cross-border commerce is subsidized, not taxed
-    else Same community
-        Note over PT: Standard transfer, no bonus
-    end`
-
   const redistributionFlow = `sequenceDiagram
     participant S as Newsletter Subscribers
     participant P as Browser Prover
     participant EA as EventAttestation
     participant RE as RedistributionEngine
-    participant DC as DisputeCouncil
     participant PX as CommunityPool X (aggressor)
     participant PY as CommunityPool Y (harmed)
 
@@ -218,20 +184,16 @@ export default function DocsPage() {
 
     Note over EA,RE: Thresholds met (>=1 A, >=1 B, >=2 Intl)
     EA->>RE: Event CONFIRMED
-    RE->>RE: Open 48h dispute window, freeze event amount in pool X
+    RE->>RE: Open 48h public-notice window (guardian may pause settlement)
 
-    alt Council reverses (75% supermajority within window)
-        DC->>RE: reverse(eventId)
-        RE->>PX: Unfreeze - no funds move
-    else Window passes
-        RE->>RE: Event FINALIZED (irreversible)
-        RE->>PX: Slash redistributionBps of pool X corpus
-        PX->>RE: Redeem slashed tokens to reserve (USD) 1:1
-        RE->>PY: Mint community Y tokens at par into pool Y rewards
-        PY->>PY: rewardPerMember accumulator increases
-        Note over PY: Verified members of Y claim equal-per-member peace dividend
-        RE->>RE: Release any SanctionsEscrow tranches referencing this incentive
-    end`
+    Note over RE: Window passes untouched
+    RE->>RE: Event FINALIZED
+    RE->>PX: Slash redistributionBps of pool X pledge
+    PX->>RE: Redeem slashed units to reserve (sDAI) 1:1
+    RE->>PY: Mint community Y money at par into pool Y rewards
+    PY->>PY: rewardPerMember accumulator increases
+    Note over PY: Verified members of Y claim equal per-member shares
+    RE->>RE: Release any SanctionsEscrow tranches referencing this incentive`
 
   return (
     <>
@@ -286,12 +248,11 @@ export default function DocsPage() {
         {/* ------------------------------ diagrams ------------------------------ */}
         <div className="mx-auto mt-14 max-w-6xl">
           <Tabs defaultValue="verification" className="w-full">
-            <TabsList className="grid w-full grid-cols-6">
+            <TabsList className="grid w-full grid-cols-5">
               <TabsTrigger value="verification">Verify</TabsTrigger>
               <TabsTrigger value="minting">Mint</TabsTrigger>
               <TabsTrigger value="proposing">Propose</TabsTrigger>
               <TabsTrigger value="voting">Agree</TabsTrigger>
-              <TabsTrigger value="business">Business</TabsTrigger>
               <TabsTrigger value="redistribution">Attest &amp; Settle</TabsTrigger>
             </TabsList>
 
@@ -395,27 +356,6 @@ export default function DocsPage() {
               </Card>
             </TabsContent>
 
-            <TabsContent value="business" className="mt-6 space-y-8">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <GitBranch className="h-5 w-5" />
-                    Business — commerce across the line, subsidized
-                  </CardTitle>
-                  <CardDescription>
-                    Businesses certified by a vote of both communities earn a Treasury-funded bonus
-                    on every cross-community payment — the war chest pays for cooperation instead of
-                    taxing it.{" "}
-                    <Link href="/business" className="font-medium text-primary underline underline-offset-4">
-                      Run this flow live at /business →
-                    </Link>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MermaidDiagram chart={businessFlow} id="business-flow" />
-                </CardContent>
-              </Card>
-            </TabsContent>
 
             <TabsContent value="redistribution" className="mt-6 space-y-8">
               <Card>

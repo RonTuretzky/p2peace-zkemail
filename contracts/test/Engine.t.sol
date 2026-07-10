@@ -6,17 +6,13 @@ import {BaseTest} from "./Base.t.sol";
 import {Community, Direction} from "../src/Types.sol";
 import {IncentiveRegistry} from "../src/IncentiveRegistry.sol";
 import {RedistributionEngine} from "../src/RedistributionEngine.sol";
-import {DisputeCouncil} from "../src/DisputeCouncil.sol";
 import {Guarded} from "../src/Guarded.sol";
 
 /// @notice Deep coverage of RedistributionEngine (confirmation planning, dispute
-///         window boundaries, finalize value routes + capping, reversal, pause)
-///         and DisputeCouncil (membership bookkeeping, 75% threshold math).
+///         window boundaries, finalize value routes + capping, pause).
 contract EngineTest is BaseTest {
     // mirror declarations so vm.expectEmit can reference them
     event EventFinalized(uint256 indexed eventId, uint256 moved);
-    event EventReversed(uint256 indexed eventId);
-    event Reversed(uint256 indexed eventId);
 
     address internal alice = makeAddr("alice");
     address internal avi = makeAddr("avi");
@@ -58,7 +54,7 @@ contract EngineTest is BaseTest {
     }
 
     function _fundTreasury(uint256 amount) internal {
-        d.usd.mint(address(this), amount);
+        mintUsd(address(this), amount);
         d.usd.approve(address(d.treasury), amount);
         d.treasury.donate(amount);
     }
@@ -170,7 +166,7 @@ contract EngineTest is BaseTest {
         _enroll();
         // outsider pays 2x: 100e18 in -> 50e18 tokens, 50e18 premium to treasury
         address olga = makeAddr("olga");
-        d.usd.mint(olga, 100e18);
+        mintUsd(olga, 100e18);
         vm.startPrank(olga);
         d.usd.approve(address(d.minterA), 100e18);
         d.minterA.mintOutsider(100e18);
@@ -297,7 +293,7 @@ contract EngineTest is BaseTest {
         assertEq(d.poolA.corpusBalance(), 0, "5 x 40 drained the corpus");
 
         // a fresh citizen mint restakes 3e18 of corpus before event 6 finalizes
-        d.usd.mint(avi, 30e18);
+        mintUsd(avi, 30e18);
         vm.startPrank(avi);
         d.usd.approve(address(d.minterA), 30e18);
         d.minterA.mintCitizen(30e18);
@@ -424,13 +420,8 @@ contract EngineTest is BaseTest {
         vm.expectRevert(Guarded.CurrentlyPaused.selector);
         d.engine.finalize(evt);
 
-        // Documented behavior: the dispute window keeps running during a pause.
-        // At 48h the council can no longer reverse even though finalize is blocked
-        // - a pause does NOT extend the window, only delays execution.
-        vm.prank(address(d.council));
-        vm.expectRevert(RedistributionEngine.DisputeWindowClosed.selector);
-        d.engine.reverse(evt);
-
+        // Documented behavior: the notice window keeps running during a pause -
+        // a pause does NOT extend the window, only delays execution.
         vm.warp(t0 + 3 days - 1);
         vm.expectRevert(Guarded.CurrentlyPaused.selector);
         d.engine.finalize(evt);
@@ -460,213 +451,6 @@ contract EngineTest is BaseTest {
         vm.prank(guardian);
         d.engine.unpause();
         d.engine.finalize(evt);
-        assertTrue(d.engine.isFinalized(evt));
-    }
-
-    // ----------------------------------------------------------- engine.reverse
-
-    function test_reverse_onlyCouncil() public {
-        _enroll();
-        uint256 id = _passDefault(Direction.HarmfulByA);
-        uint256 evt = _confirm(id, "rc");
-
-        vm.expectRevert(RedistributionEngine.NotCouncil.selector);
-        d.engine.reverse(evt);
-        vm.prank(guardian);
-        vm.expectRevert(RedistributionEngine.NotCouncil.selector);
-        d.engine.reverse(evt);
-    }
-
-    function test_reverse_insideWindow_restoresTriggerSlot() public {
-        _enroll();
-        IncentiveRegistry.ProposalInput memory input = defaultProposal(Direction.HarmfulByA);
-        input.maxTriggers = 1;
-        uint256 id = d.incentives.propose(input);
-        passProposal(id, _votersA(), _votersB());
-        uint256 evt = _confirm(id, "slot");
-
-        // trigger slot consumed: single-trigger incentive is no longer active
-        assertEq(d.incentives.getIncentive(id).triggerCount, 1);
-        assertFalse(d.incentives.isActive(id));
-
-        // reverse just before the window closes
-        vm.warp(_evt(evt).confirmedAt + 48 hours - 1);
-        vm.expectEmit(true, false, false, true, address(d.engine));
-        emit EventReversed(evt);
-        vm.prank(address(d.council));
-        d.engine.reverse(evt);
-
-        assertEq(uint8(_evt(evt).status), uint8(RedistributionEngine.EventStatus.Reversed));
-        assertEq(d.incentives.getIncentive(id).triggerCount, 0, "trigger slot returned");
-        assertTrue(d.incentives.isActive(id), "incentive active again");
-        assertEq(d.poolA.corpusBalance(), 200e18, "no value moved");
-
-        // a reversed event is never executable
-        vm.warp(block.timestamp + 48 hours);
-        vm.expectRevert(RedistributionEngine.NotPending.selector);
-        d.engine.finalize(evt);
-
-        // the cooldown clock deliberately stays: after it lapses the same
-        // incentive can confirm a fresh event in its restored slot
-        vm.warp(uint256(d.incentives.getIncentive(id).lastTriggeredAt) + 7 days);
-        uint256 evt2 = _confirm(id, "slot2");
-        assertEq(evt2, 2);
-        assertEq(uint8(_evt(evt2).status), uint8(RedistributionEngine.EventStatus.Pending));
-    }
-
-    function test_reverse_windowClosedAtExactly48h() public {
-        _enroll();
-        uint256 id = _passDefault(Direction.HarmfulByA);
-        uint256 evt = _confirm(id, "closed");
-
-        vm.warp(_evt(evt).confirmedAt + 48 hours);
-        vm.prank(address(d.council));
-        vm.expectRevert(RedistributionEngine.DisputeWindowClosed.selector);
-        d.engine.reverse(evt);
-
-        // ...and at the same instant finalize succeeds: no dead zone, no overlap
-        d.engine.finalize(evt);
-        assertTrue(d.engine.isFinalized(evt));
-    }
-
-    function test_reverse_unknownAndNonPending() public {
-        _enroll();
-        vm.prank(address(d.council));
-        vm.expectRevert(RedistributionEngine.UnknownEvent.selector);
-        d.engine.reverse(999);
-
-        uint256 id = _passDefault(Direction.HarmfulByA);
-        uint256 evt = _confirm(id, "np");
-        vm.warp(block.timestamp + 48 hours);
-        d.engine.finalize(evt);
-
-        // finalized events cannot be reversed (even though the window check
-        // would also fail here, status is checked first)
-        vm.prank(address(d.council));
-        vm.expectRevert(RedistributionEngine.NotPending.selector);
-        d.engine.reverse(evt);
-    }
-
-    // ------------------------------------------------------------- DisputeCouncil
-
-    function _seatCouncil(uint256 n) internal returns (address[] memory members) {
-        members = new address[](n);
-        for (uint256 i = 0; i < n; i++) {
-            members[i] = makeAddr(string.concat("council", vm.toString(i)));
-            d.council.setMember(members[i], true);
-        }
-    }
-
-    function test_council_setMember_onlyOwnerAndBookkeeping() public {
-        address m1 = makeAddr("m1");
-        address m2 = makeAddr("m2");
-
-        vm.prank(guardian);
-        vm.expectRevert(
-            abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, guardian)
-        );
-        d.council.setMember(m1, true);
-
-        d.council.setMember(m1, true);
-        assertEq(d.council.memberCount(), 1);
-        assertTrue(d.council.isMember(m1));
-
-        // idempotent: re-adding does not double-count
-        d.council.setMember(m1, true);
-        assertEq(d.council.memberCount(), 1);
-
-        d.council.setMember(m2, true);
-        assertEq(d.council.memberCount(), 2);
-
-        d.council.setMember(m1, false);
-        assertEq(d.council.memberCount(), 1);
-        assertFalse(d.council.isMember(m1));
-
-        // idempotent: removing a non-member does not underflow the count
-        d.council.setMember(m1, false);
-        assertEq(d.council.memberCount(), 1);
-    }
-
-    function test_council_voteReverse_gates() public {
-        address[] memory m = _seatCouncil(4);
-        _enroll();
-        uint256 id = _passDefault(Direction.HarmfulByA);
-        uint256 evt = _confirm(id, "gates");
-
-        vm.prank(makeAddr("stranger"));
-        vm.expectRevert(DisputeCouncil.NotMember.selector);
-        d.council.voteReverse(evt);
-
-        vm.prank(m[0]);
-        d.council.voteReverse(evt);
-        vm.prank(m[0]);
-        vm.expectRevert(DisputeCouncil.AlreadyVoted.selector);
-        d.council.voteReverse(evt);
-    }
-
-    function test_council_thresholdMath_4members3votes() public {
-        address[] memory m = _seatCouncil(4);
-        _enroll();
-        uint256 id = _passDefault(Direction.HarmfulByA);
-        uint256 evt = _confirm(id, "thresh");
-        assertEq(d.incentives.getIncentive(id).triggerCount, 1);
-
-        // 2 of 4 = 50% < 75%: no reversal yet
-        vm.prank(m[0]);
-        d.council.voteReverse(evt);
-        vm.prank(m[1]);
-        d.council.voteReverse(evt);
-        assertEq(d.council.reverseVotes(evt), 2);
-        assertFalse(d.council.reversed(evt));
-        assertEq(uint8(_evt(evt).status), uint8(RedistributionEngine.EventStatus.Pending));
-
-        // 3 of 4 = exactly 75%: the vote itself executes the reversal
-        vm.expectEmit(true, false, false, true, address(d.engine));
-        emit EventReversed(evt);
-        vm.expectEmit(true, false, false, true, address(d.council));
-        emit Reversed(evt);
-        vm.prank(m[2]);
-        d.council.voteReverse(evt);
-
-        assertTrue(d.council.reversed(evt));
-        assertEq(uint8(_evt(evt).status), uint8(RedistributionEngine.EventStatus.Reversed));
-        assertEq(d.incentives.getIncentive(id).triggerCount, 0, "trigger slot restored");
-
-        // late fourth vote hits the reversed guard
-        vm.prank(m[3]);
-        vm.expectRevert(DisputeCouncil.AlreadyReversed.selector);
-        d.council.voteReverse(evt);
-
-        // reversed event can never be finalized
-        vm.warp(block.timestamp + 48 hours);
-        vm.expectRevert(RedistributionEngine.NotPending.selector);
-        d.engine.finalize(evt);
-        assertEq(d.poolA.corpusBalance(), 200e18, "no value ever moved");
-    }
-
-    function test_council_lateThresholdRevertsWithWindow() public {
-        address[] memory m = _seatCouncil(4);
-        _enroll();
-        uint256 id = _passDefault(Direction.HarmfulByA);
-        uint256 evt = _confirm(id, "late");
-
-        vm.prank(m[0]);
-        d.council.voteReverse(evt);
-        vm.prank(m[1]);
-        d.council.voteReverse(evt);
-
-        // window lapses before the third vote: engine.reverse reverts, so the
-        // whole vote reverts - no phantom "reversed" state in the council
-        vm.warp(_evt(evt).confirmedAt + 48 hours);
-        vm.prank(m[2]);
-        vm.expectRevert(RedistributionEngine.DisputeWindowClosed.selector);
-        d.council.voteReverse(evt);
-
-        assertFalse(d.council.reversed(evt));
-        assertFalse(d.council.hasVoted(evt, m[2]), "failed vote left no trace");
-        assertEq(d.council.reverseVotes(evt), 2);
-
-        d.engine.finalize(evt); // event executes normally
         assertTrue(d.engine.isFinalized(evt));
     }
 
@@ -704,13 +488,13 @@ contract EngineTest is BaseTest {
     }
 
     function test_wire_onlyOnce() public {
-        // Deploy already wired attestation + council; a second wire must fail
+        // Deploy already wired the attestation; a second wire must fail
         vm.expectRevert(RedistributionEngine.AlreadyWired.selector);
-        d.engine.wire(makeAddr("fakeAttestation"), makeAddr("fakeCouncil"));
+        d.engine.wire(makeAddr("fakeAttestation"));
 
         // and non-owners cannot even try
         vm.prank(alice);
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, alice));
-        d.engine.wire(makeAddr("x"), makeAddr("y"));
+        d.engine.wire(makeAddr("x"));
     }
 }

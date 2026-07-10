@@ -22,6 +22,11 @@ out of scope here except where noted in §8.
 
 ---
 
+> **Scope note (July 2026):** the DisputeCouncil and BusinessRegistry were removed
+> from the implementation. Where this document mentions council reversal, the live
+> mitigation is now the 48h public-notice window plus the guardian's auto-expiring
+> pause; business-payment attacks no longer apply.
+
 ## 1. DKIM layer
 
 The root of trust for *everything*: both proof types reduce to "an RSA key whose hash is
@@ -540,28 +545,12 @@ outsider mints, few donations) can be run down *legitimately but wastefully* by
 marginal events. Treasury runway vs. active-incentive ceiling is a governance
 dashboard number someone must watch.
 
-### 5.4 Cooperation-bonus farming — **High**
+### 5.4 Cooperation-bonus farming — **Removed**
 
-**Attack.** Wash-trading the `cooperationBonusBps` (2%): a "business" and a payer
-collude on circular payments — pay 100, get 2 from the Treasury, return the 100,
-repeat. Cross-community collusion pairs are easy to form.
-
-**Mitigation.** Layered. (1) Both endpoints are gate-kept: the payer must be a
-verified member and the business must be **certified by member vote of the community
-rolls** (simple majority of each community, ARCHITECTURE.md §10), paying out only when
-payer and business communities differ; certification is **revocable the same way**.
-(2) Because the token round-trip itself is costless (the attacker keeps the tokens),
-gate-keeping alone was shown insufficient in adversarial review — so bonus outflow is
-**budgeted on-chain**: `BusinessRegistry` pays at most `epochBudgetBps` (default 1%)
-of the Treasury snapshot per `bonusEpoch` (default 30 days) across *all* businesses
-(`_consumeBonusBudget`). Worst-case wash-trading loss is ~1% of the Treasury per
-month — an order of magnitude slower than the 3-day revocation poll that is the
-actual remedy, and every `Paid` event is the audit trail.
-
-**Residual.** No on-chain test distinguishes real commerce from circular flow; a
-washing business can still skim the epoch budget until revoked, and the shared budget
-means a washer starves honest businesses' bonuses for the rest of the epoch (a
-nuisance, not a loss). The response remains human: watch `Paid` volumes, revoke.
+> **Removed from the implementation** (July 2026): the BusinessRegistry — and with it
+> the cooperation bonus this section attacked — was removed from the protocol. The
+> wash-trading analysis is preserved in git history; it motivated the epoch-budget
+> design while the mechanism existed.
 
 ### 5.5 Sanctions-escrow griefing — **Medium**
 

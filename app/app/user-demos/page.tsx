@@ -67,7 +67,7 @@ export default function UserDemosPage() {
         <div className="mx-auto mt-10 max-w-3xl rounded-2xl border border-border bg-muted/40 p-5 text-sm text-muted-foreground">
           <strong className="text-foreground">You need:</strong> a browser wallet with two accounts
           (the dual-majority vote needs one verified member per community — you'll play both sides),
-          and a little xDAI on each for gas. Everything else — mUSD reserve, demo proofs — comes
+          a little xDAI on each for gas, and some sDAI to join with. Everything else — demo proofs — comes
           from faucets and buttons inside the flows. Demo identity proofs stand in for the WASM
           prover; every contract check they pass is real.
         </div>
@@ -88,8 +88,8 @@ export default function UserDemosPage() {
           <Checklist
             steps={[
               { text: <>With <strong>wallet 1</strong>, verify as Community A at <L href="/verify">/verify</L> — one click builds the demo citizenship proof and registers your nullifier.</> },
-              { text: <>Still wallet 1: at <L href="/mint">/mint</L>, grab free demo dollars, approve, and mint. Watch the split land: 90% in your wallet, 10% into pool A's corpus.</> },
-              { text: <>Switch to <strong>wallet 2</strong>, verify as Community B at <L href="/verify">/verify</L>, then faucet + mint at <L href="/mint">/mint</L>. Both rolls now have one member each.</> },
+              { text: <>Still wallet 1: at <L href="/mint">/mint</L>, get a little sDAI (swap link on the page), approve, and convert. Watch the split land: 90% in your wallet, 10% into pool A's pledge.</> },
+              { text: <>Switch to <strong>wallet 2</strong>, verify as Community B at <L href="/verify">/verify</L>, then get sDAI and convert at <L href="/mint">/mint</L>. Both rolls now have one member each.</> },
               { text: <>With either wallet, open <L href="/incentives">/incentives</L> and propose — the form pre-fills the demo news sources and pattern. Submission freezes everything on-chain.</> },
               { wait: true, text: <>Wait out the 10-minute discussion window (the card shows the live countdown).</> },
               { text: <>Vote YES from wallet 1, then YES from wallet 2 at <L href="/incentives">/incentives</L>. Casting n votes locks n² tokens — approve the lock when prompted. Two members voting also satisfies the 30% quorum.</> },
@@ -101,33 +101,10 @@ export default function UserDemosPage() {
           />
         </div>
 
-        {/* ---------------------- walkthrough 2: business loop ---------------------- */}
+        {/* ----------------------- walkthrough 2: escrow loop ----------------------- */}
         <div className="mx-auto mt-8 max-w-3xl rounded-3xl border-2 border-border bg-card p-6 sm:p-8">
           <div className="flex flex-wrap items-center gap-3">
-            <h2 className="font-display text-xl font-bold">2 · The business certification loop</h2>
-            <span className="rounded-full bg-accent/60 px-2.5 py-0.5 text-xs font-semibold text-accent-foreground">
-              ~15 minutes · after walkthrough 1, steps 1–3
-            </span>
-          </div>
-          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Certify a business by vote of both communities, then pay it from across the line and
-            watch the Treasury add the cooperation bonus on top — commerce subsidized, not taxed.
-          </p>
-          <Checklist
-            steps={[
-              { text: <>Prerequisite: two verified wallets holding community money (walkthrough 1, steps 1–3).</> },
-              { text: <>At <L href="/business">/business</L>, apply for certification with one wallet — that wallet's community becomes the business's side.</> },
-              { text: <>Vote to approve from both wallets: certification needs a simple majority of <em>each</em> community's roll, just like everything else here.</> },
-              { wait: true, text: <>Wait out the 10-minute certification poll, then finalize it. The business is now certified (and revocable by the same vote, later).</> },
-              { text: <>From the wallet on the <em>other</em> side, pay the business at <L href="/business">/business</L> (approve, then pay). Because payer and business communities differ, the Treasury adds the 2% cooperation bonus — check the business balance to see the payment plus bonus arrive.</> },
-            ]}
-          />
-        </div>
-
-        {/* ----------------------- walkthrough 3: escrow loop ----------------------- */}
-        <div className="mx-auto mt-8 max-w-3xl rounded-3xl border-2 border-border bg-card p-6 sm:p-8">
-          <div className="flex flex-wrap items-center gap-3">
-            <h2 className="font-display text-xl font-bold">3 · The escrow donor loop</h2>
+            <h2 className="font-display text-xl font-bold">2 · The escrow donor loop</h2>
             <span className="rounded-full bg-accent/60 px-2.5 py-0.5 text-xs font-semibold text-accent-foreground">
               ~20 minutes · needs a passed incentive
             </span>
