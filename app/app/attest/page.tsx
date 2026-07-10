@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Mail, ShieldCheck, CheckCircle2, Radio, ArrowRight } from "lucide-react"
 import { ConnectGate, FlowHeader, TxButton, useMembership } from "@/components/flow"
 import { JourneyBar, HonestyNote, PrereqNote } from "@/components/explainer"
+import { VisualFrame, VizEvidence } from "@/components/journey-visuals"
 import { contract } from "@/lib/contracts"
 import { Community, SourceCategory } from "@/lib/chains"
 import { buildNewsProof, demoSources } from "@/lib/demo"
@@ -91,6 +92,11 @@ export default function AttestPage() {
         from community A, community B, <em>and</em> international wires all attest to the same
         approved pattern inside one window.
       </p>
+      <div className="mx-auto mt-8 max-w-xl">
+        <VisualFrame caption="≥1 A-outlet · ≥1 B-outlet · ≥2 wires — each email counted once">
+          <VizEvidence />
+        </VisualFrame>
+      </div>
       <ConnectGate>
         <AttestInner />
       </ConnectGate>

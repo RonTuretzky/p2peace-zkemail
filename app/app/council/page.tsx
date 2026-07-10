@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Gavel, Scale, Timer, Users, XCircle } from "lucide-react"
 import { ConnectGate, FlowHeader, TxButton } from "@/components/flow"
 import { HonestyNote, JourneyBar, StatPill } from "@/components/explainer"
+import { VisualFrame, VizDaylight } from "@/components/journey-visuals"
 import type { Abi } from "viem"
 import { contract } from "@/lib/contracts"
 import { fmt, DIRECTION_LABEL, short } from "@/lib/format"
@@ -54,6 +55,11 @@ export default function CouncilPage() {
       </p>
       <JourneyBar current="/pools" />
       <HowReversalWorks />
+      <div className="mx-auto mt-8 max-w-xl">
+        <VisualFrame caption="confirmation starts a clock, not a transfer">
+          <VizDaylight />
+        </VisualFrame>
+      </div>
       <ConnectGate>
         <CouncilInner />
       </ConnectGate>

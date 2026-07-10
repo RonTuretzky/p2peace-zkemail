@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { ShieldCheck, Mail, CheckCircle2, RotateCcw, ArrowRight } from "lucide-react"
 import { ConnectGate, FlowHeader, TxButton, useMembership } from "@/components/flow"
 import { JourneyBar, HonestyNote } from "@/components/explainer"
+import { VisualFrame, VizVerify } from "@/components/journey-visuals"
 import { contract } from "@/lib/contracts"
 import { Community } from "@/lib/chains"
 import { buildCitizenshipProof, DEMO_DOMAINS } from "@/lib/demo"
@@ -32,6 +33,11 @@ export default function VerifyPage() {
         passport office: your government inbox becomes the credential, and only its nullifier ever
         touches the chain.
       </p>
+      <div className="mx-auto mt-8 max-w-xl">
+        <VisualFrame caption="a government email in → an anonymous membership out">
+          <VizVerify />
+        </VisualFrame>
+      </div>
       <ConnectGate>
         <VerifyInner />
       </ConnectGate>

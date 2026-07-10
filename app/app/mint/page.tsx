@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Coins, Droplets, ArrowRight } from "lucide-react"
 import { ConnectGate, FlowHeader, TxButton, useMembership } from "@/components/flow"
 import { JourneyBar, HonestyNote, PrereqNote } from "@/components/explainer"
+import { VisualFrame, VizPledge } from "@/components/journey-visuals"
 import { contract } from "@/lib/contracts"
 import { Community } from "@/lib/chains"
 import { fmt } from "@/lib/format"
@@ -27,6 +28,11 @@ export default function MintPage() {
         community breaks the rules everyone agreed to. Joining the pool is what gives you a
         voice in writing those rules, and a share when repair flows your way.
       </p>
+      <div className="mx-auto mt-8 max-w-xl">
+        <VisualFrame caption="90% stays yours · 10% becomes the community's pledge">
+          <VizPledge />
+        </VisualFrame>
+      </div>
       <ConnectGate>
         <MintInner />
       </ConnectGate>

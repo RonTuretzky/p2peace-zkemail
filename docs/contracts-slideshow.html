@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>p2peace — Smart Contracts, Explained</title>
+<style>
+  :root{
+    --bg:#0b0f0d; --fg:#f2f6f3; --card:#121814; --muted:#9db1a6;
+    --primary:#22c55e; --primary-2:#16a34a; --accent:#14532d; --accent-fg:#d1fae5;
+    --border:#26302a; --a:#38bdf8; --b:#f0abfc; --intl:#fbbf24; --danger:#f87171;
+    --font-sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --font-mono:"SF Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:var(--bg);color:var(--fg);font-family:var(--font-sans);
+    -webkit-font-smoothing:antialiased;overflow:hidden;
+  }
+  #deck{height:100vh;width:100vw;position:relative}
+  .slide{
+    position:absolute;inset:0;display:none;flex-direction:column;
+    padding:5vh 7vw;overflow-y:auto;
+    animation:fade .45s ease;
+  }
+  .slide.active{display:flex}
+  @keyframes fade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  h1,h2,h3{margin:0;line-height:1.1;font-weight:750;letter-spacing:-.02em}
+  h1{font-size:clamp(2.2rem,5.5vw,4.2rem)}
+  h2{font-size:clamp(1.6rem,3.8vw,2.9rem);margin-bottom:.2em}
+  h3{font-size:1.15rem;color:var(--primary)}
+  p{line-height:1.5;font-size:clamp(1rem,1.5vw,1.25rem);color:#dce6e0}
+  .muted{color:var(--muted)}
+  .kicker{
+    text-transform:uppercase;letter-spacing:.22em;font-size:.8rem;font-weight:700;
+    color:var(--primary);margin-bottom:1.2em;
+  }
+  .center{justify-content:center;align-items:flex-start}
+  .lead{max-width:60ch}
+  code,.mono{font-family:var(--font-mono);font-size:.92em}
+  .pill{
+    display:inline-block;padding:.2em .7em;border:1px solid var(--border);
+    border-radius:999px;background:var(--card);font-size:.8rem;color:var(--muted);
+    font-family:var(--font-mono);
+  }
+  .grid{display:grid;gap:1.1rem;margin-top:1.4rem}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:1.1rem 1.25rem;
+  }
+  .card h3{margin-bottom:.35rem;display:flex;align-items:center;gap:.5rem;font-size:1.05rem}
+  .card p{font-size:.95rem;margin:.2rem 0 0}
+  .card .fn{font-family:var(--font-mono);font-size:.82rem;color:var(--primary);display:block;margin-top:.55rem}
+  .tag{font-size:.68rem;padding:.12em .55em;border-radius:6px;font-weight:700;letter-spacing:.03em}
+  .tag.core{background:#0e2a1a;color:var(--primary)}
+  .tag.econ{background:#0e223a;color:var(--a)}
+  .tag.gov{background:#2a0e2a;color:var(--b)}
+  .tag.exec{background:#3a2a0e;color:var(--intl)}
+  ul{margin:.6rem 0 0;padding-left:1.2rem;line-height:1.6}
+  li{margin:.35rem 0;font-size:clamp(.95rem,1.4vw,1.15rem)}
+  .flow{display:flex;flex-wrap:wrap;align-items:center;gap:.55rem;margin-top:1.5rem}
+  .node{
+    background:var(--card);border:1px solid var(--border);border-radius:10px;
+    padding:.6rem .9rem;font-size:.9rem;font-weight:600;
+  }
+  .node .s{display:block;font-size:.72rem;color:var(--muted);font-weight:400;font-family:var(--font-mono)}
+  .arrow{color:var(--primary);font-size:1.3rem;font-weight:700}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:2.5rem;margin-top:1rem;align-items:start}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:.35rem 1.2rem;margin-top:1rem;font-size:.95rem}
+  .kv .k{color:var(--muted);font-family:var(--font-mono);font-size:.82rem;white-space:nowrap}
+  .big{font-size:clamp(2.4rem,7vw,5rem);font-weight:800;color:var(--primary);letter-spacing:-.03em;line-height:1}
+  .commA{color:var(--a)} .commB{color:var(--b)} .intl{color:var(--intl)} .dgr{color:var(--danger)}
+  .progress{position:fixed;bottom:0;left:0;height:4px;background:var(--primary);transition:width .35s ease;z-index:20}
+  .hud{
+    position:fixed;bottom:1.1rem;right:1.4rem;font-family:var(--font-mono);
+    font-size:.78rem;color:var(--muted);z-index:20;user-select:none;
+  }
+  .hud b{color:var(--fg)}
+  .nav{position:fixed;bottom:1rem;left:1.4rem;z-index:20;display:flex;gap:.4rem}
+  .nav button{
+    background:var(--card);border:1px solid var(--border);color:var(--fg);
+    width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:1rem;
+  }
+  .nav button:hover{border-color:var(--primary);color:var(--primary)}
+  .diagram{
+    font-family:var(--font-mono);font-size:clamp(.5rem,1.05vw,.82rem);line-height:1.35;
+    white-space:pre;background:var(--card);border:1px solid var(--border);border-radius:12px;
+    padding:1.2rem;overflow:auto;margin-top:1.2rem;color:#cfe0d6;
+  }
+  .diagram b{color:var(--primary)}
+  .footnote{margin-top:auto;padding-top:1.4rem;font-size:.8rem;color:var(--muted)}
+  .two-col{columns:2;column-gap:2.4rem}
+  .layer-legend{display:flex;gap:1.2rem;flex-wrap:wrap;margin-top:1rem;font-size:.82rem;color:var(--muted)}
+  .layer-legend span{display:inline-flex;align-items:center;gap:.4rem}
+  .dot{width:10px;height:10px;border-radius:3px;display:inline-block}
+  b.hl{color:var(--primary);font-weight:700}
+  .title-badge{display:inline-flex;gap:.6rem;align-items:center;margin-top:2rem}
+  a{color:var(--primary)}
+</style>
+</head>
+<body>
+<div id="deck">
+
+  <!-- 1 — TITLE -->
+  <section class="slide active center">
+    <div class="kicker">peer&nbsp;→&nbsp;peer&nbsp;→&nbsp;peace · zkEmail</div>
+    <h1>The p2peace<br>Smart Contracts</h1>
+    <p class="lead muted" style="margin-top:1.5rem">
+      A decentralized protocol that builds <b class="hl">economic interdependence</b>
+      between citizens of conflicting nations — identity and real-world events proven
+      with <b class="hl">zero-knowledge email (DKIM)</b> proofs, value moved only by
+      the rules <em>both</em> communities consent to.
+    </p>
+    <div class="title-badge">
+      <span class="pill">14 contracts</span>
+      <span class="pill">Foundry · Solidity ^0.8.28</span>
+      <span class="pill">Live on Gnosis Chain</span>
+    </div>
+    <div class="footnote">Use ← → or Space to navigate · Press F for fullscreen</div>
+  </section>
+
+  <!-- 2 — THE PROBLEM / IDEA -->
+  <section class="slide center">
+    <div class="kicker">The idea in one slide</div>
+    <h2>Make peace pay, and make aggression cost your own side</h2>
+    <div class="grid g3">
+      <div class="card">
+        <h3>① Prove who you are</h3>
+        <p>Citizens prove — in zero knowledge — that they receive DKIM-signed email
+        from their government. No documents, no server, the address never touches chain.
+        <span class="fn">One inbox ↔ one member</span></p>
+      </div>
+      <div class="card">
+        <h3>② Stake into peace</h3>
+        <p>Every citizen mint puts 10% into their community's <b>pool</b> — an opt-in
+        stake explicitly at risk against <em>their own side's</em> aggression.
+        <span class="fn">Never anyone's untouched savings</span></p>
+      </div>
+      <div class="card">
+        <h3>③ Let the world attest</h3>
+        <p>Any newsletter subscriber on earth can prove a news event happened from a
+        saved <code>.eml</code>. Confirmed events move pool value after a dispute window.
+        <span class="fn">No notary to bribe or censor</span></p>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:1.6rem">
+      Two communities (<b class="commA">A</b> and <b class="commB">B</b>), two reserve-backed
+      tokens, one shared Treasury. The contracts encode <b class="hl">only what both sides
+      separately agree to</b> — neither can impose rules on the other.
+    </p>
+  </section>
+
+  <!-- 3 — WHY zkEMAIL -->
+  <section class="slide center">
+    <div class="kicker">Foundational choice</div>
+    <h2>Why zkEmail instead of zkTLS</h2>
+    <div class="split">
+      <div>
+        <h3>zkTLS (the original sketch)</h3>
+        <ul class="muted">
+          <li>A <b class="dgr">notary/MPC network</b> must attest the TLS session <em>live</em>, at fetch time.</li>
+          <li>Prover + notary both online during the session; transcript is unrepeatable.</li>
+          <li>The notary is a <b class="dgr">censorable, bribable choke point</b>.</li>
+          <li>Conflict-zone governments will never expose identity APIs to attest against.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>zkEmail (what we built)</h3>
+        <ul>
+          <li>Trust anchor is the <b class="hl">DKIM signature</b> the sender's mail server already produced.</li>
+          <li><b class="hl">Nobody</b> need be online — any recipient proves after the fact from a saved <code>.eml</code>.</li>
+          <li>Evidence is archived in <b class="hl">millions of inboxes</b>; proofs can be made years later.</li>
+          <li>Governments already send DKIM-signed mail (tax receipts, ID-portal notices).</li>
+        </ul>
+      </div>
+    </div>
+    <p style="margin-top:1.4rem">On-chain, a proof is verified as a <b class="hl">Groth16 SNARK</b> against a
+      registry of DKIM public keys. The email body and address never appear on-chain — only a nullifier.</p>
+  </section>
+
+  <!-- 4 — SYSTEM MAP -->
+  <section class="slide">
+    <div class="kicker">The whole system</div>
+    <h2>Contract map</h2>
+    <div class="diagram">     .eml file  ─────▶ <b>zkEmail prover</b> ─── Groth16 proof ───┐
+ (gov email /                (browser WASM)                    │
+  newsletter)                                                  ▼
+                                                   ┌──────────────────────────┐
+                                                   │   <b>ZKEmailVerifier</b>       │──▶ <b>DKIMRegistry</b>
+                                                   │  Groth16 verify + DKIM    │    (key archive,
+                                                   │  key lookup per blueprint │     revocation)
+                                                   └──────┬─────────────┬──────┘
+                                    citizenship proof     │             │   news-event proof
+                                                          ▼             ▼
+    ┌───────────┐   member roll   ┌──────────────────┐        ┌────────────────────┐
+    │<b>PeaceMinter</b>│◀───────────────▶│ <b>IdentityRegistry</b> │        │  <b>EventAttestation</b>  │
+    │ A  &  B   │                 │ nullifiers, roll │        │ multi-source rounds│
+    └────┬──────┘                 └────────┬─────────┘        └─────────┬──────────┘
+         │ 10% peace stake                 │ gates voting              │ confirmed
+         ▼                                 ▼                           ▼
+    ┌───────────┐                ┌──────────────────┐        ┌────────────────────┐
+    │<b>CommunityPool</b>│◀── slash/pay ──│ <b>IncentiveRegistry</b>│───────▶│<b>RedistributionEngine</b>│
+    │  A  &  B  │                │ quadratic, dual  │        │ 48h dispute window │
+    └────┬──────┘                │    majority      │        └─────────┬──────────┘
+         ▲                       └──────────────────┘                  │
+         │  ┌──────────────┐        ┌───────────────┐        ┌─────────┴──────────┐
+         └──│<b>SanctionsEscrow</b>│        │   <b>Treasury</b>   │◀──────▶│   <b>DisputeCouncil</b>   │
+   milestone│ external donors│        │  war chest    │ reverse│  75% supermajority │
+    release └──────────────┘        └───────────────┘        └────────────────────┘
+       + <b>PeaceToken A/B</b> (ERC-20, reserve-backed) · <b>BusinessRegistry</b> (cross-border bonus)</div>
+    <div class="layer-legend">
+      <span><i class="dot" style="background:var(--primary)"></i> proof layer</span>
+      <span><i class="dot" style="background:var(--a)"></i> economic layer</span>
+      <span><i class="dot" style="background:var(--b)"></i> governance layer</span>
+      <span><i class="dot" style="background:var(--intl)"></i> execution layer</span>
+    </div>
+  </section>
+
+  <!-- 5 — FOUR LAYERS / CATALOG -->
+  <section class="slide">
+    <div class="kicker">The 14 contracts, grouped</div>
+    <h2>Four layers</h2>
+    <div class="grid g4" style="margin-top:1rem">
+      <div class="card">
+        <h3><span class="tag core">PROOF</span></h3>
+        <p><b>DKIMRegistry</b> — key archive + revocation</p>
+        <p><b>ZKEmailVerifier</b> — Groth16 router</p>
+        <p><b>IdentityRegistry</b> — the member roll</p>
+        <p class="muted" style="font-size:.82rem">+ <code>Types</code>, <code>Guarded</code></p>
+      </div>
+      <div class="card">
+        <h3><span class="tag econ">ECONOMY</span></h3>
+        <p><b>PeaceToken A/B</b> — reserve-backed ERC-20</p>
+        <p><b>PeaceMinter A/B</b> — issuance & redeem</p>
+        <p><b>CommunityPool A/B</b> — the peace stake</p>
+        <p><b>Treasury</b> — shared war chest</p>
+      </div>
+      <div class="card">
+        <h3><span class="tag gov">GOVERNANCE</span></h3>
+        <p><b>IncentiveRegistry</b> — propose + quadratic dual-majority vote</p>
+        <p><b>BusinessRegistry</b> — merchant certification polls</p>
+      </div>
+      <div class="card">
+        <h3><span class="tag exec">EXECUTION</span></h3>
+        <p><b>EventAttestation</b> — the event oracle</p>
+        <p><b>RedistributionEngine</b> — the value mover</p>
+        <p><b>DisputeCouncil</b> — the circuit breaker</p>
+        <p><b>SanctionsEscrow</b> — external incentives</p>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:1.5rem">Every contract is <code>Ownable</code> by a timelocked governor; two
+      (attestation + engine) add a <code>Guarded</code> guardian pause that touches flows, never funds.</p>
+  </section>
+
+  <!-- 6 — THE PROOF ENVELOPE -->
+  <section class="slide center">
+    <div class="kicker">Proof layer · the shared primitive</div>
+    <h2>One proof envelope, two jobs</h2>
+    <div class="split">
+      <div>
+        <div class="diagram" style="margin-top:0">struct <b>EmailProof</b> {
+  bytes32 dkimPubkeyHash; <span class="muted">// which DKIM key signed</span>
+  bytes32 domainHash;     <span class="muted">// keccak(sender domain)</span>
+  bytes32 nullifier;      <span class="muted">// anti-replay handle</span>
+  bytes32 patternHash;    <span class="muted">// pins the exact circuit</span>
+  uint64  emailTimestamp; <span class="muted">// DKIM-covered Date</span>
+  uint256[8] proof;       <span class="muted">// Groth16 πA·πB·πC</span>
+}</div>
+        <p class="muted" style="font-size:.9rem"><code>ZKEmailVerifier.verify()</code> routes by <code>patternHash</code> to
+          the Groth16 verifier compiled for that blueprint, then checks the key against <code>DKIMRegistry</code>.</p>
+      </div>
+      <div>
+        <h3>Citizenship proof</h3>
+        <p><b>Claim:</b> "I control an inbox that gets DKIM-signed mail from government domain D."</p>
+        <p class="muted" style="font-size:.9rem">nullifier = <code>Poseidon(recipientAddress, salt)</code> — constant per
+          inbox ⇒ one registration per person.</p>
+        <h3 style="margin-top:1.2rem">News-event proof</h3>
+        <p><b>Claim:</b> "A DKIM-signed email from news domain D, at time T, matches keyword pattern P."</p>
+        <p class="muted" style="font-size:.9rem">nullifier = <code>Poseidon(dkimSignature)</code> — unique per physical
+          email ⇒ each newsletter counts once.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 — DKIM + VERIFIER detail -->
+  <section class="slide center">
+    <div class="kicker">Proof layer · trust anchor</div>
+    <h2>DKIMRegistry &amp; ZKEmailVerifier</h2>
+    <div class="grid g2">
+      <div class="card">
+        <h3>DKIMRegistry — the key archive</h3>
+        <p>DNS only serves a domain's <em>current</em> key. An on-chain archive with validity
+          windows is what lets <b class="hl">old emails stay provable</b> and <b class="hl">leaked keys get killed</b>.</p>
+        <p class="fn">setKey() · revokeKey() · isKeyValid()</p>
+        <p class="muted" style="font-size:.86rem">Key additions go through timelocked governance. Revocation is deliberately
+          fast — owner <em>or</em> guardian, no timelock: a leaked mail-server key is a forgery weapon.</p>
+      </div>
+      <div class="card">
+        <h3>ZKEmailVerifier — the router</h3>
+        <p>Maps each <code>patternHash</code> → the Groth16 verifier compiled for that blueprint.
+          Verifies key validity, then the SNARK over 6 public signals.</p>
+        <p class="fn">setVerifier() · verify(proof, extraData)</p>
+        <p class="muted" style="font-size:.86rem">The 6th signal (<code>extraData</code>) is the caller's context: the target
+          wallet for identity, <code>0</code> for events — this binds a proof to its use so it can't be redirected.</p>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:1.4rem">New circuits drop in as new verifiers; <b class="hl">nothing else in the
+      system changes</b> when blueprints are added or upgraded.</p>
+  </section>
+
+  <!-- 8 — IDENTITY REGISTRY -->
+  <section class="slide center">
+    <div class="kicker">Proof layer · the member roll</div>
+    <h2>IdentityRegistry — sybil-resistant citizenship</h2>
+    <div class="split">
+      <div>
+        <p><code>register(EmailProof, wallet)</code> — anyone may <em>relay</em> a proof; the enrolled
+          wallet is <b class="hl">baked inside the proof</b>, so a stolen proof can't be redirected.</p>
+        <ul>
+          <li>Domain must be <b>allowlisted</b> for a community (governance).</li>
+          <li>Pattern must be an approved <b>citizenship</b> blueprint.</li>
+          <li>Email must be <b>fresh</b> (≤ 90d) and not from the future.</li>
+          <li>Strictly-increasing timestamp per nullifier ⇒ <b class="hl">every proof is single-shot</b>.</li>
+        </ul>
+      </div>
+      <div>
+        <h3>Three modes, one function</h3>
+        <div class="kv">
+          <span class="k">Enroll</span><span>fresh nullifier → new member, pool slot created</span>
+          <span class="k">Renew</span><span>same wallet + fresh email → extend 365d membership</span>
+          <span class="k">Rotate</span><span>same inbox, new wallet → lost-key recovery; unclaimed rewards follow the nullifier</span>
+        </div>
+        <p class="muted" style="margin-top:1.2rem;font-size:.9rem"><b>Sybil model, stated honestly:</b> one identity per
+          government email account — not strictly one per human, but most portals bind one address per national ID.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 — TOKENS & MINTER -->
+  <section class="slide center">
+    <div class="kicker">Economy layer · issuance</div>
+    <h2>PeaceToken &amp; PeaceMinter</h2>
+    <p class="lead">Two ERC-20s (one per community), <b class="hl">fully reserve-backed</b>: the minter holds
+      one unit of reserve (demo: MockUSD) per token. <span class="mono">reserve == totalSupply</span> always.</p>
+    <div class="grid g3">
+      <div class="card">
+        <h3 class="commA">Citizen mint · 1:1</h3>
+        <p><code>mintCitizen(usd)</code> — 90% of tokens to you, <b>10% staked</b> into your CommunityPool.</p>
+        <p class="muted" style="font-size:.86rem">Buying in <em>is</em> signing the rebalancing agreement.</p>
+      </div>
+      <div class="card">
+        <h3 class="intl">Outsider mint · 2× premium</h3>
+        <p><code>mintOutsider(usd)</code> — par half backs tokens, the <b>premium half funds the Treasury</b>.</p>
+        <p class="muted" style="font-size:.86rem">Same redemption rights; no pool stake, no vote.</p>
+      </div>
+      <div class="card">
+        <h3>Redeem · 1:1</h3>
+        <p><code>redeem(tokens)</code> — burn for reserve, no questions, while reserve lasts.</p>
+        <p class="muted" style="font-size:.86rem"><code>mintAtPar()</code> is the protocol-internal path used by the engine &amp; escrow.</p>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:1.4rem">Only its own <code>PeaceMinter</code> can mint or burn a token — every
+      unit in existence is redeemable, including tokens that redistribution moves between pools.</p>
+  </section>
+
+  <!-- 10 — COMMUNITY POOL -->
+  <section class="slide center">
+    <div class="kicker">Economy layer · the load-bearing redesign</div>
+    <h2>CommunityPool — two strictly separate buckets</h2>
+    <div class="split">
+      <div class="card" style="border-color:var(--danger)">
+        <h3 class="dgr">Corpus — the stake at risk</h3>
+        <p>The 10% from every citizen mint. <b>Never claimable.</b> Capital consented to be
+          slashed if <em>this community</em> commits a harmful act.</p>
+        <p class="fn">only RedistributionEngine can move it → slashCorpus()</p>
+      </div>
+      <div class="card" style="border-color:var(--primary)">
+        <h3>Rewards — the peace dividend</h3>
+        <p>Inflows from finalized events, treasury payouts, escrow releases. Claimable by
+          verified members, <b class="hl">an equal share each</b>.</p>
+        <p class="fn">accumulator pattern · claim() keyed by nullifier</p>
+      </div>
+    </div>
+    <p style="margin-top:1.4rem">Rewards use a classic <b>accumulator</b> (<code>accRewardPerMember</code> grows on
+      inflow; members claim their delta). Equal-per-member — <em>not</em> pro-rata by wealth — is deliberately
+      democratic, and only possible <b class="hl">because identities are sybil-resistant</b>.</p>
+    <p class="muted" style="font-size:.9rem">Why not confiscate arbitrary holder balances? You can't iterate holders fairly, and
+      seizing individuals' savings for state actions they may oppose <em>is</em> collective punishment — the very thing the
+      protocol exists to end. So the stake is <b>opt-in</b>.</p>
+  </section>
+
+  <!-- 11 — INCENTIVE REGISTRY / VOTING -->
+  <section class="slide center">
+    <div class="kicker">Governance layer · proposals</div>
+    <h2>IncentiveRegistry — quadratic, dual-majority voting</h2>
+    <div class="flow">
+      <div class="node">Propose<span class="s">anyone, free · 30d cooldown if rejected</span></div>
+      <span class="arrow">→</span>
+      <div class="node">Discussion<span class="s">7 days · immutable on-chain</span></div>
+      <span class="arrow">→</span>
+      <div class="node">Vote<span class="s">3 days · quadratic</span></div>
+      <span class="arrow">→</span>
+      <div class="node">Active<span class="s">attestation opens</span></div>
+    </div>
+    <div class="split" style="margin-top:1.8rem">
+      <div>
+        <h3>The proposal pins a circuit, not prose</h3>
+        <p>A proposal commits a <code>patternHash</code> (the exact compiled zk-regex), a set of
+          approved <b>source domains</b> tagged <b class="commA">A</b> / <b class="commB">B</b> /
+          <b class="intl">Intl</b>, distinct-source thresholds, an attestation window, and a
+          capped <code>redistributionBps</code> (≤5%). Voters approve a <b class="hl">circuit</b>.</p>
+      </div>
+      <div>
+        <h3>Why quadratic finally works here</h3>
+        <p><code>n</code> votes lock <b><code>n²</code> tokens</b> of your community's PeaceToken (refunded after).
+          Token-weighted quadratic voting is sybil-vulnerable without identity — split tokens across wallets and the
+          penalty vanishes. <b class="hl">zkEmail identity is what makes it real:</b> ballots are per-nullifier.</p>
+      </div>
+    </div>
+    <p style="margin-top:1.3rem"><b>Dual majority to pass:</b> YES&gt;NO within <b class="commA">A</b>
+      <em>and</em> within <b class="commB">B</b>, <em>and</em> ≥30% of the roll participated.
+      <b class="hl">Neither side can impose rules on the other.</b></p>
+  </section>
+
+  <!-- 12 — EVENT ATTESTATION -->
+  <section class="slide center">
+    <div class="kicker">Execution layer · the oracle</div>
+    <h2>EventAttestation — permissionless, multi-source</h2>
+    <p class="lead">Anyone holding a DKIM-signed email from an approved source, matching the incentive's committed
+      pattern, calls <code>attest(incentiveId, proof)</code>. Proofs cluster into <b>rounds</b> = one candidate event.</p>
+    <div class="grid g3">
+      <div class="card">
+        <h3>Rounds</h3>
+        <p>The first proof opens a round; later proofs must fall within the attestation window of the first
+          ("reports within 7 days = the same event").</p>
+      </div>
+      <div class="card">
+        <h3>Distinct-source tally</h3>
+        <p>One count per <b>outlet</b> per round, one count per <b>physical email</b>. A round <b class="hl">confirms</b>
+          when it has ≥ required <b class="commA">A</b>, <b class="commB">B</b>, and <b class="intl">Intl</b> sources.</p>
+      </div>
+      <div class="card">
+        <h3>On confirm → hand off</h3>
+        <p>Bumps the incentive's trigger bookkeeping and calls <code>engine.onEventConfirmed()</code>, opening the
+          dispute window.</p>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:1.4rem">Anti-abuse: 30-day submission lag, per-round dedup, per-incentive cooldown +
+      <code>maxTriggers</code> so a recurring event can't drain a pool. Guardian can pause attestation in emergencies.</p>
+  </section>
+
+  <!-- 13 — REDISTRIBUTION ENGINE -->
+  <section class="slide center">
+    <div class="kicker">Execution layer · the value mover</div>
+    <h2>RedistributionEngine — value moves once, after 48h</h2>
+    <div class="flow">
+      <div class="node">CONFIRMED<span class="s">amount snapshotted</span></div>
+      <span class="arrow">→</span>
+      <div class="node">48h dispute window<span class="s">council may reverse</span></div>
+      <span class="arrow">→</span>
+      <div class="node" style="border-color:var(--primary)">FINALIZED<span class="s">and only here does value move</span></div>
+    </div>
+    <div class="grid g3" style="margin-top:1.8rem">
+      <div class="card">
+        <h3 class="dgr">Harmful by X</h3>
+        <p>Slash pool&nbsp;X corpus → redeem 1:1 to USD at minter&nbsp;X → mint 1:1 into <b>pool&nbsp;Y rewards</b>.
+          Reserve backing preserved on both sides.</p>
+      </div>
+      <div class="card">
+        <h3 class="commA">Positive by X</h3>
+        <p>Reward paid <b>from the shared Treasury</b> into pool&nbsp;X — rewarding de-escalation must not itself
+          punish the other side.</p>
+      </div>
+      <div class="card">
+        <h3 class="intl">Joint</h3>
+        <p>Treasury USD split <b>50 / 50</b> into both pools.</p>
+      </div>
+    </div>
+    <p class="muted" style="margin-top:1.4rem"><code>finalize()</code> is permissionless once the window passes; amounts are
+      recomputed against the <em>live</em> corpus (a prior slash can shrink it — hence the <code>min()</code>).</p>
+  </section>
+
+  <!-- 14 — DISPUTE COUNCIL + ESCROW + BUSINESS -->
+  <section class="slide center">
+    <div class="kicker">Execution layer · the rest</div>
+    <h2>Circuit breaker, external funds, commerce</h2>
+    <div class="grid g3">
+      <div class="card">
+        <h3>DisputeCouncil</h3>
+        <p>A balanced, multi-stakeholder council. <code>voteReverse(eventId)</code> — and nothing else.
+          Reversal needs YES from <b class="hl">≥75% of the entire council</b>, and only during the open window.</p>
+        <p class="muted" style="font-size:.84rem">A reversed event returns its trigger slot but keeps the cooldown clock.</p>
+      </div>
+      <div class="card">
+        <h3>SanctionsEscrow</h3>
+        <p>States / NGOs / diaspora <code>deposit()</code> reserve against a specific incentive + beneficiary + expiry.
+          On a <b>finalized</b> event the tranche <code>release()</code>s; else the donor <code>reclaim()</code>s after expiry.</p>
+        <p class="muted" style="font-size:.84rem">"Tokenized sanctions relief" — transparent, immutable conditions.</p>
+      </div>
+      <div class="card">
+        <h3>BusinessRegistry</h3>
+        <p>Merchants certified by a <b>simple dual-majority poll</b> (revocable the same way). Paying a certified
+          business <em>across the conflict line</em> earns a Treasury <b class="hl">cooperation bonus</b>.</p>
+        <p class="muted" style="font-size:.84rem">Bonus is budgeted per epoch (~1%/mo) to contain wash-trading.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 15 — END TO END FLOW -->
+  <section class="slide center">
+    <div class="kicker">Putting it together</div>
+    <h2>One harmful event, end to end</h2>
+    <div class="diagram"><b>1.</b> Citizen of <b>A</b> proves gov email → <b>IdentityRegistry.register()</b>          <span class="muted">→ enrolled</span>
+<b>2.</b> Mints tokens → <b>PeaceMinter.mintCitizen()</b>                            <span class="muted">→ 10% into CommunityPool A corpus</span>
+<b>3.</b> Anyone proposes an incentive → <b>IncentiveRegistry.propose()</b>          <span class="muted">→ "if [pattern] reported, slash A 5%"</span>
+<b>4.</b> Members of A &amp; B vote quadratically → <b>castVote()</b> → <b>finalize()</b>       <span class="muted">→ dual majority passes → Active</span>
+<b>5.</b> Subscribers prove newsletters → <b>EventAttestation.attest()</b> × sources  <span class="muted">→ round Confirmed</span>
+<b>6.</b> Engine snapshots the amount → <b>onEventConfirmed()</b>                     <span class="muted">→ 48h dispute window opens</span>
+<b>7a.</b> Council disagrees → <b>DisputeCouncil.voteReverse()</b> ≥75%              <span class="muted">→ Reversed, nothing moves</span>
+<b>7b.</b> Window passes → <b>RedistributionEngine.finalize()</b>                    <span class="muted">→ corpus A → rewards B</span>
+<b>8.</b> Members of <b>B</b> claim their equal share → <b>CommunityPool.claim()</b>        <span class="muted">→ peace dividend paid</span>
+<b>8+.</b> Any escrowed tranche on this incentive → <b>SanctionsEscrow.release()</b>  <span class="muted">→ relief funds flow</span></div>
+    <p class="muted" style="margin-top:1.2rem">Value only ever moves at step 7b — after proof, after consent, after a
+      standing dispute window. Everything before it is reversible.</p>
+  </section>
+
+  <!-- 16 — DEPLOYMENT / CLOSE -->
+  <section class="slide center">
+    <div class="kicker">Status</div>
+    <h2>Live &amp; deployed</h2>
+    <div class="split">
+      <div>
+        <p>The full system is deployed and demo-configured on <b class="hl">Gnosis Chain (100)</b>.
+          Governance windows are compressed to 10 minutes so the whole loop — verify → mint → propose →
+          vote → attest → dispute → claim — runs in under an hour.</p>
+        <div class="kv">
+          <span class="k">IdentityRegistry</span><span class="mono">0x60fe…40b3d</span>
+          <span class="k">IncentiveRegistry</span><span class="mono">0x559b…d8af</span>
+          <span class="k">EventAttestation</span><span class="mono">0x92ce…8640</span>
+          <span class="k">RedistributionEngine</span><span class="mono">0xfdad…1043</span>
+        </div>
+      </div>
+      <div>
+        <h3>Proof-system status</h3>
+        <p>Contracts verify the exact zkEmail public-signal ABI against per-blueprint Groth16 verifiers.
+          Tests run against a <b>mock</b> Groth16 backend with <b class="hl">every contract-level check fully real</b>
+          (DKIM registry, nullifiers, windows, bindings).</p>
+        <p class="muted" style="font-size:.9rem">Compiling the blueprints and registering the generated verifiers is the
+          only step between this and proving against real emails — <b>no contract changes required</b>.</p>
+      </div>
+    </div>
+    <div class="footnote">
+      Live demo: <b>ronturetzky.github.io/p2peace-zkemail</b> &nbsp;·&nbsp;
+      Deep dives: <span class="mono">docs/ARCHITECTURE.md · ZKEMAIL-DESIGN.md · THREAT-MODEL.md</span>
+    </div>
+  </section>
+
+</div>
+
+<div class="progress" id="progress"></div>
+<div class="hud"><b id="cur">1</b> / <span id="total">16</span></div>
+<div class="nav">
+  <button id="prev" aria-label="Previous">‹</button>
+  <button id="next" aria-label="Next">›</button>
+</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const total=slides.length;
+  let i=0;
+  const curEl=document.getElementById('cur');
+  const totalEl=document.getElementById('total');
+  const bar=document.getElementById('progress');
+  totalEl.textContent=total;
+  function show(n){
+    i=Math.max(0,Math.min(total-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    curEl.textContent=i+1;
+    bar.style.width=((i+1)/total*100)+'%';
+    slides[i].scrollTop=0;
+    location.hash=i+1;
+  }
+  function next(){show(i+1)} function prev(){show(i-1)}
+  document.getElementById('next').onclick=next;
+  document.getElementById('prev').onclick=prev;
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();next()}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev()}
+    else if(e.key==='Home'){show(0)} else if(e.key==='End'){show(total-1)}
+    else if(e.key.toLowerCase()==='f'){
+      if(!document.fullscreenElement)document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+  // swipe
+  let x0=null;
+  addEventListener('touchstart',e=>x0=e.touches[0].clientX,{passive:true});
+  addEventListener('touchend',e=>{
+    if(x0===null)return;
+    const dx=e.changedTouches[0].clientX-x0;
+    if(Math.abs(dx)>50){dx<0?next():prev()} x0=null;
+  },{passive:true});
+  const start=parseInt(location.hash.replace('#',''))||1;
+  show(start-1);
+</script>
+</body>
+</html>

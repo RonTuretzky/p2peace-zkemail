@@ -17,6 +17,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Gavel, Vote, FilePlus2, Megaphone, ExternalLink, Undo2, ArrowRight } from "lucide-react"
 import { ConnectGate, FlowHeader, TxButton, useMembership } from "@/components/flow"
 import { JourneyBar, HonestyNote, PrereqNote } from "@/components/explainer"
+import { VisualFrame, VizRules } from "@/components/journey-visuals"
 import { contract } from "@/lib/contracts"
 import { Community, Direction, SourceCategory } from "@/lib/chains"
 import { demoSources, domainHashOf, NEWS_PATTERN } from "@/lib/demo"
@@ -73,6 +74,11 @@ export default function IncentivesPage() {
         in public, that this exact kind of event should — agreeing on the rule while nobody knows
         who it will cost.
       </p>
+      <div className="mx-auto mt-8 max-w-xl">
+        <VisualFrame caption="no rule activates without a YES from each side">
+          <VizRules />
+        </VisualFrame>
+      </div>
       <ConnectGate>
         <IncentivesInner />
       </ConnectGate>

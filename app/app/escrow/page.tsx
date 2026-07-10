@@ -26,6 +26,7 @@ import {
   PrereqNote,
   type ExplainerStep,
 } from "@/components/explainer"
+import { VisualFrame, VizWorld } from "@/components/journey-visuals"
 import { contract } from "@/lib/contracts"
 import { fmt, short } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -268,6 +269,11 @@ export default function EscrowPage() {
         <StepperExplainer steps={STEPS} diagram={(k) => <EscrowDiagram step={k} />} />
       </div>
 
+      <div className="mx-auto mt-8 max-w-xl">
+        <VisualFrame caption="support flows in — the say stays with the two communities">
+          <VizWorld />
+        </VisualFrame>
+      </div>
       <ConnectGate>
         <EscrowInner />
       </ConnectGate>

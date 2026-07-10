@@ -10,6 +10,7 @@ import Link from "next/link"
 import { Store, Vote, HandCoins, FilePlus2, ThumbsUp, ThumbsDown, Gavel, ArrowRight } from "lucide-react"
 import { ConnectGate, FlowHeader, TxButton, useMembership } from "@/components/flow"
 import { HonestyNote, PrereqNote } from "@/components/explainer"
+import { VisualFrame, VizYearOne } from "@/components/journey-visuals"
 import { contract } from "@/lib/contracts"
 import { Community } from "@/lib/chains"
 import { fmt, short, COMMUNITY_LABEL } from "@/lib/format"
@@ -64,6 +65,11 @@ export default function BusinessPage() {
         reward everyday cooperation as it happens. Why it exists: peace that only pays out when
         something goes wrong is half a peace — cross-line commerce is the other half.
       </p>
+      <div className="mx-auto mt-8 max-w-xl">
+        <VisualFrame caption="every purchase keeps value with neighbors">
+          <VizYearOne />
+        </VisualFrame>
+      </div>
       <ConnectGate>
         <BusinessInner />
       </ConnectGate>

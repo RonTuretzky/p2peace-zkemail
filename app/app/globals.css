@@ -98,3 +98,96 @@
     text-wrap: balance;
   }
 }
+
+/* --- Journey visualizations (looping, purely decorative) -------------------
+   Crowdstake-style micro-animations: each story chapter pairs its text with a
+   small animated scene. Every scene reads correctly in its resting state, and
+   all motion is disabled under prefers-reduced-motion. */
+
+@keyframes p2p-drop {
+  0% { opacity: 0; transform: translateY(-14px) scale(0.8); }
+  18% { opacity: 1; }
+  70% { opacity: 1; transform: translateY(28px) scale(1); }
+  100% { opacity: 0; transform: translateY(30px) scale(0.9); }
+}
+.p2p-drop { animation: p2p-drop 2.6s ease-in infinite; }
+
+@keyframes p2p-fill {
+  0%, 100% { height: 42%; }
+  50% { height: 68%; }
+}
+.p2p-fill { animation: p2p-fill 3.4s ease-in-out infinite; }
+
+@keyframes p2p-bar {
+  0% { transform: scaleX(0); }
+  55%, 100% { transform: scaleX(1); }
+}
+.p2p-bar { animation: p2p-bar 3.2s ease-in-out infinite; transform-origin: left; }
+
+@keyframes p2p-flow {
+  0% { opacity: 0; transform: translate(0, -50%); }
+  20% { opacity: 1; }
+  80% { opacity: 1; transform: translate(44px, -50%); }
+  100% { opacity: 0; transform: translate(52px, -50%); }
+}
+.p2p-flow { animation: p2p-flow 1.9s ease-in-out infinite; }
+
+@keyframes p2p-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.07); }
+}
+.p2p-pulse { animation: p2p-pulse 1.9s ease-in-out infinite; }
+
+@keyframes p2p-grow-y {
+  0% { transform: scaleY(0.15); }
+  55%, 100% { transform: scaleY(1); }
+}
+.p2p-grow-y { animation: p2p-grow-y 3.2s ease-in-out infinite; transform-origin: bottom; }
+
+@keyframes p2p-shrink-y {
+  0% { transform: scaleY(1); }
+  55%, 100% { transform: scaleY(0.35); }
+}
+.p2p-shrink-y { animation: p2p-shrink-y 3.2s ease-in-out infinite; transform-origin: bottom; }
+
+/* Dispute-window timer draining while the lock holds. */
+@keyframes p2p-drain {
+  0% { transform: scaleX(1); }
+  85%, 100% { transform: scaleX(0); }
+}
+.p2p-drain { animation: p2p-drain 4s linear infinite; transform-origin: left; }
+
+/* Gentle bob for badges (accruing / watching). */
+@keyframes p2p-rise {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+.p2p-rise { animation: p2p-rise 2.4s ease-in-out infinite; }
+
+/* Two circles drifting together until they overlap (the long game). */
+@keyframes p2p-merge-l {
+  0%, 15% { transform: translateX(0); }
+  60%, 85% { transform: translateX(26px); }
+  100% { transform: translateX(0); }
+}
+@keyframes p2p-merge-r {
+  0%, 15% { transform: translateX(0); }
+  60%, 85% { transform: translateX(-26px); }
+  100% { transform: translateX(0); }
+}
+.p2p-merge-l { animation: p2p-merge-l 6s ease-in-out infinite; }
+.p2p-merge-r { animation: p2p-merge-r 6s ease-in-out infinite; }
+
+/* A tally slot snapping in when its proof lands. */
+@keyframes p2p-slot {
+  0%, 35% { opacity: 0.35; transform: scale(0.92); }
+  50%, 100% { opacity: 1; transform: scale(1); }
+}
+.p2p-slot { animation: p2p-slot 4.5s ease-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .p2p-drop, .p2p-fill, .p2p-bar, .p2p-flow, .p2p-pulse, .p2p-grow-y,
+  .p2p-shrink-y, .p2p-drain, .p2p-rise, .p2p-merge-l, .p2p-merge-r, .p2p-slot {
+    animation: none !important;
+  }
+}

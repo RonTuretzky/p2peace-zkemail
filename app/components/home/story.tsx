@@ -1,5 +1,20 @@
 import type React from "react"
 import Link from "next/link"
+import {
+  VisualFrame,
+  VizVerify,
+  VizPledge,
+  VizRules,
+  VizEvent,
+  VizEvidence,
+  VizDaylight,
+  VizSettle,
+  VizRepair,
+  VizWorld,
+  VizYearOne,
+  VizYearFive,
+  VizYearTwenty,
+} from "@/components/journey-visuals"
 
 /**
  * The Story — the whole system told once, chronologically, one idea per
@@ -7,8 +22,9 @@ import Link from "next/link"
  * from an email in their inboxes to a promise kept.
  *
  * Design: a single column on a vertical timeline spine. Each chapter is a day
- * marker, a title, two or three sentences, one small visual, and at most one
- * link. Nothing competes for attention; the order does the explaining.
+ * marker, a title, two or three sentences, one animated scene (see
+ * journey-visuals.tsx — crowdstake-style looping CSS animations), and at most
+ * one link. Nothing competes for attention; the order does the explaining.
  *
  * Voice: warm, plain, quietly confident (Bread voice guide). The money is a
  * pledge that makes commitments credible — never the point of the story.
@@ -39,7 +55,7 @@ function Chapter({
       <div className="mt-3 max-w-xl space-y-3 leading-relaxed text-muted-foreground">
         {children}
       </div>
-      {visual && <div className="mt-5 max-w-xl rounded-2xl border border-border bg-card p-5">{visual}</div>}
+      {visual && <div className="mt-5 max-w-xl">{visual}</div>}
       {link && (
         <Link
           href={link.href}
@@ -52,139 +68,21 @@ function Chapter({
   )
 }
 
-/* ------------------------------ tiny visuals ------------------------------ */
-
-function VizVerify() {
-  return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-around">
-      {[
-        { name: "Amira", side: "A", domain: "taxes.gov-a" },
-        { name: "Boaz", side: "B", domain: "id.gov-b" },
-      ].map((p) => (
-        <div key={p.name} className="flex items-center gap-2 text-sm">
-          <span className="text-xl">✉️</span>
-          <span className="text-muted-foreground">{p.domain}</span>
-          <span className="text-primary">→</span>
-          <span className="text-xl">🛡️</span>
-          <span className="font-semibold">
-            {p.name} <span className="font-normal text-muted-foreground">member of {p.side}</span>
-          </span>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function VizMint() {
-  return (
-    <div>
-      <div className="flex h-9 w-full overflow-hidden rounded-lg text-[11px] font-bold">
-        <div className="flex w-[90%] items-center justify-center bg-accent/70 text-accent-foreground">
-          $90 stays in Amira&apos;s wallet — redeemable 1:1, any time
-        </div>
-        <div className="flex w-[10%] items-center justify-center bg-primary text-primary-foreground">
-          $10
-        </div>
-      </div>
-      <p className="mt-2 text-xs text-muted-foreground">
-        The $10 joins <span className="font-semibold text-foreground">peace pool A</span> —
-        Amira's community's shared pledge. Boaz's does the same on his side. A thousand people
-        each, and both communities have put their word where the other side can see it.
-      </p>
-    </div>
-  )
-}
-
-function VizAgree() {
-  return (
-    <div className="space-y-2 text-sm">
-      <p className="rounded-lg bg-muted p-3 font-mono text-xs">
-        “IF (checkpoint removal) AND (Jordan Valley) reported by ≥1 A-outlet, ≥1 B-outlet, ≥2
-        international wires → reward community A from the Treasury”
-      </p>
-      <div className="flex items-center justify-center gap-2 text-xs font-bold">
-        <span className="rounded-lg bg-primary/15 px-2 py-1.5 text-primary">Community A: YES</span>
-        <span className="text-muted-foreground">and</span>
-        <span className="rounded-lg bg-primary/15 px-2 py-1.5 text-primary">Community B: YES</span>
-        <span className="text-primary text-base">✓ rule active</span>
-      </div>
-    </div>
-  )
-}
-
-function VizAttest() {
-  return (
-    <div className="flex flex-wrap items-center justify-center gap-2 text-xs">
-      <span className="text-xl">📰</span>
-      {[
-        { l: "A-press", ok: true },
-        { l: "B-press", ok: true },
-        { l: "wire #1", ok: true },
-        { l: "wire #2", ok: true },
-      ].map((s) => (
-        <span
-          key={s.l}
-          className="rounded-lg bg-primary px-2 py-1 font-bold text-primary-foreground"
-        >
-          {s.l} ✓
-        </span>
-      ))}
-      <span className="w-full text-center text-muted-foreground">
-        four different newsrooms, four signed emails, four proofs — event confirmed
-      </span>
-    </div>
-  )
-}
-
-function VizTwoDirections() {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <div className="rounded-xl border border-primary/40 bg-accent/30 p-3 text-xs">
-        <div className="font-bold text-accent-foreground">A step toward peace</div>
-        <p className="mt-1 text-muted-foreground">
-          Treasury → the acting side's pool. Rewarding de-escalation never costs the other
-          community a cent.
-        </p>
-      </div>
-      <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-3 text-xs">
-        <div className="font-bold">A verified harm</div>
-        <p className="mt-1 text-muted-foreground">
-          Up to 5% of the responsible side's pool → the harmed side's rewards. Only the staked
-          10% is ever reachable — never anyone's savings.
-        </p>
-      </div>
-    </div>
-  )
-}
-
-function VizDividend() {
-  return (
-    <div className="text-center text-sm">
-      <div className="flex items-center justify-center gap-2">
-        <span className="rounded-lg bg-amber-500/20 px-2 py-1 text-xs font-bold text-amber-700 dark:text-amber-300">
-          pool moves $500
-        </span>
-        <span className="text-primary">→</span>
-        <span className="rounded-lg bg-primary px-2 py-1 text-xs font-bold text-primary-foreground">
-          $0.50 to each of 1,000 members
-        </span>
-      </div>
-      <p className="mt-2 text-xs text-muted-foreground">
-        The same share to each person — repair that reaches people, not portfolios. Boaz claims
-        his; it's ordinary money, good anywhere the community's money is good.
-      </p>
-    </div>
-  )
-}
-
-/* --------------------------------- story --------------------------------- */
-
 export function Story() {
   return (
     <section id="story" className="w-full py-16">
       <div className="container mx-auto max-w-3xl px-4">
         <ol className="border-l-2 border-border">
-          <Chapter day="Day 0 · identity" title="Amira and Boaz verify — privately" visual={<VizVerify />} link={{ href: "/verify", label: "Do this step live" }}>
+          <Chapter
+            day="Day 0 · identity"
+            title="Amira and Boaz verify — privately"
+            visual={
+              <VisualFrame caption="a government email in → an anonymous membership out">
+                <VizVerify />
+              </VisualFrame>
+            }
+            link={{ href: "/verify", label: "Do this step live" }}
+          >
             <p>
               Amira lives in community A, Boaz in community B. Their governments already email
               them — tax receipts, ID-portal notices — and every such email carries a
@@ -198,11 +96,21 @@ export function Story() {
             </p>
           </Chapter>
 
-          <Chapter day="Day 0 · the pledge" title="They each put $100 behind the peace" visual={<VizMint />} link={{ href: "/mint", label: "Do this step live" }}>
+          <Chapter
+            day="Day 0 · the pledge"
+            title="They each put $100 behind the peace"
+            visual={
+              <VisualFrame caption="90% stays yours · 10% becomes the community's pledge">
+                <VizPledge />
+              </VisualFrame>
+            }
+            link={{ href: "/mint", label: "Do this step live" }}
+          >
             <p>
               The money itself is boring on purpose: every unit is backed one-for-one by real
-              money held in reserve, and you can cash back out any time. What matters is the split — 90% stays in your
-              wallet, and 10% goes into your community's <em>peace pool</em>.
+              money held in reserve, and you can cash back out any time. What matters is the
+              split — 90% stays in your wallet, and 10% goes into your community's{" "}
+              <em>peace pool</em>.
             </p>
             <p>
               That pledge is the only money these tools can ever touch, and joining is how you
@@ -211,7 +119,16 @@ export function Story() {
             </p>
           </Chapter>
 
-          <Chapter day="Day 1–8 · rules" title="Both sides write a rule — together" visual={<VizAgree />} link={{ href: "/incentives", label: "Browse & vote live" }}>
+          <Chapter
+            day="Day 1–8 · rules"
+            title="Both sides write a rule — together"
+            visual={
+              <VisualFrame caption="no rule activates without a YES from each side">
+                <VizRules />
+              </VisualFrame>
+            }
+            link={{ href: "/incentives", label: "Browse & vote live" }}
+          >
             <p>
               Anyone may propose an incentive: a precise, machine-checkable sentence about the
               world. The keyword logic is committed as the hash of an exact circuit, so voters
@@ -225,7 +142,15 @@ export function Story() {
             </p>
           </Chapter>
 
-          <Chapter day="Day 40 · the event" title="A checkpoint comes down">
+          <Chapter
+            day="Day 40 · the event"
+            title="A checkpoint comes down"
+            visual={
+              <VisualFrame caption="the evidence lands, signed, in millions of inboxes">
+                <VizEvent />
+              </VisualFrame>
+            }
+          >
             <p>
               Something real happens in the world. Newsrooms on both sides and international
               wires report it — and every newsletter they send is automatically signed by their
@@ -237,7 +162,16 @@ export function Story() {
             </p>
           </Chapter>
 
-          <Chapter day="Day 40 · evidence" title="Anyone with the email proves it" visual={<VizAttest />} link={{ href: "/attest", label: "Attest live" }}>
+          <Chapter
+            day="Day 40 · evidence"
+            title="Anyone with the email proves it"
+            visual={
+              <VisualFrame caption="≥1 A-outlet · ≥1 B-outlet · ≥2 wires — each email counted once">
+                <VizEvidence />
+              </VisualFrame>
+            }
+            link={{ href: "/attest", label: "Attest live" }}
+          >
             <p>
               Any subscriber — Amira, Boaz, a stranger in Lisbon — generates a proof in their
               browser: <em>this signed email, from this approved outlet, matches the rule's
@@ -251,7 +185,16 @@ export function Story() {
             </p>
           </Chapter>
 
-          <Chapter day="Day 40–42 · daylight" title="48 hours where nothing moves" link={{ href: "/council", label: "See the council docket" }}>
+          <Chapter
+            day="Day 40–42 · daylight"
+            title="48 hours where nothing moves"
+            visual={
+              <VisualFrame caption="confirmation starts a clock, not a transfer">
+                <VizDaylight />
+              </VisualFrame>
+            }
+            link={{ href: "/council", label: "See the council docket" }}
+          >
             <p>
               Confirmation starts a clock, not a transfer. For 48 hours the event sits in
               daylight, and a dispute council seated from both communities can reverse it with a
@@ -259,7 +202,16 @@ export function Story() {
             </p>
           </Chapter>
 
-          <Chapter day="Day 42 · the promise kept" title="The rules do what both sides agreed" visual={<VizTwoDirections />} link={{ href: "/pools", label: "Watch pools settle live" }}>
+          <Chapter
+            day="Day 42 · the promise kept"
+            title="The rules do what both sides agreed"
+            visual={
+              <VisualFrame caption="harm: pledge → repair · steps toward peace: met from the shared Treasury">
+                <VizSettle />
+              </VisualFrame>
+            }
+            link={{ href: "/pools", label: "Watch pools settle live" }}
+          >
             <p>
               The window closes untouched, and the rules carry out exactly what both
               communities wrote together. Everything is symmetric: what holds A to its word
@@ -267,7 +219,16 @@ export function Story() {
             </p>
           </Chapter>
 
-          <Chapter day="Day 42 · repair" title="Every member gets the same share" visual={<VizDividend />} link={{ href: "/pools", label: "Claim live" }}>
+          <Chapter
+            day="Day 42 · repair"
+            title="Every member gets the same share"
+            visual={
+              <VisualFrame caption="repair reaches people, not portfolios">
+                <VizRepair />
+              </VisualFrame>
+            }
+            link={{ href: "/pools", label: "Claim live" }}
+          >
             <p>
               Repair goes to people, not to balances: every member of the harmed community
               receives the same share, whether they hold a little or a lot, and it follows your
@@ -276,7 +237,15 @@ export function Story() {
             </p>
           </Chapter>
 
-          <Chapter day="Every day after · the world joins" title="Supporters, donors, and businesses compound it">
+          <Chapter
+            day="Every day after · the world joins"
+            title="Supporters, donors, and businesses compound it"
+            visual={
+              <VisualFrame caption="support flows in — the say stays with the two communities">
+                <VizWorld />
+              </VisualFrame>
+            }
+          >
             <p>
               More doors, all optional:{" "}
               <Link href="/mint" className="font-medium text-primary hover:underline">
@@ -295,7 +264,15 @@ export function Story() {
             </p>
           </Chapter>
 
-          <Chapter day="Year 1 · everyday life" title="The money starts doing groceries">
+          <Chapter
+            day="Year 1 · everyday life"
+            title="The money starts doing groceries"
+            visual={
+              <VisualFrame caption="value that used to leave the neighborhood now stays in it">
+                <VizYearOne />
+              </VisualFrame>
+            }
+          >
             <p>
               Amira's greengrocer takes community money. So does Boaz's mechanic, then a
               pharmacy, then a landlord or two. Every certified business makes it a little more
@@ -308,7 +285,15 @@ export function Story() {
             </p>
           </Chapter>
 
-          <Chapter day="Year 5 · the shift" title="War gets more expensive every year">
+          <Chapter
+            day="Year 5 · the shift"
+            title="War gets more expensive every year"
+            visual={
+              <VisualFrame caption="escalation now loses twice — the pledge, and the economy walking away">
+                <VizYearFive />
+              </VisualFrame>
+            }
+          >
             <p>
               As more of daily life runs on community money, the currencies that fund escalation
               slowly matter less. A government that chooses violence now loses twice: the
@@ -323,7 +308,16 @@ export function Story() {
             </p>
           </Chapter>
 
-          <Chapter day="Year 20 · grown together" title="Two monies become hard to tell apart" link={{ href: "/token-economics", label: "Read the long game in full" }}>
+          <Chapter
+            day="Year 20 · grown together"
+            title="Two monies become hard to tell apart"
+            visual={
+              <VisualFrame caption="integration built from a million small exchanges">
+                <VizYearTwenty />
+              </VisualFrame>
+            }
+            link={{ href: "/token-economics", label: "Read the long game in full" }}
+          >
             <p>
               This was never meant to happen in a season. Over decades, the two community
               currencies circulate side by side — accepted in the same shops, pooled in the same

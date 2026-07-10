@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Coins, Gift, ShieldAlert, Timer, CheckCircle2, XCircle, Gavel, ArrowRight } from "lucide-react"
 import { ConnectGate, FlowHeader, TxButton, useMembership } from "@/components/flow"
 import { JourneyBar, HonestyNote, PrereqNote } from "@/components/explainer"
+import { VisualFrame, VizSettle } from "@/components/journey-visuals"
 import { contract } from "@/lib/contracts"
 import { Community } from "@/lib/chains"
 import { fmt, DIRECTION_LABEL } from "@/lib/format"
@@ -26,6 +27,11 @@ export default function PoolsPage() {
         pledge does what both sides said it would, and your membership becomes your community's
         claimable share.
       </p>
+      <div className="mx-auto mt-8 max-w-xl">
+        <VisualFrame caption="harm: pledge → repair · steps toward peace: met from the Treasury">
+          <VizSettle />
+        </VisualFrame>
+      </div>
       <ConnectGate>
         <PoolsInner />
       </ConnectGate>
