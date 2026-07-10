@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import {
   useAccount,
   useReadContract,
@@ -19,7 +19,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Landmark, ListChecks, PiggyBank, Timer, CheckCircle2, Undo2 } from "lucide-react"
-import { ConnectGate, FlowHeader, TxButton } from "@/components/flow"
+import { ConnectGate, FlowHeader, TxButton, useTxSteps } from "@/components/flow"
 import {
   StepperExplainer,
   HonestyNote,
@@ -412,21 +412,26 @@ function EscrowInner() {
   })
 
   /* -------- writes -------- */
+  const refetchAll = useCallback(() => {
+    trancheCount.refetch()
+    trancheReads.refetch()
+    usdBal.refetch()
+    allowance.refetch()
+    evtCount.refetch()
+    evtReads.refetch()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  // release + reclaim are single txs (no approval) — keep on useWriteContract.
   const { writeContract, data: hash, isPending, error, reset } = useWriteContract()
   const receipt = useWaitForTransactionReceipt({ hash })
-  const [lastAction, setLastAction] = useState<"deposit" | "release" | "reclaim" | "approve" | null>(null)
+  const [lastAction, setLastAction] = useState<"release" | "reclaim" | null>(null)
   useEffect(() => {
-    if (receipt.isSuccess) {
-      trancheCount.refetch()
-      trancheReads.refetch()
-      usdBal.refetch()
-      allowance.refetch()
-      evtCount.refetch()
-      evtReads.refetch()
-    }
+    if (receipt.isSuccess) refetchAll()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [receipt.isSuccess])
   const txPending = isPending || receipt.isLoading
+  // deposit is "approve-if-needed → deposit" as ONE gesture.
+  const depositSteps = useTxSteps(refetchAll)
 
   /* -------- deposit form state -------- */
   const [incentiveId, setIncentiveId] = useState("")
@@ -446,24 +451,32 @@ function EscrowInner() {
   const hasUsd = ((usdBal.data as bigint | undefined) ?? 0n) > 0n
   const chosenIncentive = incentiveId ? incentiveById.get(incentiveId) : undefined
 
-  const approve = () => {
+  // One gesture: approve the reserve to the escrow (if short), then deposit.
+  const doDeposit = () => {
     reset()
-    setLastAction("approve")
-    writeContract({
-      ...contract.reserve(),
-      functionName: "approve",
-      args: [escrow.address, amountWei],
-    })
-  }
-  const deposit = () => {
-    reset()
-    setLastAction("deposit")
+    setLastAction(null)
     const expiry = BigInt(Math.floor(Date.now() / 1000)) + expiryPreset
-    writeContract({
-      ...escrow,
-      functionName: "deposit",
-      args: [BigInt(incentiveId), Number(beneficiary), amountWei, expiry],
-    })
+    depositSteps.run([
+      {
+        label: `Approve ${amount || "0"} sDAI`,
+        request: () =>
+          needsApproval
+            ? {
+                ...contract.reserve(),
+                functionName: "approve",
+                args: [escrow.address, amountWei],
+              }
+            : null,
+      },
+      {
+        label: `Escrow ${amount || "0"} sDAI`,
+        request: () => ({
+          ...escrow,
+          functionName: "deposit",
+          args: [BigInt(incentiveId), Number(beneficiary), amountWei, expiry],
+        }),
+      },
+    ])
   }
   const release = (trancheId: bigint, eventId: bigint) => {
     reset()
@@ -585,32 +598,20 @@ function EscrowInner() {
             </p>
           </div>
 
-          {needsApproval ? (
-            <TxButton
-              className="w-full"
-              pending={txPending}
-              disabled={amountWei === 0n}
-              onClick={approve}
-            >
-              Approve {amount || "0"} sDAI for escrow
-            </TxButton>
-          ) : (
-            <TxButton
-              className="w-full"
-              pending={txPending}
-              disabled={amountWei === 0n || !incentiveId}
-              onClick={deposit}
-            >
-              Escrow {amount || "0"} sDAI against incentive #{incentiveId || "—"}
-            </TxButton>
-          )}
+          <TxButton
+            className="w-full"
+            pending={depositSteps.running}
+            disabled={amountWei === 0n || !incentiveId}
+            onClick={doDeposit}
+          >
+            {depositSteps.running
+              ? depositSteps.stepLabel || "Working…"
+              : needsApproval
+                ? `Escrow ${amount || "0"} sDAI — approve + deposit in one click`
+                : `Escrow ${amount || "0"} sDAI against incentive #${incentiveId || "—"}`}
+          </TxButton>
 
-          {receipt.isSuccess && lastAction === "approve" && (
-            <p className="text-sm text-primary">
-              Approval confirmed — now hit the escrow button to lock the tranche.
-            </p>
-          )}
-          {receipt.isSuccess && lastAction === "deposit" && (
+          {depositSteps.done && (
             <p className="text-sm text-primary">
               Tranche escrowed. It now appears in the list below — watch{" "}
               <a className="underline" href="/attest">
@@ -623,10 +624,8 @@ function EscrowInner() {
               to see when it can release.
             </p>
           )}
-          {error && (
-            <p className="text-sm text-destructive">
-              {(error as { shortMessage?: string }).shortMessage || error.message}
-            </p>
+          {depositSteps.error && (
+            <p className="text-sm text-destructive">{depositSteps.error}</p>
           )}
         </CardContent>
       </Card>
@@ -676,6 +675,11 @@ function EscrowInner() {
           )}
           {receipt.isSuccess && lastAction === "reclaim" && (
             <p className="text-sm text-primary">Reclaimed — the sDAI is back in your wallet.</p>
+          )}
+          {error && (
+            <p className="text-sm text-destructive">
+              {(error as { shortMessage?: string }).shortMessage || error.message}
+            </p>
           )}
         </CardContent>
       </Card>

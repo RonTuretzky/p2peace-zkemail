@@ -5,6 +5,8 @@ Chain ([addresses](DEPLOYMENT.md)) · branded with the
 [Decentral Park UI kit](https://github.com/decentralparknyc/decentralpark-ui-kit) ·
 CI/CD by [etherform](https://github.com/BreadchainCoop/etherform)
 
+**New here? → [docs/GET-STARTED.md](docs/GET-STARTED.md)** walks every flow in ~40 minutes, one click at a time.
+
 A full implementation of the **p2p2p** concept ([communetxyz/p2peace @ `v0/ronturetzky-f0bece5e`](https://github.com/communetxyz/p2peace/tree/v0/ronturetzky-f0bece5e)):
 a decentralized protocol that builds economic interdependence between citizens of
 conflicting nations — re-founded on **zkEmail** (DKIM zero-knowledge proofs) instead of

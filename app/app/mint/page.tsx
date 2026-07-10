@@ -2,17 +2,28 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi"
+import { useAccount, useBalance, useReadContracts } from "wagmi"
 import { parseUnits } from "viem"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Coins, Droplets, ArrowRight } from "lucide-react"
-import { ConnectGate, FlowHeader, TxButton, useMembership } from "@/components/flow"
+import { ConnectGate, FlowHeader, TxButton, useMembership, useTxSteps } from "@/components/flow"
 import { JourneyBar, HonestyNote, PrereqNote } from "@/components/explainer"
 import { VisualFrame, VizPledge } from "@/components/journey-visuals"
 import { contract } from "@/lib/contracts"
-import { Community, RESERVE } from "@/lib/chains"
+import { Community, RESERVE, SAVINGS_XDAI_ADAPTER } from "@/lib/chains"
 import { fmt } from "@/lib/format"
+
+const ZERO = "0x0000000000000000000000000000000000000000" as const
+const ADAPTER_ABI = [
+  {
+    type: "function",
+    name: "depositXDAI",
+    stateMutability: "payable",
+    inputs: [{ name: "receiver", type: "address" }],
+    outputs: [{ name: "shares", type: "uint256" }],
+  },
+] as const
 
 export default function MintPage() {
   return (
@@ -55,36 +66,26 @@ function MintJourney() {
 function MintInner() {
   const { address } = useAccount()
   const membership = useMembership()
-  const [amount, setAmount] = useState("100")
+  const [amount, setAmount] = useState("5")
   const isCitizen = membership.isActiveMember && membership.community !== Community.None
   const community = isCitizen ? membership.community : Community.A
 
-  const usdBal = useReadContract({
-    ...contract.reserve(),
-    functionName: "balanceOf",
-    args: address ? [address] : undefined,
+  const balances = useReadContracts({
+    contracts: [
+      { ...contract.reserve(), functionName: "balanceOf", args: [address ?? ZERO] },
+      { ...contract.token(community), functionName: "balanceOf", args: [address ?? ZERO] },
+      {
+        ...contract.reserve(),
+        functionName: "allowance",
+        args: [address ?? ZERO, contract.minter(community).address],
+      },
+    ],
     query: { enabled: !!address },
   })
-  const tokBal = useReadContract({
-    ...contract.token(community),
-    functionName: "balanceOf",
-    args: address ? [address] : undefined,
-    query: { enabled: !!address },
-  })
-  const allowance = useReadContract({
-    ...contract.reserve(),
-    functionName: "allowance",
-    args: address ? [address, contract.minter(community).address] : undefined,
-    query: { enabled: !!address },
-  })
-
-  const { writeContract, data: hash, isPending, error, reset } = useWriteContract()
-  const receipt = useWaitForTransactionReceipt({ hash })
-  if (receipt.isSuccess) {
-    usdBal.refetch()
-    tokBal.refetch()
-    allowance.refetch()
-  }
+  const usdBal = (balances.data?.[0]?.result as bigint) ?? 0n
+  const tokBal = (balances.data?.[1]?.result as bigint) ?? 0n
+  const allowance = (balances.data?.[2]?.result as bigint) ?? 0n
+  const xdai = useBalance({ address, query: { enabled: !!address } })
 
   const amountWei = (() => {
     try {
@@ -93,22 +94,62 @@ function MintInner() {
       return 0n
     }
   })()
-  const needsApproval = (allowance.data ?? 0n) < amountWei
 
-  const approve = () =>
-    writeContract({
-      ...contract.reserve(),
-      functionName: "approve",
-      args: [contract.minter(community).address, amountWei],
-    })
-  const mint = () =>
-    writeContract({
-      ...contract.minter(community),
-      functionName: isCitizen ? "mintCitizen" : "mintOutsider",
-      args: [amountWei],
-    })
+  // One gesture: wrap sDAI (if short), approve (if short), then mint.
+  const join = useTxSteps(() => balances.refetch())
+  const wrap = useTxSteps(() => {
+    balances.refetch()
+    xdai.refetch()
+  })
 
-  const pending = isPending || receipt.isLoading
+  const needsSdai = usdBal < amountWei
+  const shortfall = amountWei > usdBal ? amountWei - usdBal : 0n
+
+  const doJoin = () =>
+    join.run([
+      {
+        label: "Approve sDAI",
+        request: () =>
+          allowance >= amountWei
+            ? null
+            : {
+                ...contract.reserve(),
+                functionName: "approve",
+                args: [contract.minter(community).address, amountWei],
+              },
+      },
+      {
+        label: isCitizen ? "Convert to community money" : "Contribute",
+        request: () => ({
+          ...contract.minter(community),
+          functionName: isCitizen ? "mintCitizen" : "mintOutsider",
+          args: [amountWei],
+        }),
+      },
+    ])
+
+  // Wrap a little extra xDAI → sDAI (covers rounding) in one tx.
+  const doWrapSdai = () =>
+    wrap.run([
+      {
+        label: "Wrap xDAI → sDAI",
+        request: () => ({
+          address: SAVINGS_XDAI_ADAPTER,
+          abi: ADAPTER_ABI,
+          functionName: "depositXDAI",
+          args: [address!],
+          value: shortfall > 0n ? shortfall : amountWei,
+        }),
+      },
+    ])
+
+  const pending = join.running || wrap.running
+  const receiptSuccess = join.done
+  const error = join.error || wrap.error
+  const reset = () => {
+    join.reset()
+    wrap.reset()
+  }
 
   return (
     <>
@@ -125,11 +166,12 @@ function MintInner() {
           <CardDescription>Your sDAI and your community money.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Row label="sDAI (reserve)" value={fmt(usdBal.data as bigint)} />
+          <Row label="sDAI (reserve)" value={fmt(usdBal)} />
           <Row
             label={community === Community.A ? "Community A money (PEACE-A)" : "Community B money (PEACE-B)"}
-            value={fmt(tokBal.data as bigint)}
+            value={fmt(tokBal)}
           />
+          <Row label="xDAI (for gas + wrapping)" value={fmt(xdai.data?.value)} />
           <Row
             label="Joining as"
             value={
@@ -138,14 +180,23 @@ function MintInner() {
               </Badge>
             }
           />
-          <a
-            href={RESERVE.getUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-sm font-medium hover:border-primary/50"
+          <TxButton
+            variant="outline"
+            className="w-full"
+            pending={wrap.running}
+            disabled={!needsSdai || amountWei === 0n}
+            onClick={doWrapSdai}
           >
-            <Droplets className="h-4 w-4 text-primary" /> Get sDAI (swap xDAI on CoW)
-          </a>
+            <Droplets className="mr-2 h-4 w-4 text-primary" />
+            {needsSdai ? `Get ${amount || "0"} sDAI (wrap xDAI, 1 click)` : "You have enough sDAI ✓"}
+          </TxButton>
+          <p className="text-center text-[11px] text-muted-foreground">
+            Wraps xDAI → sDAI in one transaction, right here — no external site. Or{" "}
+            <a href={RESERVE.getUrl} target="_blank" rel="noreferrer" className="underline">
+              swap on CoW
+            </a>
+            .
+          </p>
           {!isCitizen && (
             <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
               You are not verified yet, so you join at the supporter rate and cannot
@@ -191,18 +242,28 @@ function MintInner() {
               </>
             )}
           </p>
-          {needsApproval ? (
-            <TxButton className="w-full" pending={pending} onClick={approve}>
-              Approve {amount || "0"} sDAI
-            </TxButton>
-          ) : (
-            <TxButton className="w-full" pending={pending} onClick={mint} disabled={amountWei === 0n}>
-              {isCitizen ? "Convert to community money" : "Contribute as a supporter"}
-            </TxButton>
+          <TxButton
+            className="w-full"
+            pending={pending}
+            disabled={amountWei === 0n || needsSdai}
+            onClick={doJoin}
+          >
+            {join.running
+              ? join.stepLabel || "Working…"
+              : isCitizen
+                ? "Join — approve + convert in one click"
+                : "Contribute as a supporter"}
+          </TxButton>
+          {needsSdai && amountWei > 0n && (
+            <p className="text-center text-xs text-amber-600">
+              Get {amount || "0"} sDAI first (button on the left).
+            </p>
           )}
-          {receipt.isSuccess && (
+          {receiptSuccess && (
             <div className="rounded-lg bg-accent/40 p-3 text-sm" onClick={reset}>
-              <p className="font-medium text-primary">Confirmed. Balances updated.</p>
+              <p className="font-medium text-primary">
+                Done — you converted, and 10% is now your community&apos;s pledge.
+              </p>
               <Link
                 href="/incentives"
                 className="mt-1 inline-flex items-center gap-1 font-medium text-primary underline"
@@ -211,11 +272,7 @@ function MintInner() {
               </Link>
             </div>
           )}
-          {error && (
-            <p className="text-sm text-destructive">
-              {(error as { shortMessage?: string }).shortMessage || error.message}
-            </p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
         </CardContent>
       </Card>
       </div>

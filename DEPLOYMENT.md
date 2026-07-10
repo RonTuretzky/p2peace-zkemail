@@ -9,7 +9,7 @@ Deployer / admin / guardian: `0x6636A1CCBdf54485067304C1a590DE016DeaD9F0`
 
 - **Real email (genuine crypto).** `IdentityRegistry.registerReal` verifies a real
   email's DKIM RSA signature fully on-chain via `RealEmailVerifier`
-  (`0x6Ac204183EBE2AFe11097ae697FF1Af0F5A3dA44`) and enrolls you. Proven end-to-end
+  (`0x0e707f9e969c0b61d48e9efb62fbecf54e628a8b`) and enrolls you. Proven end-to-end
   against an actual `noreply@btl.gov.il` one-time-code email: signature VALID on-chain,
   tampered signature rejected, full `registerReal` enrolls as Community A. This proves
   **authenticity, not privacy** — the signed headers (incl. recipient) are public
@@ -26,22 +26,23 @@ btl's SES account can send as that address).
 | Contract | Address |
 |---|---|
 | sDAI (reserve, external) | `0xaf204776c7245bf4147c2612bf6e5972ee483701` |
-| RealEmailVerifier | `0x6Ac204183EBE2AFe11097ae697FF1Af0F5A3dA44` |
-| DKIMRegistry | `0xdfba380eb408444d1d418bf23994274f15cdd3c0` |
-| ZKEmailVerifier | `0x63babfa2d223ee34403e88a6272842ee778ad2a3` |
-| MockGroth16Verifier | `0xf3ea51f794b2eb1a417f37ba5e69f87762e0d2ca` |
-| IdentityRegistry | `0xa9f9a182010776e41cbec5293f52f2c61bc47403` |
-| PeaceToken A | `0xd1454cccc2777af3042a4f557768cc80a427f468` |
-| PeaceToken B | `0x84e75d03db712847a80493d24b4a957bc4680986` |
-| Treasury | `0x9bc24488e88089c5e178d7a5a7e47f609725fa1c` |
-| CommunityPool A | `0x9a6645e7fa1cdb2c580173915581a9adcf5e2d5e` |
-| CommunityPool B | `0xa676c72b9ad2acb68253757387b5bd2c326bef87` |
-| PeaceMinter A | `0xeeaf1893229d69a003a8e1e6548fec383df87e39` |
-| PeaceMinter B | `0x21172a8a553c65c6d68fe2c7241b444cb62dc5f5` |
-| IncentiveRegistry | `0xa82e9f91265ff9bd86dc516d86b4fc082ee814bd` |
-| EventAttestation | `0xb65ad8b3f3cfd68e0cd4e46dca0669885bf1d367` |
-| RedistributionEngine | `0x0ba7ac918f664ab4707ca8d0c69e8c4d06e59143` |
-| SanctionsEscrow | `0x07a1f0b3d83bf3517199ffa123bd56c48c0efbd4` |
+| SavingsXDaiAdapter (xDAI→sDAI) | `0xD499b51fcFc66bd31248ef4b28d656d67E591A94` |
+| RealEmailVerifier | `0x0e707f9e969c0b61d48e9efb62fbecf54e628a8b` |
+| DKIMRegistry | `0x0aae0d2af6f73d3034490e4bbb17e897c57ae977` |
+| ZKEmailVerifier | `0xd43380d3639096a2450b1e0ef235b4ddca8796f8` |
+| MockGroth16Verifier | `0xaed7cf0fd62b547a02309b134a2cc89d053b2019` |
+| IdentityRegistry | `0xab8758312f4dc3f50abb7f52ca4e65ecd19bd268` |
+| PeaceToken A | `0x63be2cee6cb79bd4ff960e1c8a2b58514f033c1b` |
+| PeaceToken B | `0x0b05d93822145f2f74dd59e10653fbd6a30d14b4` |
+| Treasury | `0x63f166ab322cd26b195a57fe283284a5d8adb186` |
+| CommunityPool A | `0x12785f81624e8c303f2b8dfba33d1e88d7fbf5d1` |
+| CommunityPool B | `0xf31599c4ec89cae2ff26265e53e7508bce5af0c0` |
+| PeaceMinter A | `0xe4e5456878f4760e75a56ce2c657c27b4fd54d2d` |
+| PeaceMinter B | `0x9c76dfa376bd2ed0ce14c90e09e31425ece42b42` |
+| IncentiveRegistry | `0x2d552aac74e5229240dcf727d6edc3e2c3a3f42d` |
+| EventAttestation | `0x7150d600cf922eec337f0a0ada14b525f0dd530d` |
+| RedistributionEngine | `0x241a51c7f3394538c883dce28af433c6908ce032` |
+| SanctionsEscrow | `0x4f931f24462d4b53a0475c98a00cad74d32d0a70` |
 
 ## Real-world domains
 
@@ -73,7 +74,7 @@ PK=<key> RESERVE_TOKEN=0xaf204776c7245bF4147c2612BF6e5972Ee483701 DEMO_SETUP=tru
   EMAIL_DOMAIN=<dkim d=> EMAIL_SELECTOR=<dkim s=> EMAIL_SENDER=noreply@btl.gov.il \
   EMAIL_MODULUS=0x<rsa n> EMAIL_EXP=0x010001 \
   forge script script/Deploy.s.sol:Deploy --rpc-url https://rpc.gnosischain.com \
-  --private-key $PK --broadcast --slow
+  --private-key $PK --broadcast
 ```
 
 Extract a key's `EMAIL_MODULUS` from a `.eml` with the helper in `contracts/` (dkimpy /

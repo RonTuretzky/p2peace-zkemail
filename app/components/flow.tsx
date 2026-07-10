@@ -1,7 +1,15 @@
 "use client"
 
 import type React from "react"
-import { useAccount, useReadContract, useSwitchChain } from "wagmi"
+import { useCallback, useState } from "react"
+import {
+  useAccount,
+  useConfig,
+  useReadContract,
+  useSwitchChain,
+  useWriteContract,
+} from "wagmi"
+import { waitForTransactionReceipt } from "wagmi/actions"
 import { ConnectButton } from "@rainbow-me/rainbowkit"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -91,4 +99,55 @@ export function TxButton({
       {children}
     </Button>
   )
+}
+
+/**
+ * useTxSteps — run a short sequence of writes as ONE user gesture.
+ *
+ * Every p2peace action is really "approve, then do the thing" (or "wrap sDAI,
+ * approve, mint"). Rather than make the user click through each, callers pass an
+ * ordered list of steps; the hook fires them one after another, waiting for each
+ * receipt, and exposes a single label + progress. The user clicks once.
+ */
+export interface TxStep {
+  label: string
+  /** Return the wagmi writeContract request, or null to skip (e.g. allowance already sufficient). */
+  request: () => Parameters<ReturnType<typeof useWriteContract>["writeContract"]>[0] | null
+}
+
+export function useTxSteps(onAllDone?: () => void) {
+  const { writeContractAsync } = useWriteContract()
+  const config = useConfig()
+  const [running, setRunning] = useState(false)
+  const [stepLabel, setStepLabel] = useState<string>("")
+  const [error, setError] = useState<string | null>(null)
+  const [done, setDone] = useState(false)
+
+  const run = useCallback(
+    async (steps: TxStep[]) => {
+      setRunning(true)
+      setError(null)
+      setDone(false)
+      try {
+        for (const step of steps) {
+          const req = step.request()
+          if (!req) continue
+          setStepLabel(step.label)
+          const hash = await writeContractAsync(req)
+          await waitForTransactionReceipt(config, { hash })
+        }
+        setDone(true)
+        onAllDone?.()
+      } catch (e) {
+        const msg = (e as { shortMessage?: string }).shortMessage || (e as Error).message
+        setError(msg)
+      } finally {
+        setRunning(false)
+        setStepLabel("")
+      }
+    },
+    [writeContractAsync, config, onAllDone],
+  )
+
+  return { run, running, stepLabel, error, done, reset: () => { setDone(false); setError(null) } }
 }

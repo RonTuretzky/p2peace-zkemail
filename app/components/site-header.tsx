@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils"
 const NAV = [
   { href: "/verify", label: "Try it live" },
   { href: "/tools", label: "Tools" },
+  { href: "https://github.com/RonTuretzky/p2peace-zkemail/blob/master/docs/GET-STARTED.md", label: "Guide" },
   { href: "/docs", label: "Docs" },
 ]
 

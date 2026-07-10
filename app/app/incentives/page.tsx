@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Gavel, Vote, FilePlus2, Megaphone, ExternalLink, Undo2, ArrowRight } from "lucide-react"
-import { ConnectGate, FlowHeader, TxButton, useMembership } from "@/components/flow"
+import { ConnectGate, FlowHeader, TxButton, useMembership, useTxSteps } from "@/components/flow"
 import { JourneyBar, HonestyNote, PrereqNote } from "@/components/explainer"
 import { VisualFrame, VizRules } from "@/components/journey-visuals"
 import { contract } from "@/lib/contracts"
@@ -411,24 +411,33 @@ function VoteCard({
     args: address ? [address, incentiveContract.address] : undefined,
     query: { enabled: !!address },
   })
-  const needsApproval = (allowance.data as bigint | undefined ?? 0n) < costWei
+  const currentAllowance = (allowance.data as bigint | undefined) ?? 0n
 
-  const { writeContract, data: hash, isPending, error } = useWriteContract()
-  const receipt = useWaitForTransactionReceipt({ hash })
-  if (receipt.isSuccess) {
+  // One gesture: approve the quadratic cost (if short), then cast the vote.
+  const vote = useTxSteps(() => {
     allowance.refetch()
     onDone()
-  }
-  const pending = isPending || receipt.isLoading
+  })
+  const pending = vote.running
 
-  const approve = () =>
-    writeContract({ ...tokenC, functionName: "approve", args: [incentiveContract.address, costWei] })
   const cast = () =>
-    writeContract({
-      ...incentiveContract,
-      functionName: "castVote",
-      args: [id, support, BigInt(votes)],
-    })
+    vote.run([
+      {
+        label: `Set aside ${votes * votes} units`,
+        request: () =>
+          currentAllowance >= costWei
+            ? null
+            : { ...tokenC, functionName: "approve", args: [incentiveContract.address, costWei] },
+      },
+      {
+        label: `Cast ${votes} vote${votes > 1 ? "s" : ""}`,
+        request: () => ({
+          ...incentiveContract,
+          functionName: "castVote",
+          args: [id, support, BigInt(votes)],
+        }),
+      },
+    ])
 
   return (
     <Card id={`vote-${id.toString()}`}>
@@ -472,26 +481,18 @@ function VoteCard({
           louder costs 25× more, so conviction counts but wealth hits a wall. You get the stake
           back after finalize, win or lose.
         </p>
-        {needsApproval ? (
-          <TxButton className="w-full" pending={pending} onClick={approve}>
-            Set aside {votes * votes} units
-          </TxButton>
-        ) : (
-          <TxButton className="w-full" pending={pending} onClick={cast}>
-            Cast {votes} vote{votes > 1 ? "s" : ""}
-          </TxButton>
-        )}
-        {receipt.isSuccess && (
+        <TxButton className="w-full" pending={pending} onClick={cast}>
+          {vote.running
+            ? vote.stepLabel || "Working…"
+            : `Cast ${votes} vote${votes > 1 ? "s" : ""} — approve + cast in one click`}
+        </TxButton>
+        {vote.done && (
           <p className="text-xs text-primary">
             Vote counted. When the window closes, finalize below — a passed incentive goes live
             for attestation.
           </p>
         )}
-        {error && (
-          <p className="text-xs text-destructive">
-            {(error as { shortMessage?: string }).shortMessage || error.message}
-          </p>
-        )}
+        {vote.error && <p className="text-xs text-destructive">{vote.error}</p>}
       </CardContent>
     </Card>
   )

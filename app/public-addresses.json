@@ -5,22 +5,22 @@
       "deployer": "0x6636A1CCBdf54485067304C1a590DE016DeaD9F0",
       "contracts": {
         "reserveToken": "0xaf204776c7245bf4147c2612bf6e5972ee483701",
-        "dkimRegistry": "0xdfba380eb408444d1d418bf23994274f15cdd3c0",
-        "zkEmailVerifier": "0x63babfa2d223ee34403e88a6272842ee778ad2a3",
-        "mockGroth16Verifier": "0xf3ea51f794b2eb1a417f37ba5e69f87762e0d2ca",
-        "identityRegistry": "0xa9f9a182010776e41cbec5293f52f2c61bc47403",
-        "peaceTokenA": "0xd1454cccc2777af3042a4f557768cc80a427f468",
-        "peaceTokenB": "0x84e75d03db712847a80493d24b4a957bc4680986",
-        "treasury": "0x9bc24488e88089c5e178d7a5a7e47f609725fa1c",
-        "communityPoolA": "0x9a6645e7fa1cdb2c580173915581a9adcf5e2d5e",
-        "communityPoolB": "0xa676c72b9ad2acb68253757387b5bd2c326bef87",
-        "peaceMinterA": "0xeeaf1893229d69a003a8e1e6548fec383df87e39",
-        "peaceMinterB": "0x21172a8a553c65c6d68fe2c7241b444cb62dc5f5",
-        "incentiveRegistry": "0xa82e9f91265ff9bd86dc516d86b4fc082ee814bd",
-        "eventAttestation": "0xb65ad8b3f3cfd68e0cd4e46dca0669885bf1d367",
-        "redistributionEngine": "0x0ba7ac918f664ab4707ca8d0c69e8c4d06e59143",
-        "sanctionsEscrow": "0x07a1f0b3d83bf3517199ffa123bd56c48c0efbd4",
-        "realEmailVerifier": "0x6ac204183ebe2afe11097ae697ff1af0f5a3da44"
+        "dkimRegistry": "0x0aae0d2af6f73d3034490e4bbb17e897c57ae977",
+        "zkEmailVerifier": "0xd43380d3639096a2450b1e0ef235b4ddca8796f8",
+        "mockGroth16Verifier": "0xaed7cf0fd62b547a02309b134a2cc89d053b2019",
+        "identityRegistry": "0xab8758312f4dc3f50abb7f52ca4e65ecd19bd268",
+        "peaceTokenA": "0x63be2cee6cb79bd4ff960e1c8a2b58514f033c1b",
+        "peaceTokenB": "0x0b05d93822145f2f74dd59e10653fbd6a30d14b4",
+        "treasury": "0x63f166ab322cd26b195a57fe283284a5d8adb186",
+        "communityPoolA": "0x12785f81624e8c303f2b8dfba33d1e88d7fbf5d1",
+        "communityPoolB": "0xf31599c4ec89cae2ff26265e53e7508bce5af0c0",
+        "peaceMinterA": "0xe4e5456878f4760e75a56ce2c657c27b4fd54d2d",
+        "peaceMinterB": "0x9c76dfa376bd2ed0ce14c90e09e31425ece42b42",
+        "incentiveRegistry": "0x2d552aac74e5229240dcf727d6edc3e2c3a3f42d",
+        "eventAttestation": "0x7150d600cf922eec337f0a0ada14b525f0dd530d",
+        "redistributionEngine": "0x241a51c7f3394538c883dce28af433c6908ce032",
+        "sanctionsEscrow": "0x4f931f24462d4b53a0475c98a00cad74d32d0a70",
+        "realEmailVerifier": "0x0e707f9e969c0b61d48e9efb62fbecf54e628a8b"
       }
     }
   }
