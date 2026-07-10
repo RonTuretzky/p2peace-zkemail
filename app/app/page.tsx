@@ -16,7 +16,7 @@ export default function HomePage() {
         <div className="container mx-auto max-w-3xl px-4 text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-accent/40 px-3 py-1 text-xs font-medium text-accent-foreground">
             <OliveBranchIcon className="h-4 w-4 text-primary" />
-            p2p2p — peer to peer to peace · live on Gnosis Chain
+            p2p2p — peer to peer to peace · a live working demo
           </div>
           <h1 className="mt-6 font-display text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
             Peace, built peer to peer
@@ -52,8 +52,8 @@ export default function HomePage() {
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
             The demo deployment compresses every waiting period to 10 minutes, so the whole
-            journey — verify, mint, agree, attest, settle, claim — fits in about 40. You'll need
-            a wallet and a little xDAI for gas; the tokens come from a faucet.
+            journey — verify, join, agree, attest, settle, claim — fits in about 40. You'll need
+            a wallet and a little gas money; the demo money is free.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Button size="lg" asChild>

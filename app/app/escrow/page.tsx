@@ -241,7 +241,7 @@ function EscrowDiagram({ step }: { step: string }) {
             </div>
           ))}
           <div className="text-center text-[9px] text-muted-foreground">
-            minted at par — backing holds
+            through the reserve — backing holds
           </div>
         </div>
       </div>
@@ -255,7 +255,7 @@ export default function EscrowPage() {
   return (
     <div className="container mx-auto px-4 py-14">
       <FlowHeader
-        title="Tokenized Sanctions Relief"
+        title="Sanctions Relief, Pre-Committed"
         blurb="Traditional sanctions punish whole populations and let the goalposts drift with politics. Escrowed relief flips that: a donor locks funds against one specific, pre-agreed incentive — a finalized event releases them automatically, and if it never happens, the donor takes the money back."
       />
       <p className="mx-auto mt-4 max-w-2xl text-center text-sm text-muted-foreground">
@@ -276,7 +276,7 @@ export default function EscrowPage() {
         Release is permissionless and race-free against reclaim: a finalized event is public for
         the whole dispute window (10 minutes on this demo, 48 hours in production) before any
         reclaim could front-run it, so beneficiaries always have time to act first. Released funds
-        enter pool rewards minted at par against the reserve — every token stays fully backed.
+        enter pool rewards through the reserve — every unit stays fully backed.
         This is a demo on test funds; nothing here is financial or sanctions-policy advice.
       </HonestyNote>
     </div>

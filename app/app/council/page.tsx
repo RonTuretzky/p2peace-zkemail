@@ -61,7 +61,7 @@ export default function CouncilPage() {
         Fine print: council collusion is bounded by what the council can touch. It can only
         reverse <em>pending</em> events, only within the dispute window ({" "}
         <WindowMinutes /> minutes on this demo, 48 hours in the design), and a reversal merely
-        returns the trigger slot — it cannot move tokens, seat members, or rewrite history. Seats
+        returns the trigger slot — it cannot move money, seat members, or rewrite history. Seats
         are set by the timelocked governance owner; on this demo deployment that is the deployment
         admin.
       </HonestyNote>

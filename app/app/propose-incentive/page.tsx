@@ -122,6 +122,22 @@ export default function ProposeIncentivePage() {
           </HonestyNote>
         </div>
 
+
+        {/* ----------------------------- testing keywords ----------------------------- */}
+        <div className="mx-auto mt-16 max-w-3xl rounded-3xl border-2 border-border bg-card p-6">
+          <h3 className="font-display text-lg font-bold">Test your keywords before you propose</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            The original design included a keyword testing tool: before committing a rule, run
+            your phrasing against months of real news archives and see exactly which stories
+            would have triggered it — and which wouldn&apos;t. That practice matters more than
+            any tool: a rule that fires on &ldquo;clashes reported&rdquo; will fire weekly; a
+            rule anchored to specific places and verified actions fires when the thing actually
+            happens. Until the hosted tester ships, do the same by hand: search your own
+            newsletter archive for your exact word combinations and read every match. In this
+            demo, proposals use one pre-committed pattern so the whole loop stays walkable.
+          </p>
+        </div>
+
         {/* --------------------------------- CTA --------------------------------- */}
         <div className="mx-auto mt-16 flex max-w-3xl flex-col items-center gap-4 rounded-3xl border-2 border-primary/40 bg-card p-8 text-center">
           <h2 className="font-display text-2xl font-bold">Ready? The form is live</h2>

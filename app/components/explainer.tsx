@@ -195,7 +195,7 @@ export function StepperExplainer({
 
 export const JOURNEY = [
   { href: "/verify", label: "Verify", blurb: "one email, one identity" },
-  { href: "/mint", label: "Mint", blurb: "1:1, with a small pledge" },
+  { href: "/mint", label: "Join", blurb: "add money, make the pledge" },
   { href: "/incentives", label: "Agree", blurb: "both sides vote yes" },
   { href: "/attest", label: "Attest", blurb: "newsletters as evidence" },
   { href: "/pools", label: "Settle", blurb: "dispute, then repair" },

@@ -27,7 +27,7 @@ const identityContract = contract.identity()
 
 // The demo deployment runs 5-minute governance floors (setParams), so a full
 // propose → discuss → vote → finalize cycle is ~10 minutes end to end.
-const WINDOW_COPY = "Governance windows on this demo are ~10 minutes (5-min discussion + 5-min vote), not the 7/3-day production defaults."
+const WINDOW_COPY = "Rule-making on this demo runs in minutes (a 10-minute discussion, then a 10-minute vote) instead of the 7/3-day production pace."
 
 type Phase = "Discussion" | "Voting" | "Ended"
 
@@ -368,7 +368,7 @@ function VotePanel({
       <section>
         <h3 className="mb-3 font-display text-lg font-semibold">Withdraw vote stake</h3>
         {withdrawable.length === 0 ? (
-          <p className="text-sm text-muted-foreground">You can reclaim locked tokens once a vote is finalized.</p>
+          <p className="text-sm text-muted-foreground">You can reclaim the money set aside for a vote once it is finalized.</p>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             {withdrawable.map(({ id, state }) => (
@@ -462,13 +462,13 @@ function VoteCard({
         <Row label="Locked cost" value={`${votes * votes} PEACE-${community === Community.A ? "A" : "B"}`} />
         <p className="rounded-lg bg-muted p-2 text-xs text-muted-foreground">
           Read it like this: {votes} vote{votes > 1 ? "s" : ""} lock{votes > 1 ? "" : "s"}{" "}
-          {votes * votes} token{votes * votes > 1 ? "s" : ""} — quadratic cost means shouting 5×
+          {votes * votes} unit{votes * votes > 1 ? "s" : ""} of community money — shouting 5×
           louder costs 25× more, so conviction counts but wealth hits a wall. You get the stake
           back after finalize, win or lose.
         </p>
         {needsApproval ? (
           <TxButton className="w-full" pending={pending} onClick={approve}>
-            Approve {votes * votes} tokens
+            Set aside {votes * votes} units
           </TxButton>
         ) : (
           <TxButton className="w-full" pending={pending} onClick={cast}>

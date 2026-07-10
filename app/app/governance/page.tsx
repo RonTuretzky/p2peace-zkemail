@@ -122,6 +122,21 @@ export default function GovernancePage() {
           </HonestyNote>
         </div>
 
+
+        {/* ------------------------------- delegation ------------------------------- */}
+        <div className="mx-auto mt-16 max-w-3xl rounded-3xl border-2 border-border bg-card p-6">
+          <h3 className="font-display text-lg font-bold">For people who don&apos;t want to vote on everything</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            The original design also called for <span className="font-medium text-foreground">delegation</span> —
+            letting a member hand their voice on day-to-day rules to someone they trust (a
+            neighbor, a union, a community group) while keeping the right to take it back at any
+            time. It isn&apos;t in the deployed rules yet: delegation interacts with
+            one-person-one-ballot in subtle ways (a delegate&apos;s louder voice must still cost
+            more), and we would rather ship it carefully than quickly. It is next on the
+            governance roadmap, and this note is here so the gap is visible, not hidden.
+          </p>
+        </div>
+
         {/* --------------------------------- CTA --------------------------------- */}
         <div className="mx-auto mt-16 flex max-w-3xl flex-col items-center gap-4 rounded-3xl border-2 border-primary/40 bg-card p-8 text-center">
           <h2 className="font-display text-2xl font-bold">See governance running, not described</h2>

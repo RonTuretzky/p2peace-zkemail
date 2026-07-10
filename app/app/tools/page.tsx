@@ -8,7 +8,7 @@ import { PeaceCalculator } from "@/components/home/peace-calculator"
  */
 const LIVE_TOOLS = [
   { day: "Day 0", href: "/verify", title: "Verify", body: "Prove citizenship from a government email — one inbox, one anonymous membership." },
-  { day: "Day 0", href: "/mint", title: "Mint", body: "Faucet mUSD, then mint 1:1 — 90% yours, 10% staked into your peace pool. Outsiders mint at 2×." },
+  { day: "Day 0", href: "/mint", title: "Join", body: "Get free demo dollars, then convert one-for-one — 90% stays yours, 10% becomes your community's pledge. Supporters abroad join at 2×." },
   { day: "Day 1–8", href: "/incentives", title: "Incentives", body: "Propose rules, vote quadratically, and see the dual-majority tallies both sides must pass." },
   { day: "Day 40", href: "/attest", title: "Attest", body: "Submit newsletter proofs source-by-source and watch the event tally fill." },
   { day: "Day 40–42", href: "/council", title: "Council", body: "The dispute docket: countdowns, 75% reversal threshold, member voting." },
@@ -20,7 +20,7 @@ const LIVE_TOOLS = [
 const EXPLAINERS = [
   { href: "/verification", title: "Verification, explained", body: "DKIM, nullifiers, key registry, privacy properties." },
   { href: "/governance", title: "Governance, explained", body: "Quadratic voting, dual majority, timelock, guardian, council." },
-  { href: "/token-economics", title: "Token economics, explained", body: "Reserve invariant, the 90/10 split, Treasury flows." },
+  { href: "/token-economics", title: "How the money works", body: "Full backing, the 90/10 split, Treasury flows — and the long game over decades." },
   { href: "/economic-incentives", title: "Incentives, explained", body: "Directions, caps, cooldowns, and a worked example." },
   { href: "/external-incentives", title: "Sanctions relief, explained", body: "The tranche lifecycle and why conditions can't shift." },
   { href: "/propose-incentive", title: "Proposer's guide", body: "From behavior to keyword circuit to a passing vote." },

@@ -171,7 +171,7 @@ function VizDividend() {
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
         The same share to each person — repair that reaches people, not portfolios. Boaz claims
-        his; it's an ordinary token, redeemable 1:1.
+        his; it's ordinary money, good anywhere the community's money is good.
       </p>
     </div>
   )
@@ -200,8 +200,8 @@ export function Story() {
 
           <Chapter day="Day 0 · the pledge" title="They each put $100 behind the peace" visual={<VizMint />} link={{ href: "/mint", label: "Do this step live" }}>
             <p>
-              The tokens themselves are boring on purpose: backed one-for-one by a full reserve,
-              redeemable one-for-one, forever. What matters is the split — 90% stays in your
+              The money itself is boring on purpose: every unit is backed one-for-one by real
+              money held in reserve, and you can cash back out any time. What matters is the split — 90% stays in your
               wallet, and 10% goes into your community's <em>peace pool</em>.
             </p>
             <p>
@@ -276,21 +276,65 @@ export function Story() {
             </p>
           </Chapter>
 
-          <Chapter day="Every day after · the world joins" title="Outsiders, donors, and businesses compound it">
+          <Chapter day="Every day after · the world joins" title="Supporters, donors, and businesses compound it">
             <p>
-              Three more doors, all optional:{" "}
+              More doors, all optional:{" "}
               <Link href="/mint" className="font-medium text-primary hover:underline">
-                outsiders mint at 2×
+                supporters worldwide can join at double the rate
               </Link>{" "}
-              (half funds the shared Treasury — money in, no vote),{" "}
+              (half backs their money, half supports the shared Treasury — support, not a say),{" "}
               <Link href="/escrow" className="font-medium text-primary hover:underline">
-                donors escrow sanctions relief
+                donors pre-commit sanctions relief
               </Link>{" "}
-              that releases automatically on verified milestones, and{" "}
+              that releases automatically on verified milestones,{" "}
               <Link href="/business" className="font-medium text-primary hover:underline">
                 businesses certified by both communities
               </Link>{" "}
-              earn a bonus on every cross-community sale.
+              earn a bonus on every cross-community sale — and whole towns can join too, twin
+              municipalities pooling for shared water, roads, and schools.
+            </p>
+          </Chapter>
+
+          <Chapter day="Year 1 · everyday life" title="The money starts doing groceries">
+            <p>
+              Amira's greengrocer takes community money. So does Boaz's mechanic, then a
+              pharmacy, then a landlord or two. Every certified business makes it a little more
+              normal, and every cross-line sale earns that small bonus from the Treasury.
+            </p>
+            <p>
+              Here is the quiet part: every purchase made in community money is value that now
+              lives with neighbors — held by people on both sides, under rules both sides wrote
+              — instead of sitting in the national currency that pays for the conflict.
+            </p>
+          </Chapter>
+
+          <Chapter day="Year 5 · the shift" title="War gets more expensive every year">
+            <p>
+              As more of daily life runs on community money, the currencies that fund escalation
+              slowly matter less. A government that chooses violence now loses twice: the
+              verified event moves its community's pledge — and the economy it commands keeps
+              shrinking as people, shops, and towns quietly settle their lives in money it
+              doesn't control.
+            </p>
+            <p>
+              That is the design, stated plainly: conflict becomes a game where both sides lose
+              more each passing year, and de-escalation is the only move that pays. Not because
+              anyone's mind was changed — because the ground shifted under the choice.
+            </p>
+          </Chapter>
+
+          <Chapter day="Year 20 · grown together" title="Two monies become hard to tell apart" link={{ href: "/token-economics", label: "Read the long game in full" }}>
+            <p>
+              This was never meant to happen in a season. Over decades, the two community
+              currencies circulate side by side — accepted in the same shops, pooled in the same
+              town projects, held by families with cousins on both sides — until merging them is
+              paperwork, not a peace treaty.
+            </p>
+            <p>
+              Integration that grows out of a million small exchanges doesn't depend on any
+              government's signature, and it is very hard to bomb. That is the long game: peace
+              held up not by treaties above, but by an economy the two communities built
+              together, underneath.
             </p>
           </Chapter>
         </ol>

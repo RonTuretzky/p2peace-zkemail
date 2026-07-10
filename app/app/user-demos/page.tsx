@@ -81,14 +81,14 @@ export default function UserDemosPage() {
             </span>
           </div>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            The whole journey — Verify → Mint → Agree → Attest → Settle — played end to end, with
+            The whole journey — Verify → Join → Agree → Attest → Settle — played end to end, with
             you as one citizen of each community. By the end, an incentive you proposed will have
             fired on evidence you attested, and paid a dividend you claim.
           </p>
           <Checklist
             steps={[
               { text: <>With <strong>wallet 1</strong>, verify as Community A at <L href="/verify">/verify</L> — one click builds the demo citizenship proof and registers your nullifier.</> },
-              { text: <>Still wallet 1: at <L href="/mint">/mint</L>, tap the mUSD faucet, approve, and mint. Watch the split land: 90% in your wallet, 10% into pool A's corpus.</> },
+              { text: <>Still wallet 1: at <L href="/mint">/mint</L>, grab free demo dollars, approve, and mint. Watch the split land: 90% in your wallet, 10% into pool A's corpus.</> },
               { text: <>Switch to <strong>wallet 2</strong>, verify as Community B at <L href="/verify">/verify</L>, then faucet + mint at <L href="/mint">/mint</L>. Both rolls now have one member each.</> },
               { text: <>With either wallet, open <L href="/incentives">/incentives</L> and propose — the form pre-fills the demo news sources and pattern. Submission freezes everything on-chain.</> },
               { wait: true, text: <>Wait out the 10-minute discussion window (the card shows the live countdown).</> },
@@ -115,7 +115,7 @@ export default function UserDemosPage() {
           </p>
           <Checklist
             steps={[
-              { text: <>Prerequisite: two verified wallets holding tokens (walkthrough 1, steps 1–3).</> },
+              { text: <>Prerequisite: two verified wallets holding community money (walkthrough 1, steps 1–3).</> },
               { text: <>At <L href="/business">/business</L>, apply for certification with one wallet — that wallet's community becomes the business's side.</> },
               { text: <>Vote to approve from both wallets: certification needs a simple majority of <em>each</em> community's roll, just like everything else here.</> },
               { wait: true, text: <>Wait out the 10-minute certification poll, then finalize it. The business is now certified (and revocable by the same vote, later).</> },

@@ -51,13 +51,13 @@ export default function TokenEconomicsPage() {
       <section className="container mx-auto px-4 py-14">
         {/* -------------------------------- hero -------------------------------- */}
         <div className="mx-auto max-w-3xl space-y-4 text-center">
-          <SectionChip>Token economics, explained</SectionChip>
+          <SectionChip>How the money works</SectionChip>
           <h1 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
-            The token is a receipt, not a bet
+            This money is a receipt, not a bet
           </h1>
           <p className="text-muted-foreground md:text-lg">
-            PEACE-A and PEACE-B don't float, don't inflate, and don't promise number-go-up. Every
-            token is minted 1:1 against a reserve deposit and redeems 1:1, any time. All the
+            Community money doesn't float, doesn't inflate, and doesn't promise number-go-up. Every
+            unit is created one-for-one against a reserve deposit and cashes out one-for-one, any time. All the
             economics live in two deliberate asymmetries: the 10% peace stake citizens opt into, and
             the 2× premium outsiders pay. Here is exactly where every unit goes.
           </p>
@@ -214,16 +214,67 @@ export default function TokenEconomicsPage() {
           </div>
         </div>
 
+
+        {/* ------------------------------ the long game ------------------------------ */}
+        <div className="mx-auto mt-16 max-w-3xl">
+          <SectionHeading
+            chip="The long game"
+            title="What this does over years, not weeks"
+            lede="The original vision was never just event-by-event settlement. It is a slow, deliberate shift in where everyday value lives — restored here in full."
+          />
+          <div className="mt-8 space-y-4">
+            <div className="rounded-3xl border-2 border-border bg-card p-6">
+              <h3 className="font-display text-lg font-bold">Everyday value leaves the war economy</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                Every purchase, wage, and savings account that moves into community money is value
+                that no longer sits in the national currency that funds escalation. One
+                transaction means nothing; millions of them, over years, quietly shrink the
+                economy a war-making government can command — and grow the one that neighbors
+                govern together. Power follows the money, from capitals toward communities.
+              </p>
+            </div>
+            <div className="rounded-3xl border-2 border-border bg-card p-6">
+              <h3 className="font-display text-lg font-bold">Conflict is engineered to be lose/lose</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                The design borrows a hard lesson from game theory: peace holds when conflict
+                costs both sides more every year. Each verified harmful event moves the
+                responsible side&apos;s pledge; each year of adoption makes the national
+                currency matter less; each certified business deepens what both sides would
+                lose. Escalation becomes a choice that punishes its chooser twice — immediately
+                through the pledge, and structurally through an economy that keeps walking away.
+              </p>
+            </div>
+            <div className="rounded-3xl border-2 border-border bg-card p-6">
+              <h3 className="font-display text-lg font-bold">A decades-long path to one economy</h3>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                The two community monies are designed to grow together slowly — circulating in
+                the same shops, pooled in twin-town projects, held by families with people on
+                both sides — until merging them is administration, not diplomacy. Integration
+                built from a million small exchanges doesn&apos;t depend on any government&apos;s
+                signature. Towns and cities can join along the way: municipal treasuries
+                pledging alongside their residents, with joint infrastructure rewarded from the
+                shared Treasury.
+              </p>
+            </div>
+          </div>
+          <HonestyNote>
+            Stated honestly: this is the most ambitious claim in the whole design, and the least
+            testable in a demo. It depends on years of real adoption. What the tools guarantee is
+            smaller and firmer — the pledges, the rules, and the settlement work exactly as
+            written, from day one.
+          </HonestyNote>
+        </div>
+
         {/* --------------------------------- CTA --------------------------------- */}
         <div className="mx-auto mt-16 flex max-w-3xl flex-col items-center gap-4 rounded-3xl border-2 border-primary/40 bg-card p-8 text-center">
           <h2 className="font-display text-2xl font-bold">Watch the splits happen on-chain</h2>
           <p className="text-sm text-muted-foreground">
-            Mint with the faucet and see the 90/10 split land in real balances, then watch both
-            pools' corpus and claimable dividends move as events settle.
+            Get free demo dollars and see the 90/10 split land in real balances, then watch both
+            pools' pledges and claimable shares move as events settle.
           </p>
           <div className="flex flex-wrap justify-center gap-3">
             <Button size="lg" asChild>
-              <Link href="/mint">Mint tokens — /mint</Link>
+              <Link href="/mint">Add money — /mint</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
               <Link href="/pools">The peace pools — /pools</Link>

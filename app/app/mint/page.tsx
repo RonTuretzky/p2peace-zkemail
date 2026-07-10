@@ -17,13 +17,13 @@ export default function MintPage() {
   return (
     <div className="container mx-auto px-4 py-14">
       <FlowHeader
-        title="Mint Peace Tokens"
-        blurb="Verified citizens mint their community token 1:1 against the reserve — 90% to your wallet, 10% pledged to your community's peace pool. Outsiders mint at a 2× premium that supports the shared Treasury."
+        title="Get Community Money"
+        blurb="Verified members convert regular money into their community's money, one-for-one — 90% to your wallet, 10% pledged to your community's peace pool. Supporters abroad join at double the rate, which supports the shared Treasury."
       />
       <MintJourney />
       <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
         Why this step exists: this is where your community's promise becomes real. A tenth of
-        every mint is set aside as your side's pledge — money that moves only if your own
+        everything you put in is set aside as your side's pledge — money that moves only if your own
         community breaks the rules everyone agreed to. Joining the pool is what gives you a
         voice in writing those rules, and a share when repair flows your way.
       </p>
@@ -31,8 +31,8 @@ export default function MintPage() {
         <MintInner />
       </ConnectGate>
       <HonestyNote>
-        Honest limit: every circulating token is matched by reserve sitting in the minter, and you
-        can redeem back to mUSD at any time — except the 10% pledge. The pledge is{" "}
+        Honest limit: every unit of community money is matched by real money sitting in reserve,
+        and you can cash back out at any time — except the 10% pledge. The pledge is{" "}
         <em>not withdrawable</em> by you: it stays as your community&apos;s promise, or goes
         toward repair on the other side after a verified harmful event. That one-way door is what
         makes the promise worth believing.
@@ -113,7 +113,7 @@ function MintInner() {
   return (
     <>
       <PrereqNote met={isCitizen} href="/verify" cta="Verify first">
-        Outsiders can mint at 2× — but to mint 1:1, vote on the rules, and receive your
+        Supporters can join at 2× — but to convert one-for-one, vote on the rules, and receive your
         community&apos;s share, verify first.
       </PrereqNote>
       <div className="mx-auto mt-10 grid max-w-4xl gap-6 lg:grid-cols-2">
@@ -122,30 +122,30 @@ function MintInner() {
           <CardTitle className="flex items-center gap-2">
             <Coins className="h-5 w-5 text-primary" /> Balances
           </CardTitle>
-          <CardDescription>Reserve asset and your community token.</CardDescription>
+          <CardDescription>Demo dollars and your community money.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <Row label="mUSD (reserve)" value={fmt(usdBal.data as bigint)} />
+          <Row label="Demo dollars (mUSD)" value={fmt(usdBal.data as bigint)} />
           <Row
-            label={community === Community.A ? "PEACE-A" : "PEACE-B"}
+            label={community === Community.A ? "Community A money (PEACE-A)" : "Community B money (PEACE-B)"}
             value={fmt(tokBal.data as bigint)}
           />
           <Row
-            label="Minting as"
+            label="Joining as"
             value={
               <Badge variant={isCitizen ? "default" : "outline"}>
-                {isCitizen ? `Citizen · ${membership.communityLabel}` : "Outsider (2× premium)"}
+                {isCitizen ? `Member · ${membership.communityLabel}` : "Supporter (2× rate)"}
               </Badge>
             }
           />
           <TxButton variant="outline" className="w-full" pending={pending} onClick={faucet}>
-            <Droplets className="mr-2 h-4 w-4" /> Get 1,000 test mUSD
+            <Droplets className="mr-2 h-4 w-4" /> Get 1,000 free demo dollars
           </TxButton>
           {!isCitizen && (
             <p className="rounded-lg bg-muted p-3 text-xs text-muted-foreground">
-              You are not a verified citizen, so you mint at the outsider premium and cannot
-              vote. <a className="text-primary underline" href="/verify">Get verified</a> to mint
-              1:1 and participate in governance.
+              You are not verified yet, so you join at the supporter rate and cannot
+              vote. <a className="text-primary underline" href="/verify">Get verified</a> to join
+              one-for-one and have a vote.
             </p>
           )}
         </CardContent>
@@ -153,11 +153,11 @@ function MintInner() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Mint</CardTitle>
+          <CardTitle>Join</CardTitle>
           <CardDescription>
             {isCitizen
-              ? "1:1 — 90% to you, 10% into your community peace pool."
-              : "Pay 2× par; half backs your tokens, half funds the Treasury."}
+              ? "One-for-one — 90% to you, 10% into your community peace pool."
+              : "Pay double; half backs your money, half supports the Treasury."}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -180,9 +180,9 @@ function MintInner() {
               </>
             ) : (
               <>
-                Read it like this: as an outsider you pay {amount || "0"} mUSD and receive tokens
-                worth half that at par — the other half funds the shared Treasury that pays for
-                positive and joint events. It is a donation with a receipt, not an investment.
+                Read it like this: as a supporter you put in {amount || "0"} and receive community
+                money worth half that — the other half supports the shared Treasury that rewards
+                steps toward peace. It is a donation with a receipt, not an investment.
               </>
             )}
           </p>
@@ -192,7 +192,7 @@ function MintInner() {
             </TxButton>
           ) : (
             <TxButton className="w-full" pending={pending} onClick={mint} disabled={amountWei === 0n}>
-              Mint {isCitizen ? "as citizen" : "as outsider"}
+              {isCitizen ? "Convert to community money" : "Contribute as a supporter"}
             </TxButton>
           )}
           {receipt.isSuccess && (

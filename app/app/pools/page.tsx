@@ -17,7 +17,7 @@ export default function PoolsPage() {
     <div className="container mx-auto px-4 py-14">
       <FlowHeader
         title="Peace Pools & Event Resolution"
-        blurb="Every citizen mint pledges 10% into their community's peace pool — each side's word, made tangible. When a harmful event is verified and finalized, part of the responsible side's pledge goes toward repair on the other side. Steps toward peace are met from the shared Treasury."
+        blurb="Every member who joins pledges 10% into their community's peace pool — each side's word, made tangible. When a harmful event is verified and finalized, part of the responsible side's pledge goes toward repair on the other side. Steps toward peace are met from the shared Treasury."
       />
       <PoolsJourney />
       <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
@@ -365,7 +365,7 @@ function PoolsInner() {
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>
             <span className="font-medium text-foreground">Harmful events</span> slash the
-            responsible community's pool corpus and route it — redeemed to reserve and re-minted at
+            responsible community's pool and route it — converted through the reserve at
             par — into the <em>other</em> community's claimable rewards. Aggression by your side
             pays the side it harmed.
           </p>
@@ -376,7 +376,7 @@ function PoolsInner() {
           </p>
           <p>
             Claims are <span className="font-medium text-foreground">equal per member</span> — every
-            verified citizen of a pool draws the same share, regardless of how much they minted.
+            verified member of a pool draws the same share, regardless of how much they put in.
           </p>
           <p className="rounded-lg bg-muted p-3 text-foreground">
             Note: on this demo deployment the dispute window is{" "}
@@ -415,7 +415,7 @@ function PoolCard({
       </CardHeader>
       <CardContent className="space-y-3">
         <Row label="Corpus (at-risk stake)" value={fmt(corpus)} />
-        <Row label="Pool token balance" value={fmt(poolTokBal)} />
+        <Row label="Pool balance" value={fmt(poolTokBal)} />
         <Row label="Your claimable" value={fmt(claimable)} />
         <p className="rounded-lg bg-muted p-2 text-xs text-muted-foreground">
           Read the corpus like this: it is the sum of every member&apos;s 10% peace stakes. The

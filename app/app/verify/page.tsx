@@ -27,7 +27,7 @@ export default function VerifyPage() {
       />
       <JourneyBar current="/verify" />
       <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
-        Why this step exists: everything downstream — 1:1 minting, one-person voting, equal pool
+        Why this step exists: everything downstream — one-for-one joining, one-person voting, equal pool
         shares — assumes one person cannot be two members. zkEmail gives us that without a
         passport office: your government inbox becomes the credential, and only its nullifier ever
         touches the chain.
@@ -87,9 +87,9 @@ function VerifyInner() {
           <Row label="Community" value={membership.communityLabel} />
           {membership.isActiveMember && (
             <div className="rounded-lg bg-accent/40 p-3 text-sm text-accent-foreground">
-              You can now mint tokens, vote on incentives, attest events, and claim pool rewards.{" "}
+              You can now add money, vote on the rules, attest events, and claim your community's share.{" "}
               <Link href="/mint" className="inline-flex items-center gap-1 font-medium text-primary underline">
-                Next: mint 1:1 <ArrowRight className="h-3.5 w-3.5" />
+                Next: add money one-for-one <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
           )}
@@ -136,7 +136,7 @@ function VerifyInner() {
                 href="/mint"
                 className="inline-flex items-center gap-1 text-sm font-medium text-primary underline"
               >
-                Next step: mint peace tokens at 1:1 <ArrowRight className="h-4 w-4" />
+                Next step: get community money, one-for-one <ArrowRight className="h-4 w-4" />
               </Link>
               <TxButton variant="outline" size="sm" onClick={reset}>
                 <RotateCcw className="mr-2 h-4 w-4" /> Register another

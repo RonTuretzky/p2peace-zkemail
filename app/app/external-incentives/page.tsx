@@ -111,6 +111,50 @@ export default function ExternalIncentivesPage() {
           </div>
         </div>
 
+
+        {/* --------------------------- graduated pathway --------------------------- */}
+        <div className="mx-auto mt-16 max-w-3xl">
+          <SectionHeading
+            chip="The graduated pathway"
+            title="Relief that grows with the peace"
+            lede="From the original vision: outside nations can pre-commit an entire staircase of relief, each level unlocked by verified milestones — so everyone can see the whole path from here to normal."
+          />
+          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-2xl border border-border bg-card p-5">
+              <div className="text-xs font-bold uppercase tracking-wide text-primary">Level 1 · first steps</div>
+              <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                <li>Specific tariffs eased</li>
+                <li>Travel restrictions relaxed</li>
+                <li>Basic banking access restored</li>
+              </ul>
+              <p className="mt-3 text-xs text-muted-foreground">Unlocked by: early security cooperation, first de-escalation steps</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-5">
+              <div className="text-xs font-bold uppercase tracking-wide text-primary">Level 2 · working together</div>
+              <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                <li>Preferential trade access</li>
+                <li>Investment restrictions lifted</li>
+                <li>Full financial services</li>
+              </ul>
+              <p className="mt-3 text-xs text-muted-foreground">Unlocked by: sustained de-escalation, joint economic projects</p>
+            </div>
+            <div className="rounded-2xl border border-border bg-card p-5">
+              <div className="text-xs font-bold uppercase tracking-wide text-primary">Level 3 · a normal neighbor</div>
+              <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
+                <li>Free trade</li>
+                <li>Full market and technology access</li>
+                <li>Ordinary international standing</li>
+              </ul>
+              <p className="mt-3 text-xs text-muted-foreground">Unlocked by: comprehensive agreement, years of kept promises</p>
+            </div>
+          </div>
+          <HonestyNote>
+            Each level is just more tranches on this page&apos;s escrow, pointed at bigger
+            milestones — the mechanism is identical from level one to level three. What changes
+            is only how much the world is willing to put behind the path.
+          </HonestyNote>
+        </div>
+
         {/* --------------------------------- CTA --------------------------------- */}
         <div className="mx-auto mt-16 flex max-w-3xl flex-col items-center gap-4 rounded-3xl border-2 border-primary/40 bg-card p-8 text-center">
           <h2 className="font-display text-2xl font-bold">Fund an outcome</h2>

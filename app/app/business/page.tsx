@@ -59,7 +59,7 @@ export default function BusinessPage() {
         blurb="Businesses earn certification through a one-member-one-vote poll that needs a majority in BOTH communities. Pay a certified business across the conflict line and the Treasury tops it up with a cooperation bonus."
       />
       <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
-        This page sits <em>alongside</em> the main verify → mint → agree → attest → settle
+        This page sits <em>alongside</em> the main verify → join → agree → attest → settle
         journey rather than on it: pools punish harm after the fact, while certified businesses
         reward everyday cooperation as it happens. Why it exists: peace that only pays out when
         something goes wrong is half a peace — cross-line commerce is the other half.
@@ -433,7 +433,7 @@ function PayIntro({
 }) {
   return (
     <div className="rounded-lg bg-accent/40 p-4 text-sm text-accent-foreground">
-      You pay in <span className="font-medium">your own</span> community token
+      You pay in <span className="font-medium">your own</span> community's money
       {membership.community !== Community.None && (
         <> ({membership.communityLabel === "Community A" ? "PEACE-A" : "PEACE-B"})</>
       )}
