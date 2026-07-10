@@ -195,10 +195,10 @@ export function StepperExplainer({
 
 export const JOURNEY = [
   { href: "/verify", label: "Verify", blurb: "one email, one identity" },
-  { href: "/mint", label: "Mint", blurb: "1:1, 10% peace stake" },
+  { href: "/mint", label: "Mint", blurb: "1:1, with a small pledge" },
   { href: "/incentives", label: "Agree", blurb: "both sides vote yes" },
   { href: "/attest", label: "Attest", blurb: "newsletters as evidence" },
-  { href: "/pools", label: "Settle", blurb: "dispute, then dividend" },
+  { href: "/pools", label: "Settle", blurb: "dispute, then repair" },
 ] as const
 
 /**

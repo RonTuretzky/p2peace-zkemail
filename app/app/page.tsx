@@ -19,13 +19,13 @@ export default function HomePage() {
             p2p2p — peer to peer to peace · live on Gnosis Chain
           </div>
           <h1 className="mt-6 font-display text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-            Make peace the profitable move
+            Peace, built peer to peer
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-muted-foreground md:text-xl">
-            Citizens on both sides of a conflict stake a small slice of their own money on
-            de-escalation. Verified events move that money — automatically, symmetrically, under
-            rules both sides approved. Identity and evidence come from something everyone already
-            has: signed email.
+            p2p2p is a set of practical tools for people on both sides of a conflict line.
+            Neighbors verify themselves privately, put a small pledge behind the peace, and
+            write rules together that hold both sides to their word — with evidence anyone can
+            check, from something everyone already has: signed email.
           </p>
           <p className="mx-auto mt-4 text-sm text-muted-foreground">
             Here's the whole thing as one story, in order. Five minutes to read, forty to do for
@@ -64,9 +64,9 @@ export default function HomePage() {
             </Button>
           </div>
           <p className="mx-auto mt-6 max-w-xl text-xs text-muted-foreground">
-            An experiment in mechanism design, not a promise of peace — it prices events; people
-            end wars. Open source; the docs spell out honestly what it defends against and what
-            it can't.
+            Tools don't end wars — people do. These tools just help two communities keep their
+            word to each other, one verified step at a time. Everything is open source, and the
+            docs are honest about what the tools can and cannot protect.
           </p>
         </div>
       </section>

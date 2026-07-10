@@ -28,7 +28,7 @@ export default function VerifyPage() {
       <JourneyBar current="/verify" />
       <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
         Why this step exists: everything downstream — 1:1 minting, one-person voting, equal pool
-        dividends — assumes one person cannot be two members. zkEmail gives us that without a
+        shares — assumes one person cannot be two members. zkEmail gives us that without a
         passport office: your government inbox becomes the credential, and only its nullifier ever
         touches the chain.
       </p>

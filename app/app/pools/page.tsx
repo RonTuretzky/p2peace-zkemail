@@ -17,14 +17,14 @@ export default function PoolsPage() {
     <div className="container mx-auto px-4 py-14">
       <FlowHeader
         title="Peace Pools & Event Resolution"
-        blurb="Every citizen mint stakes 10% into their community's peace pool corpus — capital consciously put at risk against their own side's aggression. Finalized harmful events slash that corpus into the other community's claimable rewards. Positive and joint events pay from the shared Treasury."
+        blurb="Every citizen mint pledges 10% into their community's peace pool — each side's word, made tangible. When a harmful event is verified and finalized, part of the responsible side's pledge goes toward repair on the other side. Steps toward peace are met from the shared Treasury."
       />
       <PoolsJourney />
       <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
-        Why this step exists: this is where words become settlement. A confirmed event sits out a
-        dispute window so the council can catch a bad round, then anyone can finalize it — moving
-        real stake from the responsible side to the harmed one, and turning your membership into a
-        claimable dividend.
+        Why this step exists: this is where promises are kept. A confirmed event sits out a
+        dispute window so the council can catch a bad round, then anyone can finalize it — the
+        pledge does what both sides said it would, and your membership becomes your community's
+        claimable share.
       </p>
       <ConnectGate>
         <PoolsInner />
@@ -185,7 +185,7 @@ function PoolsInner() {
         cta="Verify"
       >
         You have nothing claimable and no pool membership yet. Verify to join your community&apos;s
-        pool — dividends are split equally per member, so membership is the whole ticket.
+        pool — payouts are split equally per member — membership, not wealth, is the ticket.
       </PrereqNote>
       {/* Section 1 — pool state */}
       <div className="grid gap-6 lg:grid-cols-2">
@@ -209,7 +209,7 @@ function PoolsInner() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Gift className="h-5 w-5 text-primary" /> Your reward dividend
+            <Gift className="h-5 w-5 text-primary" /> Your share
           </CardTitle>
           <CardDescription>
             Rewards are split equally per verified member of your pool (accumulator pattern), keyed
@@ -248,7 +248,7 @@ function PoolsInner() {
               {receipt.isSuccess && lastAction === "claim" && (
                 <div className="rounded-lg bg-accent/40 p-3 text-sm">
                   <p className="font-medium text-primary">
-                    Claimed — the dividend is in your wallet. That completes the journey.
+                    Claimed — your share is in your wallet. That completes the journey.
                   </p>
                   <Link
                     href="/business"
@@ -311,7 +311,7 @@ function PoolsInner() {
           )}
           {receipt.isSuccess && lastAction === "finalize" && (
             <p className="rounded-lg bg-accent/40 p-3 text-sm text-accent-foreground">
-              Event finalized — the value has moved. Next: check your dividend in the claim card
+              Event finalized — the promise was carried out. Next: check your share in the claim card
               above; if your community was the harmed side, your share is now claimable.
             </p>
           )}

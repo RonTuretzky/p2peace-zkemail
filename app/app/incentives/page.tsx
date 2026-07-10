@@ -63,8 +63,8 @@ export default function IncentivesPage() {
   return (
     <div className="container mx-auto px-4 py-14">
       <FlowHeader
-        title="Incentive Governance"
-        blurb="Propose the news-event circuits that trigger cross-community redistribution, then approve them with quadratic votes. Voters approve a committed keyword circuit (patternHash), not prose."
+        title="Write the Rules Together"
+        blurb="Propose the rules both communities will live by, then approve them together. Voters approve an exact committed keyword circuit — a machine, not prose that can drift — and no rule activates without a YES majority on each side."
       />
       <IncentivesJourney />
       <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">

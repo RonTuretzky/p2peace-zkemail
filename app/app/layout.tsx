@@ -6,9 +6,9 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 
 export const metadata: Metadata = {
-  title: "p2p2p — Building Peace Through Economic Interdependence",
+  title: "p2p2p — peace, built peer to peer",
   description:
-    "peer to peer to peace: a decentralized protocol letting citizens of conflicting nations build economic cooperation, verified with zkEmail. Branded with the Decentral Park UI kit.",
+    "peer to peer to peace: practical tools that help communities on both sides of a conflict keep their word to each other — with private verification and evidence anyone can check, built on signed email.",
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

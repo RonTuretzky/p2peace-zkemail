@@ -59,8 +59,8 @@ export function PeaceCalculator() {
       <div className="container mx-auto px-4">
         <SectionHeading
           chip="Peace pool calculator"
-          title="What would your community actually stake?"
-          lede="Real math, adjustable assumptions — 90% of every mint stays in the minter's wallet. Model a community on each side of a conflict line and see what a single verified event moves."
+          title="What does a community's pledge look like at scale?"
+          lede="Real math, adjustable assumptions — 90% of every mint stays in the minter's wallet. Model a community on each side of a conflict line and see what stands behind their word."
         />
 
         <div className="mx-auto mt-12 grid max-w-5xl gap-6 lg:grid-cols-[380px_1fr]">
@@ -121,7 +121,7 @@ export function PeaceCalculator() {
                 setPreset("custom")
               }}
               display={outsiders.toLocaleString()}
-              hint="Diaspora & allies pay 2× par — the premium funds the Treasury"
+              hint="Diaspora & allies pay 2× par — the extra supports the shared Treasury"
             />
           </div>
 
@@ -133,43 +133,44 @@ export function PeaceCalculator() {
               </p>
               <p className="font-display text-4xl font-bold text-primary">{usd(out.corpus)}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                10% of {usd(out.minted)} minted — the only capital redistribution can touch
+                10% of {usd(out.minted)} minted — the only money the rules can ever touch
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <StatPill
                 tone="risk"
-                label="One harmful event moves"
+                label="One broken promise moves"
                 value={usd(out.perEvent)}
-                hint="5% cap per event, corpus → other side's rewards"
+                hint="at most 5% per event, from the pledge toward repair"
               />
               <StatPill
                 tone="positive"
-                label="Dividend per member"
+                label="Repair, per person"
                 value={usd(out.dividend)}
-                hint="equal share to every verified member of the harmed side"
+                hint="the same share to every member of the harmed community"
               />
               <StatPill
                 label="Treasury inflow / month"
                 value={usd(out.treasuryMo)}
-                hint={`outsider premium; one positive-action reward ≈ ${usd(out.positiveReward)}`}
+                hint={`from supporters worldwide; one peace-step reward ≈ ${usd(out.positiveReward)}`}
               />
             </div>
             <div className="rounded-2xl bg-accent/30 p-4 text-sm text-accent-foreground">
-              <span className="font-semibold">Read it like this:</span> a verified checkpoint
-              removal, prisoner release, or joint water project doesn't move opinions — it moves{" "}
-              <span className="font-semibold">{usd(out.perEvent)}</span> between {members.toLocaleString()}-member
-              communities, {usd(out.dividend)} to each person on the receiving side, every time,
-              automatically, under rules both sides pre-approved.
+              <span className="font-semibold">Read it like this:</span> when a promise is broken
+              and verified, <span className="font-semibold">{usd(out.perEvent)}</span> moves from
+              the responsible community&apos;s pledge toward repair — {usd(out.dividend)} to each
+              person on the harmed side — every time, automatically, under rules both sides wrote
+              together. Steps <em>toward</em> peace are met from the shared Treasury instead, so
+              honoring them never costs the other community anything.
             </div>
           </div>
         </div>
 
         <HonestyNote>
-          Illustration, not a promise — pool sizes depend on real adoption, and every
-          parameter (stake %, per-event cap, thresholds) is set by dual-majority governance.
-          Principal never moves: only the consented 10% stake is ever at risk, and unstaked
-          tokens redeem 1:1 at any time.
+          Illustration, not a promise — pool sizes depend on real people joining, and every
+          number here (pledge share, per-event cap, thresholds) is decided by both communities
+          together. Savings never move: only the consented 10% pledge is ever involved, and
+          everything else redeems 1:1 at any time.
         </HonestyNote>
       </div>
     </section>

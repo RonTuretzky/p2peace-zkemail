@@ -18,23 +18,24 @@ export default function MintPage() {
     <div className="container mx-auto px-4 py-14">
       <FlowHeader
         title="Mint Peace Tokens"
-        blurb="Verified citizens mint their community token 1:1 against the reserve — 90% to your wallet, 10% staked into your peace pool. Outsiders mint at a 2× premium that funds the shared Treasury."
+        blurb="Verified citizens mint their community token 1:1 against the reserve — 90% to your wallet, 10% pledged to your community's peace pool. Outsiders mint at a 2× premium that supports the shared Treasury."
       />
       <MintJourney />
       <p className="mx-auto mt-6 max-w-2xl text-center text-sm text-muted-foreground">
-        Why this step exists: minting is how you put skin in the game. Every citizen mint quietly
-        sets aside 10% as a peace stake — collateral your community loses only if it starts a
-        verified harmful event. No stake, no vote, no dividend.
+        Why this step exists: this is where your community's promise becomes real. A tenth of
+        every mint is set aside as your side's pledge — money that moves only if your own
+        community breaks the rules everyone agreed to. Joining the pool is what gives you a
+        voice in writing those rules, and a share when repair flows your way.
       </p>
       <ConnectGate>
         <MintInner />
       </ConnectGate>
       <HonestyNote>
         Honest limit: every circulating token is matched by reserve sitting in the minter, and you
-        can redeem back to mUSD at any time — except the 10% peace stake. The stake is{" "}
-        <em>not withdrawable</em> by you: it either stays as your community&apos;s collateral or
-        moves to the other side after a verified harmful event. That one-way door is the whole
-        mechanism.
+        can redeem back to mUSD at any time — except the 10% pledge. The pledge is{" "}
+        <em>not withdrawable</em> by you: it stays as your community&apos;s promise, or goes
+        toward repair on the other side after a verified harmful event. That one-way door is what
+        makes the promise worth believing.
       </HonestyNote>
     </div>
   )
@@ -112,8 +113,8 @@ function MintInner() {
   return (
     <>
       <PrereqNote met={isCitizen} href="/verify" cta="Verify first">
-        Outsiders can mint at 2× — but to mint 1:1, vote on incentives, and earn pool dividends,
-        verify first.
+        Outsiders can mint at 2× — but to mint 1:1, vote on the rules, and receive your
+        community&apos;s share, verify first.
       </PrereqNote>
       <div className="mx-auto mt-10 grid max-w-4xl gap-6 lg:grid-cols-2">
       <Card>
@@ -173,7 +174,7 @@ function MintInner() {
               <>
                 Read it like this: of your {amount || "0"} mUSD, {" "}
                 <span className="font-medium text-foreground">90% lands in your wallet</span> and{" "}
-                <span className="font-medium text-foreground">10% becomes your peace stake</span>.
+                <span className="font-medium text-foreground">10% becomes your community&apos;s pledge</span>.
                 The largest amount an event can ever move from the pool is 5% of it — and only if
                 your community&apos;s side causes a verified harmful event.
               </>

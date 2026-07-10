@@ -2,13 +2,16 @@ import type React from "react"
 import Link from "next/link"
 
 /**
- * The Story — the whole protocol told once, chronologically, one idea per
+ * The Story — the whole system told once, chronologically, one idea per
  * chapter, following two people (Amira in community A, Boaz in community B)
- * from an email in their inboxes to a dividend in their wallets.
+ * from an email in their inboxes to a promise kept.
  *
  * Design: a single column on a vertical timeline spine. Each chapter is a day
  * marker, a title, two or three sentences, one small visual, and at most one
  * link. Nothing competes for attention; the order does the explaining.
+ *
+ * Voice: warm, plain, quietly confident (Bread voice guide). The money is a
+ * pledge that makes commitments credible — never the point of the story.
  */
 
 function Chapter({
@@ -84,9 +87,9 @@ function VizMint() {
         </div>
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        The $10 joins <span className="font-semibold text-foreground">peace pool A</span>. Boaz's
-        mint does the same on his side. A thousand people each → two pools of $10,000 facing each
-        other.
+        The $10 joins <span className="font-semibold text-foreground">peace pool A</span> —
+        Amira's community's shared pledge. Boaz's does the same on his side. A thousand people
+        each, and both communities have put their word where the other side can see it.
       </p>
     </div>
   )
@@ -167,8 +170,8 @@ function VizDividend() {
         </span>
       </div>
       <p className="mt-2 text-xs text-muted-foreground">
-        Equal per member — a per-citizen dividend, not a whale transfer. Boaz claims his share;
-        it's an ordinary token, redeemable 1:1.
+        The same share to each person — repair that reaches people, not portfolios. Boaz claims
+        his; it's an ordinary token, redeemable 1:1.
       </p>
     </div>
   )
@@ -195,15 +198,16 @@ export function Story() {
             </p>
           </Chapter>
 
-          <Chapter day="Day 0 · stake" title="They each mint $100" visual={<VizMint />} link={{ href: "/mint", label: "Do this step live" }}>
+          <Chapter day="Day 0 · the pledge" title="They each put $100 behind the peace" visual={<VizMint />} link={{ href: "/mint", label: "Do this step live" }}>
             <p>
-              Tokens are boring on purpose: minted 1:1 against a full reserve, redeemable 1:1
-              forever. The interesting part is the split — 90% to your wallet, 10% staked into
-              your community's <em>peace pool</em>.
+              The tokens themselves are boring on purpose: backed one-for-one by a full reserve,
+              redeemable one-for-one, forever. What matters is the split — 90% stays in your
+              wallet, and 10% goes into your community's <em>peace pool</em>.
             </p>
             <p>
-              That stake is the only money the protocol can ever move, and minting is how you
-              consent to it. It is each community's collateral against its own side's aggression.
+              That pledge is the only money these tools can ever touch, and joining is how you
+              consent to it. Think of it as your community's word, made tangible — a promise
+              each side makes to the other, held where everyone can see it.
             </p>
           </Chapter>
 
@@ -215,8 +219,9 @@ export function Story() {
             </p>
             <p>
               After a week of discussion, it passes only with a separate YES-majority in{" "}
-              <em>each</em> community — one verified person, one ballot, extra votes costing
-              quadratically. Neither side can ever impose a rule on the other.
+              <em>each</em> community — one verified person, one ballot, and speaking louder
+              costs more than speaking once, so no one can simply outspend their neighbors.
+              Neither side can ever impose a rule on the other.
             </p>
           </Chapter>
 
@@ -234,9 +239,10 @@ export function Story() {
 
           <Chapter day="Day 40 · evidence" title="Anyone with the email proves it" visual={<VizAttest />} link={{ href: "/attest", label: "Attest live" }}>
             <p>
-              Any subscriber — Amira, Boaz, a stranger in Lisbon — generates a zero-knowledge
-              proof in their browser: <em>this signed email, from this approved outlet, matches
-              the rule's exact keywords.</em> The email itself never leaves their machine.
+              Any subscriber — Amira, Boaz, a stranger in Lisbon — generates a proof in their
+              browser: <em>this signed email, from this approved outlet, matches the rule's
+              exact keywords.</em> The proof shows the fact and nothing else; the email itself
+              never leaves their machine.
             </p>
             <p>
               One outlet is never enough. The event confirms only with distinct sources from
@@ -253,19 +259,20 @@ export function Story() {
             </p>
           </Chapter>
 
-          <Chapter day="Day 42 · settlement" title="Value moves — by the rules, in both directions" visual={<VizTwoDirections />} link={{ href: "/pools", label: "Watch pools settle live" }}>
+          <Chapter day="Day 42 · the promise kept" title="The rules do what both sides agreed" visual={<VizTwoDirections />} link={{ href: "/pools", label: "Watch pools settle live" }}>
             <p>
-              The window closes untouched, and the engine executes exactly what both sides
-              pre-approved. Every mechanism is symmetric: A's harm costs A what B's harm costs
-              B, and either side's step toward peace is rewarded identically.
+              The window closes untouched, and the rules carry out exactly what both
+              communities wrote together. Everything is symmetric: what holds A to its word
+              holds B the same way, and either side's step toward peace is met identically.
             </p>
           </Chapter>
 
-          <Chapter day="Day 42 · the dividend" title="Every member gets the same share" visual={<VizDividend />} link={{ href: "/pools", label: "Claim live" }}>
+          <Chapter day="Day 42 · repair" title="Every member gets the same share" visual={<VizDividend />} link={{ href: "/pools", label: "Claim live" }}>
             <p>
-              Pool payouts are identical for every verified member — wealth doesn't multiply
-              your share, and wallet rotation doesn't lose it. Peace stops being an abstraction
-              and becomes a small, regular, personal dividend.
+              Repair goes to people, not to balances: every member of the harmed community
+              receives the same share, whether they hold a little or a lot, and it follows your
+              membership even if you change wallets. A small thing arriving in an ordinary
+              wallet — and a sign, each time, that the promise held.
             </p>
           </Chapter>
 
