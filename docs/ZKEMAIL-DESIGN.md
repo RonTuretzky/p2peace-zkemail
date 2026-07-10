@@ -3,6 +3,35 @@
 How p2peace turns raw `.eml` files into on-chain facts. Companion to
 [ARCHITECTURE.md](./ARCHITECTURE.md) §3 and the blueprint specs in `circuits/`.
 
+## 0. Three verification tiers
+
+p2peace has three ways to turn an email into an on-chain fact. They differ only in
+*what the cryptography guarantees* — every one of them enforces the identical
+contract-level rules (DKIM key must be registered and not revoked, nullifier
+uniqueness, freshness windows, sender/wallet bindings). Be precise about which tier a
+given claim rests on:
+
+1. **DEMO — mock verifier.** `MockGroth16Verifier` accepts *any* proof. Every
+   contract-level rule is enforced, but the cryptography is not: anyone can register
+   because no real signature is ever checked. This tier exists solely to walk the full
+   flow end-to-end without producing a real proof. It proves nothing about a real email.
+
+2. **REAL ON-CHAIN DKIM — `RealEmailVerifier.sol` + `RSAPKCS1.sol` (new).**
+   Genuinely verifies an email's RSASSA-PKCS1-v1.5 signature on-chain via the modexp
+   precompile (`0x05`), checks the SHA-256 digest, requires the signed `From` header to
+   carry the allowlisted government sender, and derives the recipient nullifier from the
+   signed bytes. This is **real cryptographic verification of a real email** — but it is
+   **not zero-knowledge**: the signed headers, including the recipient address, are
+   public calldata. It exists so the mechanism can be exercised with a real inbox today.
+   Detail in §8 below.
+
+3. **ZK — production endpoint.** Compiled zkEmail circuits prove the *same statement*
+   (a genuine DKIM-signed government email exists) while keeping the email private. This
+   is the upgrade. `RealEmailVerifier` is the honest, non-private stepping stone to it.
+
+The through-line: tier 2 proves **authenticity**; tier 3 proves **authenticity +
+privacy**. Tier 1 proves neither and is for demos only.
+
 ## 1. Background: what zkEmail proves
 
 Every serious mail sender signs outgoing mail with **DKIM** (RFC 6376): the sending
@@ -134,3 +163,71 @@ wallet as a public input so a relayer cannot redirect it).
 - **Gov domain compromise**: bounded by the domain allowlist + revocation + membership
   expiry; a compromised sender can forge *new* members only until revoked, and
   members it forged expire.
+
+## 8. On-chain verification without ZK (RealEmailVerifier)
+
+`RealEmailVerifier.sol` (backed by the `RSAPKCS1.sol` library) is tier 2 from §0: it
+verifies a **real** email fully on-chain, with no proof and no privacy. It is what lets
+the mechanism be exercised against a live inbox before the ZK circuits are compiled.
+
+**RSASSA-PKCS1-v1.5 over the modexp precompile.** DKIM signs
+`hash(canonicalized headers)` with the sender's RSA private key. Verification is the
+RSA public operation: given signature `s`, exponent `e`, modulus `n`, compute
+`em = s^e mod n` and check that `em` is the PKCS#1 v1.5 encoding of `SHA256(message)`.
+`RSAPKCS1._modexp` performs `s^e mod n` by `staticcall`ing the EVM modexp precompile at
+address `0x05`, left-padded to the modulus length (256 bytes for RSA-2048). No
+in-circuit big-int math is needed — the precompile is the whole cryptographic core.
+
+**EMSA-PKCS1 encoding checked.** `RSAPKCS1.verify` decodes `em` byte-for-byte against
+the RFC 8017 §9.2 encoding for SHA-256:
+
+```
+00 01 FF FF ... FF 00 || DigestInfo || H
+└┬┘ └┬┘ └────┬─────┘ └┬┘   └──┬───┘   └┬┘
+ │   │       │        │       │        └ 32-byte SHA-256(message)
+ │   │       │        │       └ DER DigestInfo prefix (19 bytes):
+ │   │       │        │         3031300d060960864801650304020105000420
+ │   │       │        └ single 0x00 separator
+ │   │       └ padding string PS: run of 0xFF, ≥ 8 bytes
+ │   └ block type 0x01
+ └ leading 0x00
+```
+
+The contract checks the leading `00 01`, walks the `0xFF` run up to the `0x00`
+separator, matches the 19-byte `SHA256_PREFIX` DigestInfo, and finally compares the
+trailing 32 bytes against `sha256(message)`. Any mismatch (wrong padding length, forged
+digest, tampered headers) fails. This is the same acceptance predicate a mail server’s
+verifier uses.
+
+**From-sender binding.** `verifyIdentityEmail` extracts the value of the DKIM-signed
+`from:` header out of the *signed* bytes and requires it to carry the allowlisted
+government sender address (`expectedFrom`). Because `From` is inside the signed header
+set, it cannot be altered without invalidating the signature. Mailers render `From`
+either bare (`from:noreply@btl.gov.il`) or angle-bracketed behind a display name
+(`from:=?UTF-8?..?= <noreply@btl.gov.il>`); the check accepts either an exact match or
+the `<address>` form contained in the value, so a spoofed display name cannot smuggle a
+different sender.
+
+**Recipient → nullifier derivation.** The `to:` header value — likewise read from the
+signed bytes — becomes the identity nullifier:
+`nullifier = keccak256("p2peace-real-id" ‖ recipientBytes)`. It is constant per
+recipient (supporting wallet rotation/renewal) and, because it is taken from signed
+bytes, cannot be forged without the domain's private key. `IdentityRegistry.registerReal`
+consumes this nullifier exactly as it consumes the ZK path's Poseidon nullifier.
+
+**Privacy tradeoff (explicit).** Everything above happens over **public calldata**:
+the signed headers, and therefore the recipient's email address, are visible on-chain.
+This tier proves the email is **authentic**; it does **not** hide it. That is the one
+and only thing the ZK path adds — the compiled zkEmail circuit proves the identical
+statement (authentic DKIM-signed government email → nullifier) while revealing nothing
+but the public signals of §2. Use `RealEmailVerifier` to prove the plumbing works with a
+real inbox; use the ZK endpoint when privacy is required.
+
+**DKIM key-rotation reality.** The key registered for the live btl.gov.il instance is
+*not* btl.gov.il's own direct DKIM key: that key has rotated out of DNS since the email
+was sent. What remains resolvable is the Amazon SES key that actually signs
+`From: noreply@btl.gov.il` (SES enforces the sender via verified-sender identities), so
+that archived/live SES key is what `registerKey` records. This is precisely the
+key-archival case the `DKIMRegistry` (§5) is built for: DNS serves only the current key,
+but historical or delegated-signer keys must remain verifiable with their validity
+windows.

@@ -15,6 +15,7 @@ import {IncentiveRegistry} from "../src/IncentiveRegistry.sol";
 import {EventAttestation} from "../src/EventAttestation.sol";
 import {RedistributionEngine} from "../src/RedistributionEngine.sol";
 import {SanctionsEscrow} from "../src/SanctionsEscrow.sol";
+import {RealEmailVerifier} from "../src/RealEmailVerifier.sol";
 import {MockUSD} from "../src/mocks/MockUSD.sol";
 import {MockGroth16Verifier} from "../src/mocks/MockGroth16Verifier.sol";
 import {IGroth16Verifier} from "../src/interfaces/IGroth16Verifier.sol";
@@ -181,5 +182,20 @@ contract Deploy is Script {
         d.identity.setDomain(domains[1], Community.B);
         d.incentives.setParams(10 minutes, 10 minutes, 3_000, 500);
         d.engine.setDisputeWindow(10 minutes);
+
+        // Real-email path: if a real DKIM key is supplied via env, deploy the
+        // on-chain RSA verifier, register the key, and map it to Community A so a
+        // genuine btl.gov.il email (From: noreply@btl.gov.il) can enroll for real.
+        if (vm.envOr("EMAIL_MODULUS", bytes("")).length > 0) {
+            RealEmailVerifier rev = new RealEmailVerifier(msg.sender);
+            bytes32 kid = rev.registerKey(
+                vm.envString("EMAIL_DOMAIN"),
+                vm.envString("EMAIL_SELECTOR"),
+                vm.envBytes("EMAIL_MODULUS"),
+                vm.envBytes("EMAIL_EXP")
+            );
+            d.identity.setRealVerifier(rev);
+            d.identity.setRealKey(kid, Community.A, vm.envString("EMAIL_SENDER"));
+        }
     }
 }

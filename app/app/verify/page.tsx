@@ -9,6 +9,7 @@ import { ShieldCheck, Mail, CheckCircle2, RotateCcw, ArrowRight } from "lucide-r
 import { ConnectGate, FlowHeader, TxButton, useMembership } from "@/components/flow"
 import { JourneyBar, HonestyNote } from "@/components/explainer"
 import { VisualFrame, VizVerify } from "@/components/journey-visuals"
+import { RealEmailVerify } from "@/components/real-email-verify"
 import { contract } from "@/lib/contracts"
 import { Community } from "@/lib/chains"
 import { buildCitizenshipProof, DEMO_DOMAINS } from "@/lib/demo"
@@ -39,7 +40,19 @@ export default function VerifyPage() {
         </VisualFrame>
       </div>
       <ConnectGate>
-        <VerifyInner />
+        <div className="space-y-2">
+          <p className="mx-auto max-w-3xl text-center text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Two ways to verify
+          </p>
+          <RealEmailVerify />
+          <div className="mx-auto mt-8 max-w-3xl">
+            <p className="mb-2 text-center text-xs text-muted-foreground">
+              …or use the one-click demo proof below (no real email needed — for walking the
+              flow; it accepts any proof, so it proves nothing about a real inbox).
+            </p>
+          </div>
+          <VerifyInner />
+        </div>
       </ConnectGate>
       <HonestyNote>
         Honest limit: this proves control of <em>one government inbox</em>, not one human. Someone

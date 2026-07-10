@@ -6,6 +6,7 @@ import {Community, EmailProof} from "./Types.sol";
 import {IZKEmailVerifier} from "./interfaces/IZKEmailVerifier.sol";
 import {IIdentityRegistry} from "./interfaces/IIdentityRegistry.sol";
 import {ICommunityPool} from "./interfaces/ICommunityPool.sol";
+import {RealEmailVerifier} from "./RealEmailVerifier.sol";
 
 /// @notice Sybil-resistant community roll built on zkEmail citizenship proofs.
 ///
@@ -38,6 +39,13 @@ contract IdentityRegistry is Ownable, IIdentityRegistry {
     mapping(Community => uint256) private _memberCount;
     mapping(Community => ICommunityPool) public pools;
 
+    // --- real-email path (fully on-chain DKIM/RSA verification, no ZK) ---
+    RealEmailVerifier public realVerifier;
+    /// keyId → the community a genuine email from that DKIM key enrolls into.
+    mapping(bytes32 realKeyId => Community) public realKeyCommunity;
+    /// keyId → the exact sender address the From header must carry.
+    mapping(bytes32 realKeyId => string) public realKeySender;
+
     event DomainSet(bytes32 indexed domainHash, Community community);
     event CitizenshipPatternSet(bytes32 indexed patternHash, bool approved);
     event Registered(
@@ -46,6 +54,8 @@ contract IdentityRegistry is Ownable, IIdentityRegistry {
     event Renewed(address indexed wallet, uint64 expiresAt);
     event WalletRotated(bytes32 indexed nullifier, address indexed from, address indexed to);
     event PoolsSet(address poolA, address poolB);
+    event RealVerifierSet(address verifier);
+    event RealKeyMapped(bytes32 indexed keyId, Community community, string sender);
 
     error InvalidProof();
     error DomainNotAllowlisted();
@@ -55,6 +65,8 @@ contract IdentityRegistry is Ownable, IIdentityRegistry {
     error ProofReplayed();
     error WalletAlreadyMember();
     error CommunityMismatch();
+    error RealPathDisabled();
+    error RealKeyNotMapped();
 
     constructor(address owner_, IZKEmailVerifier verifier_) Ownable(owner_) {
         verifier = verifier_;
@@ -99,7 +111,63 @@ contract IdentityRegistry is Ownable, IIdentityRegistry {
         if (p.emailTimestamp <= lastProofTimestamp[p.nullifier]) revert ProofReplayed();
         lastProofTimestamp[p.nullifier] = p.emailTimestamp;
 
-        address current = nullifierWallet[p.nullifier];
+        _enroll(p.nullifier, wallet, community);
+    }
+
+    // --------------------------------------------------- real-email enrollment
+
+    function setRealVerifier(RealEmailVerifier verifier_) external onlyOwner {
+        realVerifier = verifier_;
+        emit RealVerifierSet(address(verifier_));
+    }
+
+    /// @notice Map a real DKIM key (in the RealEmailVerifier) to the community it
+    ///         enrolls, and the exact sender address its From header must carry.
+    function setRealKey(bytes32 keyId, Community community, string calldata sender)
+        external
+        onlyOwner
+    {
+        realKeyCommunity[keyId] = community;
+        realKeySender[keyId] = sender;
+        emit RealKeyMapped(keyId, community, sender);
+    }
+
+    /// @notice Register with a *real* email — fully on-chain DKIM/RSA verification,
+    ///         no ZK, no mock. `signedHeaders` are the canonicalized DKIM-signed
+    ///         header bytes and `signature` the RSA signature; the RealEmailVerifier
+    ///         proves the email was genuinely signed by the domain and extracts the
+    ///         recipient nullifier from the signed bytes.
+    ///
+    ///         Trade-off (honest): the signed headers, including the recipient
+    ///         address, are public calldata. This proves authenticity, not privacy —
+    ///         the ZK path keeps the email private. Freshness is not enforced
+    ///         on-chain here (the signed Date is present but RFC-2822 parsing on-chain
+    ///         is out of scope); the per-recipient nullifier still guarantees one
+    ///         membership per inbox.
+    function registerReal(
+        bytes32 keyId,
+        bytes calldata signedHeaders,
+        bytes calldata signature,
+        address wallet
+    ) external {
+        _enroll(_verifyReal(keyId, signedHeaders, signature), wallet, realKeyCommunity[keyId]);
+    }
+
+    function _verifyReal(bytes32 keyId, bytes calldata signedHeaders, bytes calldata signature)
+        internal
+        view
+        returns (bytes32)
+    {
+        RealEmailVerifier rv = realVerifier;
+        if (address(rv) == address(0)) revert RealPathDisabled();
+        if (realKeyCommunity[keyId] == Community.None) revert RealKeyNotMapped();
+        return rv.verifyIdentityEmail(keyId, signedHeaders, signature, realKeySender[keyId]);
+    }
+
+    // ------------------------------------------------------------------ internal
+
+    function _enroll(bytes32 nullifier, address wallet, Community community) internal {
+        address current = nullifierWallet[nullifier];
         uint64 expiresAt = uint64(block.timestamp) + membershipDuration;
 
         if (current == wallet) {
@@ -116,22 +184,22 @@ contract IdentityRegistry is Ownable, IIdentityRegistry {
             // keyed by nullifier, so they follow the member.
             if (members[current].community != community) revert CommunityMismatch();
             delete members[current];
-            emit WalletRotated(p.nullifier, current, wallet);
+            emit WalletRotated(nullifier, current, wallet);
         } else {
             // Fresh enrollment.
             _memberCount[community] += 1;
             ICommunityPool pool = pools[community];
-            if (address(pool) != address(0)) pool.initMember(p.nullifier);
+            if (address(pool) != address(0)) pool.initMember(nullifier);
         }
 
         members[wallet] = Member({
             community: community,
-            nullifier: p.nullifier,
+            nullifier: nullifier,
             registeredAt: uint64(block.timestamp),
             expiresAt: expiresAt
         });
-        nullifierWallet[p.nullifier] = wallet;
-        emit Registered(wallet, community, p.nullifier);
+        nullifierWallet[nullifier] = wallet;
+        emit Registered(wallet, community, nullifier);
     }
 
     // ------------------------------------------------------------------ views

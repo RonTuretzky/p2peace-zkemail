@@ -94,13 +94,34 @@ forge test
 cd app && pnpm install && pnpm dev
 ```
 
-## Proof system status
+## Proof system status — three verification tiers
 
-Contracts verify the exact zkEmail public-signal ABI
-(`[dkimPubkeyHash, domainHash, nullifier, patternHash, emailTimestamp, extraData]`)
-against per-blueprint Groth16 verifiers registered in `ZKEmailVerifier`. The repo ships
-blueprint specifications and the compilation pipeline ([circuits/](circuits/)); tests
-run against a mock Groth16 backend with every contract-level check (DKIM registry,
-nullifiers, windows, bindings) fully real. Compiling the blueprints with zk-email
-tooling and registering the generated verifiers is the only step between this and
-proving against real emails — no contract changes required.
+Every tier enforces the identical contract-level rules (DKIM key registered + not
+revoked, nullifier uniqueness, freshness windows, sender/wallet bindings). They differ
+only in what the cryptography guarantees. Full detail in
+[docs/ZKEMAIL-DESIGN.md](docs/ZKEMAIL-DESIGN.md) §0 and §8.
+
+1. **DEMO (mock verifier).** `MockGroth16Verifier` accepts any proof: every
+   contract-level rule runs, but the crypto does not, so anyone can register. For
+   walking the flow only — it proves nothing about a real email.
+2. **REAL ON-CHAIN DKIM (`RealEmailVerifier.sol` + `RSAPKCS1.sol`).** Genuinely
+   verifies an email's RSASSA-PKCS1-v1.5 signature on-chain via the modexp precompile
+   (`0x05`), checks the SHA-256 digest, requires the signed `From` to carry the
+   government sender, and derives the recipient nullifier from the signed bytes. This is
+   **real cryptographic verification of a real email — but not zero-knowledge**: the
+   signed headers (including the recipient address) are public calldata. It exists so
+   the mechanism can be exercised with a real inbox today.
+3. **ZK (production endpoint).** Compiled zkEmail circuits prove the *same statement*
+   while keeping the email private. This is the upgrade; `RealEmailVerifier` is the
+   honest, non-private stepping stone. Blueprint specs and the compilation pipeline live
+   in [circuits/](circuits/); registering the generated verifiers is the only step
+   between the mock backend and private proofs — no contract changes required.
+
+Tier 2 proves **authenticity**; tier 3 proves **authenticity + privacy**.
+
+**Deployed `RealEmailVerifier` (Gnosis Chain):**
+[`0x6Ac204183EBE2AFe11097ae697FF1Af0F5A3dA44`](https://gnosisscan.io/address/0x6Ac204183EBE2AFe11097ae697FF1Af0F5A3dA44).
+The full system is being redeployed with the real path wired into
+`IdentityRegistry.registerReal`. The registered key is the Amazon SES key that signs
+`From: noreply@btl.gov.il` — btl.gov.il's direct DKIM key has since rotated out of DNS,
+exactly the key-archival case the `DKIMRegistry` models.

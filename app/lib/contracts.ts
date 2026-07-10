@@ -11,6 +11,7 @@ import incentiveAbi from "./abis/IncentiveRegistry.json"
 import attestationAbi from "./abis/EventAttestation.json"
 import engineAbi from "./abis/RedistributionEngine.json"
 import escrowAbi from "./abis/SanctionsEscrow.json"
+import realEmailAbi from "./abis/RealEmailVerifier.json"
 
 export const abis = {
   reserve: erc20Abi,
@@ -23,12 +24,14 @@ export const abis = {
   attestation: attestationAbi,
   engine: engineAbi,
   escrow: escrowAbi,
+  realEmail: realEmailAbi,
 } as const
 
 /** wagmi `{ address, abi }` config for a role, read from the (hydratable) ADDRESSES. */
 export const contract = {
   reserve: () => ({ address: ADDRESSES.reserveToken, abi: abis.reserve }),
   identity: () => ({ address: ADDRESSES.identityRegistry, abi: abis.identity }),
+  realEmail: () => ({ address: ADDRESSES.realEmailVerifier, abi: abis.realEmail }),
   incentive: () => ({ address: ADDRESSES.incentiveRegistry, abi: abis.incentive }),
   attestation: () => ({ address: ADDRESSES.eventAttestation, abi: abis.attestation }),
   engine: () => ({ address: ADDRESSES.redistributionEngine, abi: abis.engine }),

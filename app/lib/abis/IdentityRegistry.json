@@ -274,6 +274,57 @@
   },
   {
     "type": "function",
+    "name": "realKeyCommunity",
+    "inputs": [
+      {
+        "name": "realKeyId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8",
+        "internalType": "enum Community"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "realKeySender",
+    "inputs": [
+      {
+        "name": "realKeyId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "realVerifier",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract RealEmailVerifier"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "register",
     "inputs": [
       {
@@ -312,6 +363,34 @@
             "internalType": "uint256[8]"
           }
         ]
+      },
+      {
+        "name": "wallet",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "registerReal",
+    "inputs": [
+      {
+        "name": "keyId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "signedHeaders",
+        "type": "bytes",
+        "internalType": "bytes"
+      },
+      {
+        "name": "signature",
+        "type": "bytes",
+        "internalType": "bytes"
       },
       {
         "name": "wallet",
@@ -396,6 +475,42 @@
         "name": "poolB",
         "type": "address",
         "internalType": "contract ICommunityPool"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setRealKey",
+    "inputs": [
+      {
+        "name": "keyId",
+        "type": "bytes32",
+        "internalType": "bytes32"
+      },
+      {
+        "name": "community",
+        "type": "uint8",
+        "internalType": "enum Community"
+      },
+      {
+        "name": "sender",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setRealVerifier",
+    "inputs": [
+      {
+        "name": "verifier_",
+        "type": "address",
+        "internalType": "contract RealEmailVerifier"
       }
     ],
     "outputs": [],
@@ -509,6 +624,44 @@
       },
       {
         "name": "poolB",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "RealKeyMapped",
+    "inputs": [
+      {
+        "name": "keyId",
+        "type": "bytes32",
+        "indexed": true,
+        "internalType": "bytes32"
+      },
+      {
+        "name": "community",
+        "type": "uint8",
+        "indexed": false,
+        "internalType": "enum Community"
+      },
+      {
+        "name": "sender",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "RealVerifierSet",
+    "inputs": [
+      {
+        "name": "verifier",
         "type": "address",
         "indexed": false,
         "internalType": "address"
@@ -635,6 +788,16 @@
   {
     "type": "error",
     "name": "ProofReplayed",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RealKeyNotMapped",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "RealPathDisabled",
     "inputs": []
   },
   {
