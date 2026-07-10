@@ -65,7 +65,7 @@ they already send DKIM-signed email. Full analysis: [docs/IMPROVEMENTS.md](docs/
 | [`contracts/`](contracts/) | Foundry suite — 14 contracts + mocks, deploy script, tests |
 | [`circuits/`](circuits/) | zkEmail blueprint specs, keyword→zk-regex compiler spec, proving walkthrough |
 | [`app/`](app/) | Next.js site (adapted from the original concept site) with the zkEmail flows |
-| [`docs/`](docs/) | [ARCHITECTURE](docs/ARCHITECTURE.md) · [IMPROVEMENTS](docs/IMPROVEMENTS.md) · [ZKEMAIL-DESIGN](docs/ZKEMAIL-DESIGN.md) · [THREAT-MODEL](docs/THREAT-MODEL.md) |
+| [`docs/`](docs/) | [GET-STARTED](docs/GET-STARTED.md) · [ARCHITECTURE](docs/ARCHITECTURE.md) · [IMPROVEMENTS](docs/IMPROVEMENTS.md) · [ZKEMAIL-DESIGN](docs/ZKEMAIL-DESIGN.md) · [THREAT-MODEL](docs/THREAT-MODEL.md) · [CURRENCY-MECHANISM](docs/CURRENCY-MECHANISM.md) |
 
 ## Contracts
 

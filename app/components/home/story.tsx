@@ -287,6 +287,7 @@ export function Story() {
           <Chapter
             day="Year 5 · the shift"
             title="War gets more expensive every year"
+            link={{ href: "/exit", label: "See the shekel exit, measured live" }}
             visual={
               <VisualFrame caption="escalation now loses twice — the pledge, and the economy walking away">
                 <VizYearFive />

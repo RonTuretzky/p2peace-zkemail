@@ -16,6 +16,7 @@ const LIVE_TOOLS = [
 ] as const
 
 const EXPLAINERS = [
+  { href: "/exit", title: "The shekel exit (live)", body: "Value withdrawn from national-currency demand — the measurable currency mechanism." },
   { href: "/verification", title: "Verification, explained", body: "DKIM, nullifiers, key registry, privacy properties." },
   { href: "/governance", title: "Governance, explained", body: "Quadratic voting, dual majority, timelock, guardian, council." },
   { href: "/token-economics", title: "How the money works", body: "Full backing, the 90/10 split, Treasury flows — and the long game over decades." },
