@@ -53,6 +53,8 @@ contract ExitAssurance is Ownable {
     bytes32 public exitPattern;
     /// domainHash (keccak of the ramp domain) allowlisted on the ZK path.
     mapping(bytes32 domainHash => bool) public rampDomainAllowed;
+    /// The shielded exit pool — the only address allowed to credit anonymous exits.
+    address public pool;
 
     // ---- exit positions, keyed by citizenship nullifier (one person = one position)
     mapping(bytes32 nullifier => uint256) public exited; //     total sDAI locked
@@ -102,6 +104,9 @@ contract ExitAssurance is Ownable {
     );
     event ExitPatternSet(bytes32 patternHash);
     event RampDomainSet(bytes32 indexed domainHash, bool allowed);
+    event PoolSet(address pool);
+    // Deliberately carries ONLY the anonymous pool nullifier — no wallet, ever.
+    event ExitedFromPool(bytes32 indexed poolNullifier, uint256 amount);
 
     error NotMember();
     error ZeroAmount();
@@ -113,6 +118,7 @@ contract ExitAssurance is Ownable {
     error ReceiptAlreadyUsed();
     error PatternNotAllowed();
     error InvalidProof();
+    error NotPool();
 
     constructor(address owner_, IERC20 usd_, IIdentityRegistry identity_, IZKEmailVerifier zk_)
         Ownable(owner_)
@@ -147,6 +153,12 @@ contract ExitAssurance is Ownable {
         emit RampDomainSet(domainHash, allowed);
     }
 
+    /// @notice Set the shielded exit pool (the only caller of commitFromPool).
+    function setPool(address pool_) external onlyOwner {
+        pool = pool_;
+        emit PoolSet(pool_);
+    }
+
     // --------------------------------------------------------- commit / redeem
 
     /// @notice Lock `amount` sDAI as an exit position. Requires active membership; the
@@ -172,6 +184,22 @@ contract ExitAssurance is Ownable {
         totalExited -= amount;
         usd.safeTransfer(msg.sender, amount);
         emit Redeemed(nf, msg.sender, amount);
+    }
+
+    /// @notice Credit an exit position keyed by an ANONYMOUS pool nullifier — the
+    ///         shielded-pool sink. Unlike commit(), it does NOT call _memberNullifier,
+    ///         so the crediting party never has to be a registered (KYC-adjacent)
+    ///         member: this is the whole point — the anonymous withdrawal from the
+    ///         shielded pool credits the Exit Index without any wallet or identity on
+    ///         a p2p2p-branded contract. The pool transfers the funds in first, so the
+    ///         totalExited == balanceOf invariant holds. One-way for v1 (redeeming a
+    ///         pool position back out anonymously needs a withdraw-side ZK proof — v2).
+    function commitFromPool(bytes32 poolNullifier, uint256 amount) external {
+        if (msg.sender != pool) revert NotPool();
+        if (amount == 0) revert ZeroAmount();
+        exited[poolNullifier] += amount;
+        totalExited += amount;
+        emit ExitedFromPool(poolNullifier, amount);
     }
 
     // ------------------------------------------------------- assurance campaigns

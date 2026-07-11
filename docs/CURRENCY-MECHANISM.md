@@ -255,6 +255,66 @@ only a ~250 k-gas proof is verified on-chain. Today it runs on the mock verifier
 like identity/events); a compiled circuit drops into the same `exitPattern` slot with no
 contract change.
 
+### 5.4b Sovereignty — the shielded exit (Sepolia, no bridge)
+
+Even with the private ZK receipt (§5.4a), a linkage survives that ZK-over-email cannot
+touch: Bit2C settles the withdrawal to an on-chain address `W_kyc` that is **KYC-bound to
+a regulated Israeli exchange and plausibly gov-visible**. Any transaction from `W_kyc`
+(or a wallet it funds) that touches a p2p2p contract puts the citizen on the
+peace-protocol graph — dangerous for them. `attestProvenanceZK` hides the *email*, not the
+*wallet that transacts*. Participating in a peace protocol with the other side deserves
+full sovereignty, so this must be severed.
+
+Targeting **Sepolia (stand-in for Ethereum mainnet, where Bit2C actually settles)** drops
+the Gnosis bridge assumption — the withdrawal address and the acting address share one
+chain — which makes a clean solution possible: a **`ProvenanceShieldedPool`** whose
+anonymity set *is* the set of DKIM-verified real Bit2C exits (Vitalik's Privacy-Pools
+association-set idea, inverted so the gate proves *real provenance* instead of blocking
+illicit funds).
+
+| Step | Actor | Public | Private |
+|---|---|---|---|
+| Provenance voucher | anyone | that *some* verified Bit2C exit of bucket D happened | which email / address / amount |
+| Deposit (fixed denomination) | `W_kyc` (or a fresh wallet) | a deposit into a *generic verified-exit pool*, bucket, time | secret + spend nullifier → **which** future withdrawal |
+| Anonymous withdrawal | relayer, for a fresh address | a withdrawal of bucket D; a pool nullifier; relayer fee | **which deposit it drains** — the link is severed |
+| Exit-Index credit | pool → `ExitAssurance.commitFromPool` | the aggregate stock grew | whose |
+
+Three things this fixed or delivered, all real today:
+- **A confirmed re-linkage bug:** `commit()`/`pledge()` require `isActiveMember(msg.sender)`,
+  so any wallet touching the sink is KYC-adjacent. New `commitFromPool(nullifier, amount)`
+  credits the Exit Index keyed by an **anonymous pool nullifier**, no membership — the
+  anonymous exit never puts a wallet or identity on a p2p2p-branded contract.
+- **Real structure:** incremental Merkle tree + roots history, nullifier double-spend
+  prevention, single-use provenance vouchers, fixed denomination, and a relayer fee bound
+  via `extDataHash` so **the relayer is untrusted** (can't re-target or inflate the fee).
+- **The binding flip:** the voucher proof binds to `extraData=0` (its own exit-nullifier),
+  **not** `msg.sender` — so neither the minting nor the depositing wallet is exposed by the
+  proof, and the deposit can come from a wallet other than `W_kyc`.
+
+**Deployed + proven end-to-end on Sepolia** (`DeployShieldedExit.s.sol`): `ShieldedPool`
+`0x957A95eC6F47fbDB469Bd724A9af2dA32575877F`, `ExitAssurance`
+`0x395D8D4f3d020f36653443Dd483AabFF23b9B2DA`, reserve MockUSD
+`0x39E8Bcc40630dd64AdF08780aCA13C0e66f7E604`. A live run (mint voucher → deposit from
+`W_kyc` → relayer withdrawal) credited the Exit Index **keyed by the pool nullifier**, with
+`exited[W_kyc] == 0` — nothing tied to the KYC wallet. The Foundry suite includes the
+key assertion: **no emitted event links `W_kyc` to the exit credit.**
+
+> **THE HONEST LINE — read this.** The pool *structure* is real. But real *anonymity*
+> requires the **withdraw proof to be a compiled Merkle-membership circuit** — and that is
+> **not** a harmless demo like the provenance mock. With the `MockGroth16Verifier` in the
+> `withdrawVerifier` slot, the withdrawal does **not** actually hide which deposit it
+> drains: the linkage is still visible. That one circuit is the entire line between
+> *"demonstrates the model"* and *"provides anonymity."* It drops into the existing
+> `IGroth16Verifier` slot with no other change. Until then, and additionally, real safety
+> needs: a **minimum anonymity-set size** (contract-enforced `minDeposits` + a real,
+> continuous population — a cold-start pool of five is not anonymous at any *k*), **fixed
+> denominations** (variable amounts re-link by value even with a perfect circuit), a
+> **randomized deposit→withdraw delay**, and a **permissionless relayer market / 4337
+> paymaster over Tor/Waku** (a single relayer is a metadata sink and censorship SPOF).
+> What the state can *always* still see, unhideably: that `W_kyc` made a public deposit
+> into a *generic* exit pool at time T — which is why the pool is deliberately **not**
+> p2p2p-branded and all p2p2p naming lives on the hidden withdrawal side.
+
 ### 5.5 The assurance campaigns
 
 Individual capital flight is macro-irrelevant; coordination is the missing piece.
@@ -297,6 +357,7 @@ we label everything else exactly as what it is.
 | Shrink shekel demand / deny seigniorage | **Yes** | Every exit moves economic life out of ₪ — the Exit Index measures it |
 | Prove a conversion happened (authenticity) | **Yes** | Real Bit2C DKIM receipt verifies on-chain — body-bound + full-address-bound (`ExitReceiptVerifier`) |
 | Prove it *privately* (no address revealed) | **Yes (ZK)** | `attestProvenanceZK` reveals only a nullifier; mock now, circuit-ready |
+| Unlink the KYC wallet from p2p2p (sovereignty) | **Structure yes; anonymity circuit-gated** | `ProvenanceShieldedPool` on Sepolia: real tree/nullifier/relayer/anonymous sink; real anonymity needs the compiled withdraw circuit |
 | Prove a *net* exit from the shekel | **No** | Round-trip / borrowed-ILS / provenance-of-input are unclosable from any artifact |
 | Coordinate exits to a collective threshold | **Yes** | `ExitAssurance` assurance campaigns, funds never trapped |
 | Event-triggered BILS→sDAI conversion | **Later** | Designed against the escrow; waits for BILS-on-EVM liquidity |
