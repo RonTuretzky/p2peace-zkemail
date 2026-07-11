@@ -225,21 +225,21 @@
       <div class="card good">
         <h3><span class="tag real">real today</span></h3>
         <ul style="margin-top:6px">
-          <li class="yes">The pool structure: Poseidon Merkle tree, nullifier double-spend, single-use vouchers, fixed denomination, untrusted relayer</li>
-          <li class="yes"><strong>The withdraw ZK circuit is REAL</strong> — a compiled Groth16 Merkle-membership proof, verified on-chain, live on Sepolia. The mock is gone.</li>
-          <li class="yes">The anonymous, member-less sink — no wallet ever on a p2p2p contract</li>
+          <li class="yes"><strong>The withdraw circuit is REAL</strong> — a compiled Groth16 Merkle-membership proof, verified on-chain (Sepolia)</li>
+          <li class="yes"><strong>The provenance gate is REAL too</strong> — a genuine zkEmail proof (RSA-2048 + SHA-256 over the actual Bit2C DKIM header) mints the voucher; the email stays private. Both mocks are gone.</li>
+          <li class="yes">The Poseidon tree, nullifiers, untrusted relayer, and the anonymous member-less sink</li>
         </ul>
       </div>
       <div class="card bad">
         <h3><span class="tag demo">still demo-tier</span></h3>
         <ul style="margin-top:6px">
           <li class="warn">The <strong>trusted setup is single-party</strong> — production needs a multi-party ceremony (no one holds the toxic waste)</li>
-          <li class="warn">The <strong>provenance gate is still a mock</strong> — proving "real Bit2C exit" in ZK needs the heavy zkEmail circuit (RSA + SHA-256 + regex)</li>
+          <li class="warn"><strong>Body-content binding</strong> — the proof shows a genuine Bit2C email, not yet that it's specifically a <em>withdrawal of amount X</em> (needs in-circuit body regex over the 37 KB HTML)</li>
           <li class="warn">Real safety also needs fixed denoms, a min anonymity-set size, a delay, and a permissionless relayer</li>
         </ul>
       </div>
     </div>
-    <div class="callout good" style="margin-top:16px"><b>Bottom line:</b> the load-bearing anonymity circuit is <b>done</b> — real proofs verify on-chain. What's left is a proper ceremony, the zkEmail provenance circuit, and a real relayer — not the core cryptography.</div>
+    <div class="callout good" style="margin-top:16px"><b>Bottom line:</b> both ZK circuits are <b>compiled and verifying real proofs on-chain</b> — end to end on Sepolia. What's left is a proper ceremony, one circuit refinement, and a real relayer — not the core cryptography.</div>
   </section>
 
   <!-- 11 -->
@@ -248,11 +248,11 @@
     <h2>Deployed &amp; proven on-chain</h2>
     <p class="muted">Gnosis (the exit mechanism) + Sepolia (the shielded pool, no-bridge). A live run credited the Exit Index keyed by the pool nullifier, with <code>exited[W_kyc] == 0</code>.</p>
     <dl class="kv" style="margin-top:14px">
-      <dt>Sepolia · ShieldedPool</dt><dd class="addr">0x020Ed3C582F1C6ee50Dd64faAcE0C7b68EA2843B</dd>
-      <dt>Sepolia · WithdrawGroth16Verifier</dt><dd class="addr">0x81baC255214E81265Bc91AF8b41de7F4136Ec5e3</dd>
-      <dt>Sepolia · PoseidonHasher</dt><dd class="addr">0x391788440C62b1245645388196873984977A684F</dd>
+      <dt>Sepolia · ShieldedPool</dt><dd class="addr">0x82e9DEc39898dDe0e0Cb9170799E34e678d85Ac3</dd>
+      <dt>Sepolia · ProvenanceGroth16Verifier</dt><dd class="addr">0x9FcB2638a63D6AefeF64482b23Fd6535100096A2</dd>
+      <dt>Sepolia · WithdrawGroth16Verifier</dt><dd class="addr">0x15d305a6CE3256f16132962F1a1Bb6B582Dd147E</dd>
       <dt>Gnosis · ExitAssurance</dt><dd class="addr">0xCd77F7658f77faf52020dF0a6a8660c01cC452e9</dd>
-      <dt>Tests</dt><dd><strong>209 Foundry tests pass</strong> — incl. a REAL Groth16 proof verified on-chain + "no event links W_kyc to the exit"</dd>
+      <dt>Tests</dt><dd><strong>213 Foundry tests pass</strong> — incl. two REAL Groth16 proofs (zkEmail + membership) verified on-chain</dd>
       <dt>Live demo</dt><dd class="addr">ronturetzky.github.io/p2peace-zkemail/exit</dd>
     </dl>
   </section>
@@ -262,12 +262,12 @@
     <div class="kicker">what's next</div>
     <h2>What's left (the honest remainder)</h2>
     <ul>
-      <li class="yes"><strong>Withdraw circuit — DONE.</strong> Compiled, deployed, real proofs verify on-chain (Sepolia).</li>
-      <li><strong>The zkEmail provenance circuit</strong> — RSA + SHA-256 + regex over the email; the one heavy circuit left, so "these are all real Bit2C exits" is proven, not asserted</li>
-      <li><strong>A multi-party ceremony</strong> to replace the single-party trusted setup</li>
+      <li class="yes"><strong>Both ZK circuits — DONE.</strong> Withdraw membership + zkEmail provenance, compiled, deployed, verifying real proofs on-chain (Sepolia).</li>
+      <li><strong>A multi-party ceremony</strong> to replace the single-party trusted setup on both circuits</li>
+      <li><strong>Body-content binding</strong> — extend the provenance circuit to prove the email is specifically a <em>withdrawal of amount X</em> (in-circuit body regex + SHA-slicing for the 37 KB HTML)</li>
       <li><strong>A real relayer</strong> (permissionless / 4337 over Tor) + client-side proof gen for the shielded UI, and continuous volume to grow the anonymity set</li>
     </ul>
-    <div class="callout good" style="margin-top:20px"><b>The throughline:</b> at every step we built the real thing where we could, and labeled the gap honestly where we couldn't. No theater — a measurable mechanism, an authentic email proof, a real privacy model, and a sovereignty layer whose load-bearing ZK circuit now verifies real proofs on-chain.</div>
+    <div class="callout good" style="margin-top:20px"><b>The throughline:</b> at every step we built the real thing where we could, and labeled the gap honestly where we couldn't. No theater — a measurable mechanism, an authentic email proof, and a sovereignty layer whose <em>both</em> ZK circuits now verify real proofs on-chain, end to end.</div>
     <p class="muted" style="margin-top:20px">🕊 peer to peer to peace</p>
   </section>
 
