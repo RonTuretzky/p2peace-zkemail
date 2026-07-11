@@ -452,6 +452,9 @@ function ProvenancePanel() {
   }
 
   const bodyBytes = parsed ? (parsed.body.length - 2) / 2 : 0
+  // A full HTML receipt (Bit2C's is ~37 KB) exceeds the block gas limit on the public
+  // path; steer those to the private path rather than let a tx fail.
+  const tooLargeForPublic = bodyBytes > 12000
 
   return (
     <Card className="mt-4 border-primary/30">
@@ -521,11 +524,18 @@ function ProvenancePanel() {
                 exceed the block gas limit. Use the private path unless you specifically want a public,
                 fully-verified attestation of a compact receipt.
               </p>
+              {tooLargeForPublic && (
+                <p className="mt-2 flex items-center gap-2 text-amber-600">
+                  <Warning className="h-4 w-4" weight="bold" /> This receipt is too large (
+                  {bodyBytes.toLocaleString()} bytes) for the public path — it would exceed the block
+                  gas limit. Use the private path above.
+                </p>
+              )}
               <TxButton
                 className="mt-2 w-full"
                 variant="outline"
                 pending={attest.running}
-                disabled={!parsed}
+                disabled={!parsed || tooLargeForPublic}
                 onClick={provePublic}
               >
                 Verify publicly on-chain
