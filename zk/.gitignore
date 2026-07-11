@@ -1,0 +1,7 @@
+node_modules/
+build/*.ptau
+build/withdraw_0.zkey
+build/pot14_0.ptau
+build/pot14_1.ptau
+build/withdraw.r1cs
+build/withdraw.sym

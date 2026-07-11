@@ -8,9 +8,12 @@ import {ZKEmailVerifier} from "../src/ZKEmailVerifier.sol";
 import {IdentityRegistry} from "../src/IdentityRegistry.sol";
 import {ExitAssurance} from "../src/ExitAssurance.sol";
 import {ProvenanceShieldedPool} from "../src/ProvenanceShieldedPool.sol";
+import {IHasher} from "../src/lib/MerkleTreeWithHistory.sol";
 import {MockUSD} from "../src/mocks/MockUSD.sol";
 import {MockGroth16Verifier} from "../src/mocks/MockGroth16Verifier.sol";
 import {IGroth16Verifier} from "../src/interfaces/IGroth16Verifier.sol";
+import {WithdrawGroth16Verifier} from "../src/verifiers/WithdrawGroth16Verifier.sol";
+import {WithdrawVerifierAdapter} from "../src/verifiers/WithdrawVerifierAdapter.sol";
 
 /// @notice Deploys the shielded-exit slice to Sepolia (stand-in for Ethereum mainnet,
 ///         where Bit2C settles — so NO bridge). Reserve is MockUSD (no sDAI on Sepolia).
@@ -28,23 +31,28 @@ contract DeployShieldedExit is Script {
     DKIMRegistry internal dkim;
     ZKEmailVerifier internal zk;
     MockGroth16Verifier internal provMock;
-    MockGroth16Verifier internal withdrawMock;
+    WithdrawGroth16Verifier internal g16;
+    WithdrawVerifierAdapter internal adapter;
     IdentityRegistry internal identity;
     ExitAssurance internal ea;
     ProvenanceShieldedPool internal pool;
 
+    /// The Poseidon(2) hasher is deployed separately from its circomlib EVM bytecode
+    /// (zk/build/poseidon2_bytecode.txt) and passed in via env — Solidity can't embed it.
     function run() external {
+        address hasher = vm.envAddress("HASHER");
         vm.startBroadcast();
         address me = msg.sender;
         usd = new MockUSD();
         dkim = new DKIMRegistry(me, me);
         zk = new ZKEmailVerifier(me, dkim);
         provMock = new MockGroth16Verifier();
-        withdrawMock = new MockGroth16Verifier();
+        g16 = new WithdrawGroth16Verifier();
+        adapter = new WithdrawVerifierAdapter(g16);
         identity = new IdentityRegistry(me, zk);
         ea = new ExitAssurance(me, IERC20(address(usd)), identity, zk);
         pool = new ProvenanceShieldedPool(
-            IERC20(address(usd)), ea, zk, IGroth16Verifier(address(withdrawMock)),
+            IERC20(address(usd)), ea, zk, IGroth16Verifier(address(adapter)), IHasher(hasher),
             DENOM, EXIT_PATTERN, 1, 20, me
         );
         zk.setVerifier(EXIT_PATTERN, IGroth16Verifier(address(provMock)));
@@ -52,16 +60,18 @@ contract DeployShieldedExit is Script {
         ea.setPool(address(pool));
         pool.setRampDomain(BIT2C, true);
         vm.stopBroadcast();
-        _log();
+        _log(hasher);
     }
 
-    function _log() internal view {
+    function _log(address hasher) internal view {
         console2.log("MockUSD:", address(usd));
         console2.log("ExitAssurance:", address(ea));
         console2.log("ShieldedPool:", address(pool));
         console2.log("ZKEmailVerifier:", address(zk));
         console2.log("provenanceMock:", address(provMock));
-        console2.log("withdrawMock:", address(withdrawMock));
+        console2.log("WithdrawGroth16Verifier:", address(g16));
+        console2.log("WithdrawVerifierAdapter:", address(adapter));
+        console2.log("PoseidonHasher:", hasher);
         console2.log("DKIMRegistry:", address(dkim));
         console2.log("IdentityRegistry:", address(identity));
     }
