@@ -1,1 +1,1 @@
-{"name":"p2peace-zk","version":"1.0.0","private":true,"type":"module","dependencies":{"circomlib":"^2.0.5","circomlibjs":"^0.1.7","js-sha3":"^0.9.3","snarkjs":"^0.7.5"}}
+{"name":"p2peace-zk","version":"1.0.0","private":true,"type":"module","dependencies":{"@zk-email/circuits":"^6.3.4","@zk-email/helpers":"^6.4.2","circomlib":"^2.0.5","circomlibjs":"^0.1.7","js-sha3":"^0.9.3","snarkjs":"^0.7.5"}}

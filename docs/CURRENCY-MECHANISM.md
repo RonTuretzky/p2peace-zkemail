@@ -291,53 +291,58 @@ Three things this fixed or delivered, all real today:
   **not** `msg.sender` — so neither the minting nor the depositing wallet is exposed by the
   proof, and the deposit can come from a wallet other than `W_kyc`.
 
-**Deployed + proven end-to-end on Sepolia** (`DeployShieldedExit.s.sol`), with the **real
-withdraw verifier**: `ShieldedPool` `0x020Ed3C582F1C6ee50Dd64faAcE0C7b68EA2843B`,
-`ExitAssurance` `0x324973865bcD4223898A4bD30B741D8c3047F697`, `WithdrawGroth16Verifier`
-`0x81baC255214E81265Bc91AF8b41de7F4136Ec5e3`, `PoseidonHasher`
+**Deployed + proven end-to-end on Sepolia** (`DeployShieldedExit.s.sol`), with **both
+verifiers real**: `ShieldedPool` `0x82e9DEc39898dDe0e0Cb9170799E34e678d85Ac3`,
+`ExitAssurance` `0x476E80913fDAc4A4D478F25763531754bDC7Aa9E`, `ProvenanceGroth16Verifier`
+`0x9FcB2638a63D6AefeF64482b23Fd6535100096A2`, `WithdrawGroth16Verifier`
+`0x15d305a6CE3256f16132962F1a1Bb6B582Dd147E`, `PoseidonHasher`
 `0x391788440C62b1245645388196873984977A684F`, reserve MockUSD
-`0xe03d3FA16f0b8ef364034B30734583ac1EaF0a40`. A live run (mint voucher → deposit from
-`W_kyc` → relayer withdrawal with a **real Groth16 proof**) credited the Exit Index **keyed
-by the pool nullifier**, with `exited[W_kyc] == 0` — nothing tied to the KYC wallet. The
-Foundry suite includes the key assertion: **no emitted event links `W_kyc` to the exit
-credit**, plus real-proof tests that a tampered proof is rejected.
+`0xff3c337263F627b7C5f7DaC4080d230594e90b44`. A live run — mint voucher (**real zkEmail
+proof**) → deposit → withdraw (**real membership proof**) — credited the Exit Index **keyed
+by the pool nullifier**, with `exited[W_kyc] == 0`. The Foundry suite asserts **no emitted
+event links `W_kyc` to the exit credit**, and both real proofs reject tampering.
 
-### 5.4c The withdraw circuit is now REAL
+### 5.4c Both circuits are now REAL — no mock in the shielded flow
 
-The design flagged the **withdraw membership proof** as the load-bearing line between
-*"demonstrates the model"* and *"provides anonymity."* That circuit is now compiled and
-verified on-chain — the mock is gone from the withdrawal path.
+Both zkEmail/Groth16 mocks in the shielded exit are replaced by compiled circuits,
+verified on-chain, proven live on Sepolia.
 
-- **Circuit** (`zk/withdraw.circom`): proves knowledge of `(nullifier, secret)` such that
-  `commitment = Poseidon(nullifier, secret)` is a leaf in the depth-20 Merkle tree with
-  the public `root`, reveals `nullifierHash = Poseidon(nullifier)`, and binds
-  `extDataHash` (relayer + fee) — ~11k constraints, Groth16 over BN254.
-- **On-chain**: a snarkjs-generated verifier (`WithdrawGroth16Verifier`) behind a thin
-  `WithdrawVerifierAdapter` that fits the pool's `IGroth16Verifier` slot. The Merkle tree
-  now hashes with **Poseidon** (deployed from circomlib's EVM bytecode) so the on-chain
-  root equals the circuit's root byte-for-byte.
-- **Proven end-to-end, live on Sepolia**: a genuine proof (`zk/gen-proof.mjs`) was
-  deposited and withdrawn on-chain — `getLastRoot() == circuit root`, the real proof
-  verified, and `exitIndex` was credited by the anonymous nullifier. A tampered proof or
-  a changed relayer/fee is rejected. Foundry: `ShieldedExitReal.t.sol` (4 tests).
+**Withdraw membership** (`zk/withdraw.circom`, ~11k constraints): proves
+`commitment = Poseidon(nullifier, secret)` is a leaf in the depth-20 Merkle tree with the
+public `root`, reveals `nullifierHash`, binds `extDataHash` (relayer + fee). Verified by
+`WithdrawGroth16Verifier` behind `WithdrawVerifierAdapter`. The Merkle tree now hashes with
+**Poseidon** (circomlib EVM bytecode) so the on-chain root equals the circuit root
+byte-for-byte.
 
-> **What's still demo-tier, stated plainly.** Two things remain, and they're independent
-> of the withdraw circuit:
-> 1. **The trusted setup is single-party** (a local ceremony in `zk/`). The circuit and
->    verifier are real; a *production* deployment needs a multi-party ceremony so no one
->    holds the toxic waste.
-> 2. **The provenance gate is still a mock** — proving *"this deposit is a real Bit2C
->    exit"* in zero knowledge needs the zkEmail circuit (RSA-2048 + SHA-256 + regex over
->    the email), a much larger lift than the membership circuit. Until it compiles, the
->    association-set-quality claim ("these are all real exits") is *asserted*, not proven.
+**Provenance** (`zk/provenance.circom`, ~537k constraints): a real **zkEmail** proof —
+RSA-2048 + SHA-256 over the *actual Bit2C DKIM-signed header* — proving a genuine Bit2C
+email **without revealing it**, outputting the signing key's Poseidon hash and a per-email
+nullifier. Verified by `ProvenanceGroth16Verifier` behind `ProvenanceVerifierAdapter`,
+wired into `ZKEmailVerifier`'s blueprint slot. A real proof generated from the genuine
+Bit2C email (`zk/gen-prov-proof.mjs`) mints a deposit voucher on-chain; a tampered proof or
+a forged key-hash is rejected. Foundry: `ProvenanceReal.t.sol` (4 tests) +
+`ShieldedExitReal.t.sol` (4 tests).
+
+**Proven end-to-end, live on Sepolia**, both proofs real: mint voucher (real zkEmail proof)
+→ deposit → `getLastRoot() == circuit root` → withdraw (real membership proof) → `exitIndex`
+credited by the anonymous nullifier, `exited[W_kyc] == 0`.
+
+> **What's still demo-tier, stated plainly.** The circuits and verifiers are real; two
+> things remain:
+> 1. **The trusted setup is single-party** (a local ceremony in `zk/`; the provenance
+>    ceremony used the Hermez power-20 ptau + one local contribution). A *production*
+>    deployment needs a multi-party ceremony so no one holds the toxic waste.
+> 2. **Body-content binding.** The provenance proof proves a genuine *Bit2C DKIM email*
+>    (domain-bound via the registered key); it does not yet prove the email is
+>    specifically a *withdrawal of amount X* — that needs in-circuit body regex, which for
+>    a 37 KB HTML email needs SHA-slicing (`precomputedSHA`), a further extension.
 >
-> And regardless of circuits, real-world safety still needs: a **minimum anonymity-set
-> size** (contract-enforced `minDeposits` + a real, continuous population — a cold-start
-> pool of five is not anonymous at any *k*), **fixed denominations**, a **randomized
-> deposit→withdraw delay**, and a **permissionless relayer market / 4337 paymaster over
-> Tor/Waku**. And unhideably, the state can always see that `W_kyc` made a public deposit
-> into a *generic* exit pool at time T — which is why the pool is deliberately **not**
-> p2p2p-branded and all p2p2p naming lives on the hidden withdrawal side.
+> And regardless of circuits, real-world safety still needs a **minimum anonymity-set
+> size** (`minDeposits` + a real, continuous population), **fixed denominations**, a
+> **randomized deposit→withdraw delay**, and a **permissionless relayer / 4337 paymaster
+> over Tor/Waku**. And unhideably, the state can always see that `W_kyc` made a public
+> deposit into a *generic* exit pool at time T — which is why the pool is deliberately
+> **not** p2p2p-branded and all p2p2p naming lives on the hidden withdrawal side.
 
 ### 5.5 The assurance campaigns
 
@@ -380,8 +385,8 @@ we label everything else exactly as what it is.
 | "Sell shekels to devalue the currency" | **No** | Backed stablecoins are un-sellable-down; real FX market too deep |
 | Shrink shekel demand / deny seigniorage | **Yes** | Every exit moves economic life out of ₪ — the Exit Index measures it |
 | Prove a conversion happened (authenticity) | **Yes** | Real Bit2C DKIM receipt verifies on-chain — body-bound + full-address-bound (`ExitReceiptVerifier`) |
-| Prove it *privately* (no address revealed) | **Yes (ZK)** | `attestProvenanceZK` reveals only a nullifier; mock now, circuit-ready |
-| Unlink the KYC wallet from p2p2p (sovereignty) | **Yes — real withdraw ZK on Sepolia** | `ProvenanceShieldedPool` + compiled `withdraw.circom` Groth16 proof verified on-chain; single-party ceremony + provenance circuit remain the demo-tier bits |
+| Prove it *privately* (no address revealed) | **Yes (real zkEmail)** | `provenance.circom` — RSA+SHA-256 over the real Bit2C DKIM header, verified on-chain; email private, nullifier only |
+| Unlink the KYC wallet from p2p2p (sovereignty) | **Yes — both circuits real on Sepolia** | `ProvenanceShieldedPool` + compiled `provenance.circom` (voucher) + `withdraw.circom` (membership), both Groth16 proofs verified on-chain; only a multi-party ceremony + body-content binding remain |
 | Prove a *net* exit from the shekel | **No** | Round-trip / borrowed-ILS / provenance-of-input are unclosable from any artifact |
 | Coordinate exits to a collective threshold | **Yes** | `ExitAssurance` assurance campaigns, funds never trapped |
 | Event-triggered BILS→sDAI conversion | **Later** | Designed against the escrow; waits for BILS-on-EVM liquidity |

@@ -1,7 +1,12 @@
 node_modules/
+# huge / regenerable / PII — never commit
 build/*.ptau
+build/prov-input-base.json
+build/provenance_0.zkey
+build/provenance_final.zkey
+build/provenance.r1cs
+build/provenance.sym
+build/provenance_js/
 build/withdraw_0.zkey
-build/pot14_0.ptau
-build/pot14_1.ptau
 build/withdraw.r1cs
 build/withdraw.sym
