@@ -39,6 +39,8 @@ export interface ContractAddresses {
   redistributionEngine: `0x${string}`
   sanctionsEscrow: `0x${string}`
   realEmailVerifier: `0x${string}`
+  exitAssurance: `0x${string}`
+  exitReceiptVerifier: `0x${string}`
 }
 
 /**
@@ -65,6 +67,9 @@ export const ADDRESSES: ContractAddresses = {
   redistributionEngine: "0x241a51c7f3394538c883dce28af433c6908ce032",
   sanctionsEscrow: "0x4f931f24462d4b53a0475c98a00cad74d32d0a70",
   realEmailVerifier: "0x0e707f9e969c0b61d48e9efb62fbecf54e628a8b",
+  // The Exit (added additively against the live IdentityRegistry + sDAI).
+  exitAssurance: "0x6b8aa1f18e0a64077c5c4c8f9244616fe3ae9caf",
+  exitReceiptVerifier: "0x25dc50f63e336292318a23e41d1908ae53174a7e",
 }
 
 /** Community enum (mirrors src/Types.sol Community). */

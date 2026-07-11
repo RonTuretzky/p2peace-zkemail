@@ -20,6 +20,13 @@ export interface ParsedEmail {
   from: string;
 }
 
+/** A conversion receipt also carries the raw body (the ExitReceiptVerifier
+ *  re-hashes it against the DKIM bh= tag, so the amount + destination address in
+ *  the body are covered by the signature). */
+export interface ParsedReceipt extends ParsedEmail {
+  body: `0x${string}`;
+}
+
 interface RawHeader {
   /** header field name, exactly as it appeared (case preserved) */
   name: string;
@@ -253,4 +260,35 @@ export function parseEml(raw: string | Uint8Array): ParsedEmail {
     selector: chosen.selector,
     from: extractFrom(headers),
   };
+}
+
+/** Latin1 substring → raw bytes (each char is one byte, 0–255). */
+function latin1Bytes(s: string): Uint8Array {
+  const out = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i) & 0xff;
+  return out;
+}
+
+/**
+ * Parse a conversion-receipt .eml: everything parseEml returns, plus the raw
+ * message body (the bytes after the first blank line). The on-chain verifier
+ * applies DKIM "simple" body canonicalization and checks SHA-256/base64 against
+ * the signed bh=, so the body must be passed through unmodified.
+ */
+export function parseReceiptEml(raw: string | Uint8Array): ParsedReceipt {
+  const base = parseEml(raw);
+  const text = toText(raw);
+  const crlf = text.indexOf("\r\n\r\n");
+  const lf = text.indexOf("\n\n");
+  let idx = -1;
+  let sep = 0;
+  if (crlf !== -1 && (lf === -1 || crlf <= lf)) {
+    idx = crlf;
+    sep = 4;
+  } else if (lf !== -1) {
+    idx = lf;
+    sep = 2;
+  }
+  const bodyStr = idx === -1 ? "" : text.slice(idx + sep);
+  return { ...base, body: bytesToHex(latin1Bytes(bodyStr)) };
 }

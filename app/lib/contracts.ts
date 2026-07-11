@@ -12,6 +12,8 @@ import attestationAbi from "./abis/EventAttestation.json"
 import engineAbi from "./abis/RedistributionEngine.json"
 import escrowAbi from "./abis/SanctionsEscrow.json"
 import realEmailAbi from "./abis/RealEmailVerifier.json"
+import exitAssuranceAbi from "./abis/ExitAssurance.json"
+import exitReceiptAbi from "./abis/ExitReceiptVerifier.json"
 
 export const abis = {
   reserve: erc20Abi,
@@ -25,6 +27,8 @@ export const abis = {
   engine: engineAbi,
   escrow: escrowAbi,
   realEmail: realEmailAbi,
+  exitAssurance: exitAssuranceAbi,
+  exitReceipt: exitReceiptAbi,
 } as const
 
 /** wagmi `{ address, abi }` config for a role, read from the (hydratable) ADDRESSES. */
@@ -36,6 +40,8 @@ export const contract = {
   attestation: () => ({ address: ADDRESSES.eventAttestation, abi: abis.attestation }),
   engine: () => ({ address: ADDRESSES.redistributionEngine, abi: abis.engine }),
   escrow: () => ({ address: ADDRESSES.sanctionsEscrow, abi: abis.escrow }),
+  exitAssurance: () => ({ address: ADDRESSES.exitAssurance, abi: abis.exitAssurance }),
+  exitReceipt: () => ({ address: ADDRESSES.exitReceiptVerifier, abi: abis.exitReceipt }),
   treasury: () => ({ address: ADDRESSES.treasury, abi: abis.treasury }),
   tokenA: () => ({ address: ADDRESSES.peaceTokenA, abi: abis.peaceToken }),
   tokenB: () => ({ address: ADDRESSES.peaceTokenB, abi: abis.peaceToken }),

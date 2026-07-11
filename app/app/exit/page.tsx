@@ -1,7 +1,7 @@
-import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ConnectGate } from "@/components/flow"
 import { ExitIndex } from "@/components/exit-index"
+import { ExitConsole } from "@/components/exit-console"
 
 export default function ExitPage() {
   return (
@@ -18,6 +18,7 @@ export default function ExitPage() {
       </div>
       <ConnectGate>
         <ExitIndex />
+        <ExitConsole />
       </ConnectGate>
       <div className="mx-auto mt-6 max-w-3xl text-center">
         <Button variant="outline" asChild>

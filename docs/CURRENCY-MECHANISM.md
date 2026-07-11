@@ -149,15 +149,123 @@ be the same theater §2a warns about.
 
 ---
 
-## 5. Summary
+## 5. Proof of exit — how a member proves they actually left the shekel
+
+"Measurable" only means something if the exit is *provable*. Two research passes
+(multi-lens design + adversarial red-team, and a focused red-team of the
+address-binding idea) settled what is and isn't provable. The short version:
+
+**You can prove a conversion happened; you cannot prove a net exit — and the honest
+system measures a stock, not a flow.**
+
+### 5.1 A conversion is a DKIM-signed fact
+
+An ILS→stablecoin conversion is an email your exchange signs. Verified live in DNS:
+Bits of Gold (`p=reject`, SendGrid RSA-2048), Bit2C (`p=quarantine adkim=s`), Kraken
+(`p=reject`), Coinbase (`p=reject adkim=s`) all DKIM-sign transactional mail via
+SES/SendGrid — the *exact* delegated-signer / archived-key pattern already handled for
+`noreply@btl.gov.il`. So "prove I converted ₪X" reuses the deployed on-chain RSA path
+(`RSAPKCS1.sol`) verbatim. The exchange — not the bank — is the party that actually
+witnesses shekels becoming a non-shekel asset, so its confirmation email is the most
+exit-relevant artifact that exists.
+
+### 5.2 The wall: gross, not net
+
+A signed conversion email survives three attacks that **no** proof can close, because
+they are economic, not cryptographic:
+
+- **Round-trip.** The `.eml` is valid forever; convert, save it, re-buy shekels an hour
+  later. A one-shot proof can't express "and the shekels are still out."
+- **Borrowed-ILS.** Draw an overdraft (standard on every Israeli current account),
+  convert the *borrowed* shekels — a flawless receipt, zero net exit. Israeli open
+  banking doesn't expose the liability side, so no proof sees this.
+- **Provenance of the input.** The email can't tell long-held savings from money
+  deposited that morning to mint a receipt, or from pre-held USD.
+
+Net exit is a claim about a person's *entire* balance sheet over time — an open-world,
+negative, cross-venue statement. No signed artifact has that shape.
+
+### 5.3 What we build: measure the stock, attach the email as provenance
+
+- **Load-bearing = the on-chain stock** (`ExitAssurance.exitIndex()`): sDAI held in the
+  contract right now. Trustless (Gnosis consensus only), it shrinks the instant anyone
+  redeems — so it resists round-tripping *by construction* — and it can't be replayed.
+  Keyed by the citizenship nullifier, so one person's many wallets aggregate into one
+  position instead of inflating the count (Sybil cap; the position follows wallet
+  rotation). Its honest limit: it can't show the sDAI was *ever* shekels.
+- **Provenance = an optional DKIM conversion receipt** (`ExitReceiptVerifier`), reported
+  as its own number, never mixed into the stock. It verifies the RSA signature, then the
+  **body** against the signed `bh=` (SHA-256 + base64), so the amount and destination
+  address are genuinely under the signature — not free text. One receipt counts once.
+
+### 5.4 The address-binding idea: it closes *who*, not *what*
+
+The instinct "put the destination address in the signed email and require that address
+to deposit" is sound in its correct form. Verified against ZKP2P (the production zkEmail
+on/off-ramp): binding the depositor to the address named in the signed body makes the
+receipt **not a bearer instrument** — it can only ever be claimed by that address, which
+kills proof-theft / front-running and stops an *unrelated* wallet satisfying the on-chain
+leg. `ExitReceiptVerifier` enforces exactly this (`AddressMismatch` if the claimer isn't
+the named address).
+
+But the red-team was clear about the limits: address-binding closes **who deposits**, not
+**what** — round-trip, borrowed-ILS, and pre-owned-stablecoin top-ups all survive it. And
+two empirical walls make the *literal* form undeployable against real ramps today:
+
+- **No Israeli ramp settles natively on Gnosis** (Kraken lists Gnosis as unsupported;
+  Bit2C/Coinbase/Bits of Gold are Ethereum/Base/Solana). A mandatory bridge hop severs
+  `address == depositor`.
+- **None emails a full, un-truncated address + amount in the DKIM-signed body** (Kraken
+  sends no withdrawal-completion email at all; others mask the address for anti-phishing).
+
+ZKP2P avoids all of this not with a cleverer email but with **pre-commitment**: the
+on-chain leg is the anchor and funds route to a pre-committed address. That's why our
+load-bearing measure is the on-chain stock, and the email is only ever provenance riding
+alongside — exactly the "measure the sink, don't fake the source" stance of §2b.
+
+### 5.5 The assurance campaigns
+
+Individual capital flight is macro-irrelevant; coordination is the missing piece.
+`ExitAssurance` campaigns are a Kickstarter-style threshold — *"together we move ₪N out"* —
+that makes the collective move legible when it crosses the goal. Funds are never trapped:
+a pledge is a commit that is also tallied to a public goal and can be withdrawn any time;
+`reached` is a sticky milestone, not an escrow gate. This is the one genuinely new,
+trust-minimized capability the chain is uniquely good at.
+
+### 5.6 What is deployed (Gnosis Chain)
+
+Added **additively** against the live `IdentityRegistry` + sDAI (no system redeploy):
+
+| Contract | Address |
+|---|---|
+| `ExitAssurance` | `0x6b8AA1F18E0A64077C5C4C8f9244616Fe3aE9CAf` |
+| `ExitReceiptVerifier` | `0x25dC50f63E336292318A23e41d1908AE53174a7e` |
+
+Live at [`/exit`](https://ronturetzky.github.io/p2peace-zkemail/exit): commit/redeem,
+assurance campaigns, and an optional receipt-upload provenance tab. The provenance path
+is wired and unit-tested against a synthetic self-signed vector, but reports "sender not
+recognized" until governance allowlists a ramp — because, per §5.4, no conforming ramp
+exists yet. That is honesty, not breakage.
+
+**Honest ceiling.** No scheme here proves a permanent, net exit from the shekel.
+Cryptography certifies *authenticity* (the ramp really said this, bound to your address);
+it is silent on *economic meaning* (that value irreversibly and net-newly left shekel
+form). We measure the one thing provable with zero trust — the live on-chain stock — and
+we label everything else exactly as what it is.
+
+## 6. Summary
 
 | Claim | Real? | Why |
 |---|---|---|
 | An ILS stablecoin exists | **Yes** | BILS (regulated, Solana); Jarvis jFIAT (EVM, no jILS) |
 | Our Gnosis contracts can hold/trade ILS today | **No** | BILS is Solana-only; no EVM jILS; no on-chain ILS feed |
 | "Sell shekels to devalue the currency" | **No** | Backed stablecoins are un-sellable-down; real FX market too deep |
-| Shrink shekel demand / deny seigniorage | **Yes** | Every join moves economic life out of ₪ — the Exit Index measures it |
+| Shrink shekel demand / deny seigniorage | **Yes** | Every exit moves economic life out of ₪ — the Exit Index measures it |
+| Prove a conversion happened (authenticity) | **Yes** | DKIM-signed ramp receipt, body-bound + address-bound (`ExitReceiptVerifier`) |
+| Prove a *net* exit from the shekel | **No** | Round-trip / borrowed-ILS / provenance-of-input are unclosable from any artifact |
+| Coordinate exits to a collective threshold | **Yes** | `ExitAssurance` assurance campaigns, funds never trapped |
 | Event-triggered BILS→sDAI conversion | **Later** | Designed against the escrow; waits for BILS-on-EVM liquidity |
 
-The shekel mechanism is a **demand** mechanism, not a **price** mechanism. We build and
-measure the real one, and we refuse to fake the fake one.
+The shekel mechanism is a **demand** mechanism, not a **price** mechanism, and it is a
+**stock** measure, not a **flow** proof. We build and measure the real one, and we refuse
+to fake the fake one.

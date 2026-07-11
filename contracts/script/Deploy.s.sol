@@ -16,6 +16,8 @@ import {EventAttestation} from "../src/EventAttestation.sol";
 import {RedistributionEngine} from "../src/RedistributionEngine.sol";
 import {SanctionsEscrow} from "../src/SanctionsEscrow.sol";
 import {RealEmailVerifier} from "../src/RealEmailVerifier.sol";
+import {ExitAssurance} from "../src/ExitAssurance.sol";
+import {ExitReceiptVerifier} from "../src/ExitReceiptVerifier.sol";
 import {MockUSD} from "../src/mocks/MockUSD.sol";
 import {MockGroth16Verifier} from "../src/mocks/MockGroth16Verifier.sol";
 import {IGroth16Verifier} from "../src/interfaces/IGroth16Verifier.sol";
@@ -52,6 +54,8 @@ contract Deploy is Script {
         EventAttestation attestation;
         RedistributionEngine engine;
         SanctionsEscrow escrow;
+        ExitAssurance exitAssurance;
+        ExitReceiptVerifier exitReceipt;
     }
 
     function run() external returns (Deployment memory d) {
@@ -116,6 +120,11 @@ contract Deploy is Script {
         );
         d.escrow = new SanctionsEscrow(d.usd, d.engine, d.minterA, d.minterB, address(d.treasury));
 
+        // The Exit: voluntary migration of economic life out of the national currency
+        // into sDAI-backed community money — the measurable demand-destruction path.
+        d.exitReceipt = new ExitReceiptVerifier(deployer);
+        d.exitAssurance = new ExitAssurance(deployer, d.usd, d.identity);
+
         // ---- wiring
         d.tokenA.setMinter(address(d.minterA));
         d.tokenB.setMinter(address(d.minterB));
@@ -130,6 +139,7 @@ contract Deploy is Script {
         d.attestation.setEngine(d.engine);
         d.engine.wire(address(d.attestation));
         d.treasury.setSpender(address(d.engine), true);
+        d.exitAssurance.setReceiptVerifier(d.exitReceipt);
 
         // ---- hand ownership to governance
         d.dkim.transferOwnership(admin);
@@ -145,6 +155,8 @@ contract Deploy is Script {
         d.incentives.transferOwnership(admin);
         d.attestation.transferOwnership(admin);
         d.engine.transferOwnership(admin);
+        d.exitReceipt.transferOwnership(admin);
+        d.exitAssurance.transferOwnership(admin);
     }
 
     // ---- demo fixtures (mirrored in app/lib/demo.ts) --------------------------
@@ -196,6 +208,20 @@ contract Deploy is Script {
             );
             d.identity.setRealVerifier(rev);
             d.identity.setRealKey(kid, Community.A, vm.envString("EMAIL_SENDER"));
+        }
+
+        // Exit-provenance path: if a ramp DKIM key is supplied, register it in the
+        // ExitReceiptVerifier and allowlist its sender so members can attach a
+        // conversion receipt to their exit. Env-gated so the mainnet deploy carries
+        // no placeholder ramp key unless one is explicitly provided.
+        if (vm.envOr("RAMP_MODULUS", bytes("")).length > 0) {
+            bytes32 rkid = d.exitReceipt.registerKey(
+                vm.envString("RAMP_DOMAIN"),
+                vm.envString("RAMP_SELECTOR"),
+                vm.envBytes("RAMP_MODULUS"),
+                vm.envBytes("RAMP_EXP")
+            );
+            d.exitAssurance.setRampKey(rkid, vm.envString("RAMP_SENDER"));
         }
     }
 }

@@ -31,6 +31,8 @@ export function ExitIndex() {
       { ...contract.reserve(), functionName: "balanceOf", args: [ADDRESSES.sanctionsEscrow] },
       { ...contract.tokenA(), functionName: "totalSupply", args: [] },
       { ...contract.tokenB(), functionName: "totalSupply", args: [] },
+      { ...contract.reserve(), functionName: "balanceOf", args: [ADDRESSES.exitAssurance] },
+      { ...contract.exitAssurance(), functionName: "attestedExits", args: [] },
     ],
   })
 
@@ -41,7 +43,9 @@ export function ExitIndex() {
   const escrow = r(3)
   const supplyA = r(4)
   const supplyB = r(5)
-  const totalLocked = reserveA + reserveB + treasury + escrow // sDAI, 18 decimals
+  const voluntaryExit = r(6) // sDAI locked in ExitAssurance (the /exit console)
+  const attestedExits = r(7) // members with a DKIM provenance receipt attached
+  const totalLocked = reserveA + reserveB + treasury + escrow + voluntaryExit // sDAI, 18 dec
   const lockedNum = Number(formatUnits(totalLocked, 18))
 
   // Off-chain ILS/USD rate (there is NO trustworthy on-chain ILS feed — see doc).
@@ -98,7 +102,12 @@ export function ExitIndex() {
             </p>
           </div>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <StatPill
+              label="Voluntary exits"
+              value={fmtMoney(Number(formatUnits(voluntaryExit, 18)), "$")}
+              hint="sDAI members locked in the /exit console — the deliberate exit"
+            />
             <StatPill
               label="Backing community money"
               value={fmtMoney(Number(formatUnits(reserveA + reserveB, 18)), "$")}
@@ -116,10 +125,16 @@ export function ExitIndex() {
             />
           </div>
 
-          <div className="mt-4 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <ArrowUp className="h-3.5 w-3.5 text-primary" weight="bold" />
-            {fmtMoney(Number(formatUnits(supplyA + supplyB, 18)), "")} units of community money in
-            circulation, each 1:1 redeemable
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+            <span className="flex items-center gap-2">
+              <ArrowUp className="h-3.5 w-3.5 text-primary" weight="bold" />
+              {fmtMoney(Number(formatUnits(supplyA + supplyB, 18)), "")} units of community money in
+              circulation, each 1:1 redeemable
+            </span>
+            <span>
+              · {attestedExits.toString()} exit
+              {attestedExits === 1n ? "" : "s"} with an attached shekel-provenance receipt
+            </span>
           </div>
         </div>
 
