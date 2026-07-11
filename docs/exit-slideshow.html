@@ -225,20 +225,21 @@
       <div class="card good">
         <h3><span class="tag real">real today</span></h3>
         <ul style="margin-top:6px">
-          <li class="yes">The pool <em>structure</em>: Merkle tree, nullifier double-spend, single-use vouchers, fixed denomination</li>
-          <li class="yes">Untrusted relayer (fee bound via <code>extDataHash</code>)</li>
+          <li class="yes">The pool structure: Poseidon Merkle tree, nullifier double-spend, single-use vouchers, fixed denomination, untrusted relayer</li>
+          <li class="yes"><strong>The withdraw ZK circuit is REAL</strong> — a compiled Groth16 Merkle-membership proof, verified on-chain, live on Sepolia. The mock is gone.</li>
           <li class="yes">The anonymous, member-less sink — no wallet ever on a p2p2p contract</li>
         </ul>
       </div>
       <div class="card bad">
-        <h3><span class="tag demo">not real yet</span></h3>
+        <h3><span class="tag demo">still demo-tier</span></h3>
         <ul style="margin-top:6px">
-          <li class="warn">The <strong>withdraw circuit is a mock</strong> — with it, the deposit→withdraw link is <em>still visible</em>. This is anti-private, not a harmless demo.</li>
-          <li class="warn">Real anonymity also needs: fixed denoms, a min anonymity-set size, a delay, and a permissionless relayer</li>
+          <li class="warn">The <strong>trusted setup is single-party</strong> — production needs a multi-party ceremony (no one holds the toxic waste)</li>
+          <li class="warn">The <strong>provenance gate is still a mock</strong> — proving "real Bit2C exit" in ZK needs the heavy zkEmail circuit (RSA + SHA-256 + regex)</li>
+          <li class="warn">Real safety also needs fixed denoms, a min anonymity-set size, a delay, and a permissionless relayer</li>
         </ul>
       </div>
     </div>
-    <div class="callout" style="margin-top:16px"><b>Bottom line:</b> we ship real <b>structural unlinkability</b> today; real <b>anonymity</b> arrives the day one Merkle-membership circuit compiles into the existing slot — no contract change.</div>
+    <div class="callout good" style="margin-top:16px"><b>Bottom line:</b> the load-bearing anonymity circuit is <b>done</b> — real proofs verify on-chain. What's left is a proper ceremony, the zkEmail provenance circuit, and a real relayer — not the core cryptography.</div>
   </section>
 
   <!-- 11 -->
@@ -247,11 +248,11 @@
     <h2>Deployed &amp; proven on-chain</h2>
     <p class="muted">Gnosis (the exit mechanism) + Sepolia (the shielded pool, no-bridge). A live run credited the Exit Index keyed by the pool nullifier, with <code>exited[W_kyc] == 0</code>.</p>
     <dl class="kv" style="margin-top:14px">
-      <dt>Sepolia · ShieldedPool</dt><dd class="addr">0x957A95eC6F47fbDB469Bd724A9af2dA32575877F</dd>
-      <dt>Sepolia · ExitAssurance</dt><dd class="addr">0x395D8D4f3d020f36653443Dd483AabFF23b9B2DA</dd>
+      <dt>Sepolia · ShieldedPool</dt><dd class="addr">0x020Ed3C582F1C6ee50Dd64faAcE0C7b68EA2843B</dd>
+      <dt>Sepolia · WithdrawGroth16Verifier</dt><dd class="addr">0x81baC255214E81265Bc91AF8b41de7F4136Ec5e3</dd>
+      <dt>Sepolia · PoseidonHasher</dt><dd class="addr">0x391788440C62b1245645388196873984977A684F</dd>
       <dt>Gnosis · ExitAssurance</dt><dd class="addr">0xCd77F7658f77faf52020dF0a6a8660c01cC452e9</dd>
-      <dt>Gnosis · ExitReceiptVerifier</dt><dd class="addr">0xa17Bf591bCFD9B4aC9Ce219de73622489119B71f</dd>
-      <dt>Tests</dt><dd><strong>206 Foundry tests pass</strong> — incl. "no event links W_kyc to the exit credit"</dd>
+      <dt>Tests</dt><dd><strong>209 Foundry tests pass</strong> — incl. a REAL Groth16 proof verified on-chain + "no event links W_kyc to the exit"</dd>
       <dt>Live demo</dt><dd class="addr">ronturetzky.github.io/p2peace-zkemail/exit</dd>
     </dl>
   </section>
@@ -259,13 +260,14 @@
   <!-- 12 -->
   <section class="slide">
     <div class="kicker">what's next</div>
-    <h2>One thing turns every "demo" into "real"</h2>
+    <h2>What's left (the honest remainder)</h2>
     <ul>
-      <li><strong>Compile two circuits</strong> — the zkEmail provenance circuit and the Merkle-membership withdraw circuit. Both drop into existing slots with <em>no contract change</em>.</li>
-      <li><strong>Stand up a relayer</strong> (permissionless market / 4337 paymaster over Tor) + client-side proof generation for the shielded UI</li>
-      <li><strong>Grow the anonymity set</strong> — real safety needs continuous volume, not a cold-start pool</li>
+      <li class="yes"><strong>Withdraw circuit — DONE.</strong> Compiled, deployed, real proofs verify on-chain (Sepolia).</li>
+      <li><strong>The zkEmail provenance circuit</strong> — RSA + SHA-256 + regex over the email; the one heavy circuit left, so "these are all real Bit2C exits" is proven, not asserted</li>
+      <li><strong>A multi-party ceremony</strong> to replace the single-party trusted setup</li>
+      <li><strong>A real relayer</strong> (permissionless / 4337 over Tor) + client-side proof gen for the shielded UI, and continuous volume to grow the anonymity set</li>
     </ul>
-    <div class="callout good" style="margin-top:20px"><b>The throughline:</b> at every step we built the real thing where we could, and labeled the gap honestly where we couldn't. No theater — a measurable mechanism, an authentic proof, a real privacy model, and a sovereignty layer that's structurally sound and one circuit away from complete.</div>
+    <div class="callout good" style="margin-top:20px"><b>The throughline:</b> at every step we built the real thing where we could, and labeled the gap honestly where we couldn't. No theater — a measurable mechanism, an authentic email proof, a real privacy model, and a sovereignty layer whose load-bearing ZK circuit now verifies real proofs on-chain.</div>
     <p class="muted" style="margin-top:20px">🕊 peer to peer to peace</p>
   </section>
 
