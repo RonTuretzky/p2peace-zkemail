@@ -45,6 +45,7 @@ contract ProvenanceShieldedPool is MerkleTreeWithHistory, Ownable {
 
     mapping(bytes32 domainHash => bool) public rampDomainAllowed;
     uint256 public minDeposits; // k-anonymity floor before any withdrawal is allowed
+    uint64 public minDelay; // required age of the proof's root (deposit→withdraw wait)
 
     mapping(bytes32 exitNullifier => bool) public voucher; // minted, unspent
     mapping(bytes32 exitNullifier => bool) public voucherSpent;
@@ -60,6 +61,7 @@ contract ProvenanceShieldedPool is MerkleTreeWithHistory, Ownable {
 
     event RampDomainSet(bytes32 indexed domainHash, bool allowed);
     event MinDepositsSet(uint256 minDeposits);
+    event MinDelaySet(uint64 minDelay);
     event VoucherMinted(bytes32 indexed exitNullifier, uint256 denomination);
     event DepositInserted(uint32 indexed leafIndex, uint256 indexed commitment);
     // Carries ONLY the anonymous pool nullifier + relayer — never a depositor wallet.
@@ -74,6 +76,7 @@ contract ProvenanceShieldedPool is MerkleTreeWithHistory, Ownable {
     error UnknownRoot();
     error NullifierUsed();
     error TooFewDeposits();
+    error TooRecent();
     error FeeTooHigh();
 
     constructor(
@@ -105,6 +108,13 @@ contract ProvenanceShieldedPool is MerkleTreeWithHistory, Ownable {
     function setMinDeposits(uint256 minDeposits_) external onlyOwner {
         minDeposits = minDeposits_;
         emit MinDepositsSet(minDeposits_);
+    }
+
+    /// @notice Require the proof's root to be at least `minDelay_` seconds old — a
+    ///         deposit→withdraw wait that lets the anonymity set grow before you exit.
+    function setMinDelay(uint64 minDelay_) external onlyOwner {
+        minDelay = minDelay_;
+        emit MinDelaySet(minDelay_);
     }
 
     /// @notice STEP 1 — mint a single-use deposit voucher from a Bit2C provenance proof.
@@ -147,6 +157,7 @@ contract ProvenanceShieldedPool is MerkleTreeWithHistory, Ownable {
     ) external {
         if (depositCount < minDeposits) revert TooFewDeposits();
         if (!isKnownRoot(root)) revert UnknownRoot();
+        if (block.timestamp < rootCreatedAt[root] + minDelay) revert TooRecent();
         if (nullifierSpent[poolNullifier]) revert NullifierUsed();
         if (ext.fee > denomination) revert FeeTooHigh();
 

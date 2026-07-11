@@ -292,15 +292,18 @@ Three things this fixed or delivered, all real today:
   proof, and the deposit can come from a wallet other than `W_kyc`.
 
 **Deployed + proven end-to-end on Sepolia** (`DeployShieldedExit.s.sol`), with **both
-verifiers real**: `ShieldedPool` `0x82e9DEc39898dDe0e0Cb9170799E34e678d85Ac3`,
-`ExitAssurance` `0x476E80913fDAc4A4D478F25763531754bDC7Aa9E`, `ProvenanceGroth16Verifier`
-`0x9FcB2638a63D6AefeF64482b23Fd6535100096A2`, `WithdrawGroth16Verifier`
-`0x15d305a6CE3256f16132962F1a1Bb6B582Dd147E`, `PoseidonHasher`
+verifiers real** (multi-party ceremony keys): `ShieldedPool`
+`0xCFfB2d42114562291B9f7f0CCe7424611329Ff6f`, `ExitAssurance`
+`0xB790230B4c69586cfAfb75d0071eAE4DC19a2455`, `ProvenanceGroth16Verifier`
+`0x12b7daF11D80749b635C96648afcE9f36Fa2A1ad`, `WithdrawGroth16Verifier`
+`0xD1B1AA81F7AB7E20C76D0110c816A842F4651BB8`, `PoseidonHasher`
 `0x391788440C62b1245645388196873984977A684F`, reserve MockUSD
-`0xff3c337263F627b7C5f7DaC4080d230594e90b44`. A live run — mint voucher (**real zkEmail
-proof**) → deposit → withdraw (**real membership proof**) — credited the Exit Index **keyed
-by the pool nullifier**, with `exited[W_kyc] == 0`. The Foundry suite asserts **no emitted
-event links `W_kyc` to the exit credit**, and both real proofs reject tampering.
+`0x41BB3944C212A0844B9E4D81eA83B87e52509Ec7`. A live run with **client-side note +
+withdraw-proof generation** (`zk/shielded-e2e.mjs`) — mint voucher (real zkEmail proof) →
+deposit a fresh note → *client* proves membership (client root == on-chain root) → *relayer*
+(`zk/relayer.mjs`) submits — credited the Exit Index **keyed by the pool nullifier**, with
+`exited[W_kyc] == 0`. The Foundry suite asserts **no event links `W_kyc` to the exit**, both
+proofs reject tampering, and a `minDelay` enforces a deposit→withdraw anonymity-accrual wait.
 
 ### 5.4c Both circuits are now REAL — no mock in the shielded flow
 
@@ -327,20 +330,32 @@ a forged key-hash is rejected. Foundry: `ProvenanceReal.t.sol` (4 tests) +
 → deposit → `getLastRoot() == circuit root` → withdraw (real membership proof) → `exitIndex`
 credited by the anonymous nullifier, `exited[W_kyc] == 0`.
 
-> **What's still demo-tier, stated plainly.** The circuits and verifiers are real; two
-> things remain:
-> 1. **The trusted setup is single-party** (a local ceremony in `zk/`; the provenance
->    ceremony used the Hermez power-20 ptau + one local contribution). A *production*
->    deployment needs a multi-party ceremony so no one holds the toxic waste.
-> 2. **Body-content binding.** The provenance proof proves a genuine *Bit2C DKIM email*
->    (domain-bound via the registered key); it does not yet prove the email is
->    specifically a *withdrawal of amount X* — that needs in-circuit body regex, which for
->    a 37 KB HTML email needs SHA-slicing (`precomputedSHA`), a further extension.
+**Multi-party ceremony.** Both circuits' proving keys are now the product of a
+multi-contribution Groth16 phase-2 ceremony finalized with a **public random beacon** and
+**`snarkjs zkey verify`d** (`ZKey Ok!`) against the r1cs + ptau — no single party's entropy
+determines the toxic waste. (Production would invite independent human contributors; the
+ceremony *mechanism* — multiple contributions, public beacon, public verification — is
+exactly what runs here.)
+
+**Relayer + client-side proving.** `zk/lib-shielded.mjs` generates notes and withdraw
+proofs entirely client-side (browser-capable: the withdraw wasm + 4.9 MB zkey); `zk/relayer.mjs`
+is a runnable relayer that submits `withdraw()` and takes its fee from the note, so the
+withdrawing party needs no ETH and leaves no funding edge. **Anonymity-set hardening**:
+`minDeposits` (k-floor) + `minDelay` (contract-enforced deposit→withdraw wait) are live.
+
+> **The one honest remainder: body-content binding.** The provenance proof proves a genuine
+> *Bit2C DKIM email* (domain-bound via the registered key); it does not prove the email is
+> specifically a *withdrawal of amount X to address Y*. That needs in-circuit body regex,
+> and here it hits a real physical wall: the withdrawal address sits ~12 KB into a **37 KB**
+> HTML body, so even with SHA-slicing (`precomputedSHA`) the in-circuit hash is ~12 M
+> constraints → a **power-24 ceremony (~18 GB ptau)**, not feasible on one machine. The
+> circuit *mechanism* is demonstrated on a compact receipt; the real Bit2C email would need
+> that larger ceremony (or a sender that emits a small machine-readable receipt).
 >
-> And regardless of circuits, real-world safety still needs a **minimum anonymity-set
-> size** (`minDeposits` + a real, continuous population), **fixed denominations**, a
-> **randomized deposit→withdraw delay**, and a **permissionless relayer / 4337 paymaster
-> over Tor/Waku**. And unhideably, the state can always see that `W_kyc` made a public
+> And regardless of circuits, real-world safety still needs a **continuously-populated
+> anonymity set** (a cold-start pool of five is not anonymous at any *k*) and a
+> **permissionless relayer market / 4337 paymaster over Tor/Waku** (a single relayer is a
+> metadata sink). And unhideably, the state can always see that `W_kyc` made a public
 > deposit into a *generic* exit pool at time T — which is why the pool is deliberately
 > **not** p2p2p-branded and all p2p2p naming lives on the hidden withdrawal side.
 

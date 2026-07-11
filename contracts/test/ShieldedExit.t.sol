@@ -161,6 +161,23 @@ contract ShieldedExitTest is BaseTest {
         pool.withdraw(proof, root, 1, ext);
     }
 
+    function test_withdraw_beforeMinDelay_reverts_thenSucceeds() public {
+        pool.setMinDelay(1 hours);
+        _depositOnce(wKyc, "d1", 101);
+        uint256 nfPool = 424242;
+        ProvenanceShieldedPool.ExtData memory ext =
+            ProvenanceShieldedPool.ExtData({relayer: relayer, fee: 0});
+        uint256[8] memory proof;
+        uint256 root = pool.getLastRoot();
+        vm.prank(relayer);
+        vm.expectRevert(ProvenanceShieldedPool.TooRecent.selector);
+        pool.withdraw(proof, root, nfPool, ext);
+        // after the anonymity-accrual delay, the same withdrawal is allowed
+        vm.warp(block.timestamp + 1 hours);
+        _withdraw(nfPool, 0);
+        assertTrue(pool.nullifierSpent(nfPool), "withdraw allowed once the root is old enough");
+    }
+
     function test_withdraw_doubleSpend_reverts() public {
         _depositOnce(wKyc, "d1", 101);
         _depositOnce(makeAddr("kyc2"), "d2", 102);

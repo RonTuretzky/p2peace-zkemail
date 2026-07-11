@@ -22,6 +22,9 @@ abstract contract MerkleTreeWithHistory {
     mapping(uint256 level => uint256) public filledSubtrees;
     mapping(uint256 level => uint256) public zeros;
     uint256[ROOT_HISTORY_SIZE] public roots;
+    /// When each root was first created — used to enforce a deposit→withdraw delay
+    /// (k-anonymity accrual), so a withdrawal can't chase a just-made deposit.
+    mapping(uint256 root => uint64) public rootCreatedAt;
     uint32 public currentRootIndex;
     uint32 public nextIndex;
 
@@ -65,6 +68,7 @@ abstract contract MerkleTreeWithHistory {
         uint32 newRootIndex = (currentRootIndex + 1) % ROOT_HISTORY_SIZE;
         currentRootIndex = newRootIndex;
         roots[newRootIndex] = cur;
+        if (rootCreatedAt[cur] == 0) rootCreatedAt[cur] = uint64(block.timestamp);
         nextIndex = _next + 1;
         return _next;
     }
