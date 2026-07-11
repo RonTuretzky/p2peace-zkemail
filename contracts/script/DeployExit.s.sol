@@ -4,6 +4,7 @@ pragma solidity ^0.8.28;
 import {Script, console2} from "forge-std/Script.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IIdentityRegistry} from "../src/interfaces/IIdentityRegistry.sol";
+import {IZKEmailVerifier} from "../src/interfaces/IZKEmailVerifier.sol";
 import {ExitAssurance} from "../src/ExitAssurance.sol";
 import {ExitReceiptVerifier} from "../src/ExitReceiptVerifier.sol";
 
@@ -22,10 +23,13 @@ contract DeployExit is Script {
         address admin = vm.envOr("ADMIN", msg.sender);
         address reserve = vm.envAddress("RESERVE_TOKEN");
         address identity = vm.envAddress("IDENTITY");
+        address zk = vm.envAddress("ZK_VERIFIER");
 
         vm.startBroadcast();
         erv = new ExitReceiptVerifier(msg.sender);
-        ea = new ExitAssurance(msg.sender, IERC20(reserve), IIdentityRegistry(identity));
+        ea = new ExitAssurance(
+            msg.sender, IERC20(reserve), IIdentityRegistry(identity), IZKEmailVerifier(zk)
+        );
         ea.setReceiptVerifier(erv);
 
         if (vm.envOr("RAMP_MODULUS", bytes("")).length > 0) {

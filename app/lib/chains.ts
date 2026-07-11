@@ -68,9 +68,25 @@ export const ADDRESSES: ContractAddresses = {
   sanctionsEscrow: "0x4f931f24462d4b53a0475c98a00cad74d32d0a70",
   realEmailVerifier: "0x0e707f9e969c0b61d48e9efb62fbecf54e628a8b",
   // The Exit (added additively against the live IdentityRegistry + sDAI).
-  exitAssurance: "0x6b8aa1f18e0a64077c5c4c8f9244616fe3ae9caf",
-  exitReceiptVerifier: "0x25dc50f63e336292318a23e41d1908ae53174a7e",
+  exitAssurance: "0xcd77f7658f77faf52020df0a6a8660c01cc452e9",
+  exitReceiptVerifier: "0xa17bf591bcfd9b4ac9ce219de73622489119b71f",
 }
+
+/**
+ * Exit-provenance wiring (Bit2C ramp, both tiers). The private (ZK) path proves you
+ * hold a Bit2C withdrawal receipt naming YOUR address without revealing the address —
+ * only these public values + a nullifier go on-chain.
+ */
+export const EXIT_PROVENANCE = {
+  /** keccak256("p2peace/exit-receipt-v1") — the ZK blueprint slot. */
+  exitPattern: "0xa9078eac10d0c92be65bf1588657e1a95991636ffdcbd5a2618a59035f70bccd",
+  /** keccak256("bit2c.co.il") — allowlisted ramp domain. */
+  bit2cDomainHash: "0xb3422de0e8829485a7e4e1d4c4329402dd4d3b0f78854bb6fbaa0adf9702bca5",
+  /** keccak256("p2peace/bit2c-s1-keyhash") — the DKIMRegistry key hash for Bit2C s1. */
+  bit2cKeyHash: "0xda56b991650bb679fcf908015872fc0eed9bb05e7ce55a30c1d19ff1734f5607",
+  rampDomain: "bit2c.co.il",
+  rampSender: "info@bit2c.co.il",
+} as const
 
 /** Community enum (mirrors src/Types.sol Community). */
 export enum Community {

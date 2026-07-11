@@ -21,8 +21,8 @@
         "redistributionEngine": "0x241a51c7f3394538c883dce28af433c6908ce032",
         "sanctionsEscrow": "0x4f931f24462d4b53a0475c98a00cad74d32d0a70",
         "realEmailVerifier": "0x0e707f9e969c0b61d48e9efb62fbecf54e628a8b",
-        "exitAssurance": "0x6b8aa1f18e0a64077c5c4c8f9244616fe3ae9caf",
-        "exitReceiptVerifier": "0x25dc50f63e336292318a23e41d1908ae53174a7e"
+        "exitAssurance": "0xcd77f7658f77faf52020df0a6a8660c01cc452e9",
+        "exitReceiptVerifier": "0xa17bf591bcfd9b4ac9ce219de73622489119b71f"
       }
     }
   }

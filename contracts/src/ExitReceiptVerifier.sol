@@ -45,10 +45,8 @@ contract ExitReceiptVerifier is Ownable {
     /// keyId = keccak256(domain ‖ ":" ‖ selector). One RSA key per DKIM selector.
     mapping(bytes32 keyId => DomainKey) public keys;
 
-    // Machine-readable markers the ramp is required to place in the signed body.
-    // Real senders won't use these exact markers — the regex is per-sender; these
-    // define the interoperable convention a conforming/adapter sender targets.
-    bytes internal constant ADDR_MARKER = "p2peace-exit-address=0x";
+    // Optional machine-readable amount marker (not required; real ramps like Bit2C
+    // don't emit it, so amount is best-effort and never load-bearing).
     bytes internal constant ILS_MARKER = "p2peace-exit-ils=";
 
     event KeyRegistered(bytes32 indexed keyId, string domain, string selector);
@@ -124,13 +122,17 @@ contract ExitReceiptVerifier is Ownable {
             revert HeaderNotFound();
         }
 
-        // (3) body binding: base64(sha256(simpleCanon(body))) must equal the signed bh=.
+        // (3) body binding: base64(sha256(relaxedCanon(body))) must equal the signed
+        //     bh=. Bit2C (and most senders) use c=relaxed/relaxed; the body is signed
+        //     as-transferred (quoted-printable), so we hash the raw body bytes.
         bytes memory bh = _extractTag(signedHeaders, "bh=");
-        string memory computed = Base64.encode(bytes.concat(_simpleBodyHash(body)));
+        string memory computed = Base64.encode(bytes.concat(_relaxedBodyHash(body)));
         if (keccak256(bytes(computed)) != keccak256(bh)) revert BodyHashMismatch();
 
-        // (4) address binding: the address named in the signed body must be the claimer.
-        address named = _extractAddress(body);
+        // (4) address binding: the destination address in the signed body must be the
+        //     claimer. Extracted tolerant of quoted-printable soft breaks (the address
+        //     is often split, e.g. `...Cf24=\r\n21676946C`).
+        address named = _extractAddressQP(body);
         if (named != expectedAddress) revert AddressMismatch();
 
         ilsAmount = _extractUint(body, ILS_MARKER);
@@ -139,19 +141,59 @@ contract ExitReceiptVerifier is Ownable {
 
     // ------------------------------------------------------------- body hashing
 
-    /// @dev DKIM "simple" body canonicalization: strip trailing empty lines to a
-    ///      single terminating CRLF, then SHA-256. (An empty body hashes a lone CRLF.)
-    function _simpleBodyHash(bytes calldata body) internal pure returns (bytes32) {
-        uint256 end = body.length;
-        while (end >= 2 && body[end - 2] == 0x0d && body[end - 1] == 0x0a) {
-            end -= 2;
+    /// @dev DKIM "relaxed" body canonicalization (RFC 6376 §3.4.4), then SHA-256:
+    ///      (a) strip trailing WSP at end of each line, (b) collapse WSP runs to a
+    ///      single SP, (c) collapse trailing empty lines to one CRLF (and ensure the
+    ///      body ends with a CRLF). Byte-exact with the reference — validated to
+    ///      reproduce Bit2C's signed bh=.
+    function _relaxedBodyHash(bytes calldata body) internal pure returns (bytes32) {
+        uint256 n = body.length;
+        bytes memory t = new bytes(n + 2); // output never grows past input (+CRLF)
+        uint256 o = 0;
+        bool pendingWsp = false;
+        uint256 i = 0;
+        while (i < n) {
+            bytes1 c = body[i];
+            if (c == 0x20 || c == 0x09) {
+                pendingWsp = true; // (a)+(b): defer WSP; emit at most one SP
+                i++;
+                continue;
+            }
+            if (c == 0x0d && i + 1 < n && body[i + 1] == 0x0a) {
+                pendingWsp = false; // drop trailing WSP before the CRLF
+                t[o++] = 0x0d;
+                t[o++] = 0x0a;
+                i += 2;
+                continue;
+            }
+            if (c == 0x0a) {
+                pendingWsp = false; // tolerate a bare LF as a line end
+                t[o++] = 0x0d;
+                t[o++] = 0x0a;
+                i++;
+                continue;
+            }
+            if (pendingWsp) {
+                t[o++] = 0x20;
+                pendingWsp = false;
+            }
+            t[o++] = c;
+            i++;
         }
-        bytes memory canon = new bytes(end + 2);
-        for (uint256 i = 0; i < end; i++) {
-            canon[i] = body[i];
+        // (c) collapse trailing empty lines to a single CRLF...
+        while (o >= 4 && t[o - 4] == 0x0d && t[o - 3] == 0x0a && t[o - 2] == 0x0d && t[o - 1] == 0x0a)
+        {
+            o -= 2;
         }
-        canon[end] = 0x0d;
-        canon[end + 1] = 0x0a;
+        // ...and ensure a non-empty body ends with exactly one CRLF.
+        if (o == 0 || t[o - 1] != 0x0a) {
+            t[o++] = 0x0d;
+            t[o++] = 0x0a;
+        }
+        bytes memory canon = new bytes(o);
+        for (uint256 k = 0; k < o; k++) {
+            canon[k] = t[k];
+        }
         return sha256(canon);
     }
 
@@ -194,18 +236,49 @@ contract ExitReceiptVerifier is Ownable {
         return _slice(data, vStart, vEnd);
     }
 
-    /// @dev Parse the 40-hex-char address that follows ADDR_MARKER ("...=0x") in the
-    ///      signed body. Requires the FULL address (no truncation/masking).
-    function _extractAddress(bytes calldata body) internal pure returns (address) {
-        uint256 m = _indexOf(body, ADDR_MARKER, 0);
-        if (m == type(uint256).max) revert AddressNotFound();
-        uint256 p = m + ADDR_MARKER.length;
-        if (p + 40 > body.length) revert AddressNotFound();
-        uint160 acc = 0;
-        for (uint256 i = 0; i < 40; i++) {
-            acc = (acc << 4) | uint160(_hexVal(body[p + i]));
+    /// @dev Extract the destination address from the signed body: the first "0x"
+    ///      followed by 40 hex digits, tolerant of quoted-printable soft breaks
+    ///      ("=\r\n" / "=\n") splitting the hex run. Because the whole body is already
+    ///      committed by the bh= check, this parse only affects whether we can READ
+    ///      Bit2C's address, never security — so scanning for the address is safe.
+    function _extractAddressQP(bytes calldata body) internal pure returns (address) {
+        uint256 m = _indexOf(body, "0x", 0);
+        while (m != type(uint256).max) {
+            (bool ok, address a) = _readHex40QP(body, m + 2);
+            if (ok) return a;
+            m = _indexOf(body, "0x", m + 2);
         }
-        return address(acc);
+        revert AddressNotFound();
+    }
+
+    /// @dev Try to read exactly 40 hex chars from `p`, skipping "=\r\n"/"=\n" soft
+    ///      breaks. Returns (false, 0) if a non-hex, non-soft-break char appears first.
+    function _readHex40QP(bytes calldata body, uint256 p) internal pure returns (bool, address) {
+        uint160 acc = 0;
+        uint256 got = 0;
+        uint256 len = body.length;
+        while (got < 40 && p < len) {
+            bytes1 c = body[p];
+            if (c == 0x3d) {
+                // quoted-printable soft line break: "=\r\n" or "=\n"
+                if (p + 2 < len && body[p + 1] == 0x0d && body[p + 2] == 0x0a) {
+                    p += 3;
+                    continue;
+                }
+                if (p + 1 < len && body[p + 1] == 0x0a) {
+                    p += 2;
+                    continue;
+                }
+                return (false, address(0));
+            }
+            uint8 v = _hexOrFF(c);
+            if (v == 0xff) return (false, address(0));
+            acc = (acc << 4) | uint160(v);
+            got++;
+            p++;
+        }
+        if (got == 40) return (true, address(acc));
+        return (false, address(0));
     }
 
     /// @dev Parse the unsigned decimal that follows `marker` in the body (0 if absent).
@@ -221,12 +294,12 @@ contract ExitReceiptVerifier is Ownable {
         return acc;
     }
 
-    function _hexVal(bytes1 c) internal pure returns (uint8) {
+    function _hexOrFF(bytes1 c) internal pure returns (uint8) {
         uint8 x = uint8(c);
         if (x >= 0x30 && x <= 0x39) return x - 0x30; // 0-9
         if (x >= 0x61 && x <= 0x66) return x - 0x61 + 10; // a-f
         if (x >= 0x41 && x <= 0x46) return x - 0x41 + 10; // A-F
-        revert AddressNotFound();
+        return 0xff;
     }
 
     // ----------------------------------------------------------------- bytes utils

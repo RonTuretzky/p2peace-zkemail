@@ -18,9 +18,9 @@ contract ExitReceiptTest is Test {
     bytes internal modulus;
     bytes internal exponent;
 
-    string internal constant DOMAIN = "ramp.example";
-    string internal constant SELECTOR = "exitsel";
-    string internal constant FROM = "noreply@ramp.example";
+    string internal constant DOMAIN = "bit2c-demo.example";
+    string internal constant SELECTOR = "s1";
+    string internal constant FROM = "info@bit2c-demo.example";
     address internal constant DEST = 0x1111111111111111111111111111111111111111;
 
     bytes32 internal id;
@@ -36,11 +36,13 @@ contract ExitReceiptTest is Test {
         id = verifier.registerKey(DOMAIN, SELECTOR, modulus, exponent);
     }
 
-    function test_validReceipt_bindsAddress_and_readsAmount() public view {
-        (bytes32 nullifier, uint256 ils) =
+    function test_validReceipt_bindsQPSplitAddress() public view {
+        // The address in the body is split by a quoted-printable soft break, exactly
+        // like the real Bit2C receipt; the verifier reassembles + binds it.
+        (bytes32 nullifier, uint256 amt) =
             verifier.verifyReceipt(id, signedHeaders, signature, body, FROM, DEST);
-        assertTrue(nullifier != bytes32(0), "receipt nullifier derived");
-        assertEq(ils, 10000, "ILS amount read from signed body");
+        assertTrue(nullifier != bytes32(0), "receipt nullifier derived, QP-split address bound");
+        assertEq(amt, 0, "no ILS marker in a real-format receipt (amount is best-effort)");
     }
 
     function test_deterministicNullifier() public view {
@@ -75,14 +77,14 @@ contract ExitReceiptTest is Test {
         verifier.verifyReceipt(id, signedHeaders, signature, badBody, FROM, DEST);
     }
 
-    function test_forgedAmountInBody_reverts() public {
-        // Change the ILS amount in the body from 10000 → 90000 (first digit 1→9). The
-        // body no longer hashes to the signed bh=, so the forgery is rejected: the
-        // amount is genuinely under the signature, not free-text.
+    function test_forgedAddressInBody_reverts() public {
+        // Change a digit of the destination address in the body. The body no longer
+        // hashes to the signed bh=, so the swap is rejected: the address is genuinely
+        // under the signature, not free-text an attacker can rewrite to their wallet.
         bytes memory badBody = body;
-        uint256 i = _find(badBody, "p2peace-exit-ils=1");
-        require(i != type(uint256).max, "marker present");
-        badBody[i + 17] = bytes1("9"); // the '1' right after '='
+        uint256 i = _find(badBody, "0x");
+        require(i != type(uint256).max, "address present");
+        badBody[i + 2] = badBody[i + 2] == bytes1("2") ? bytes1("3") : bytes1("2");
         vm.expectRevert(ExitReceiptVerifier.BodyHashMismatch.selector);
         verifier.verifyReceipt(id, signedHeaders, signature, badBody, FROM, DEST);
     }

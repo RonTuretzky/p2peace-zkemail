@@ -4,8 +4,9 @@ pragma solidity ^0.8.28;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Community} from "./Types.sol";
+import {Community, EmailProof} from "./Types.sol";
 import {IIdentityRegistry} from "./interfaces/IIdentityRegistry.sol";
+import {IZKEmailVerifier} from "./interfaces/IZKEmailVerifier.sol";
 import {ExitReceiptVerifier} from "./ExitReceiptVerifier.sol";
 
 /// @notice The Exit — a member voluntarily moves economic life OUT of the national
@@ -41,11 +42,17 @@ contract ExitAssurance is Ownable {
 
     IERC20 public immutable usd; // sDAI reserve, 18 decimals
     IIdentityRegistry public immutable identity;
+    /// zkEmail verifier for the PRIVATE provenance path (mock now, circuit later).
+    IZKEmailVerifier public immutable zkVerifier;
 
-    /// Optional provenance verifier (the DKIM receipt path). Zero = provenance off.
+    /// Optional provenance verifier (the public DKIM receipt path). Zero = off.
     ExitReceiptVerifier public receiptVerifier;
     /// keyId → the exact ramp/exchange sender address a receipt's From must carry.
     mapping(bytes32 keyId => string) public rampSender;
+    /// The exit-receipt blueprint (patternHash) accepted on the ZK path.
+    bytes32 public exitPattern;
+    /// domainHash (keccak of the ramp domain) allowlisted on the ZK path.
+    mapping(bytes32 domainHash => bool) public rampDomainAllowed;
 
     // ---- exit positions, keyed by citizenship nullifier (one person = one position)
     mapping(bytes32 nullifier => uint256) public exited; //     total sDAI locked
@@ -90,6 +97,11 @@ contract ExitAssurance is Ownable {
     event ProvenanceAttested(
         bytes32 indexed nullifier, address indexed wallet, uint256 ilsAmount, bytes32 receiptNullifier
     );
+    event ProvenanceAttestedZK(
+        bytes32 indexed nullifier, address indexed wallet, bytes32 receiptNullifier
+    );
+    event ExitPatternSet(bytes32 patternHash);
+    event RampDomainSet(bytes32 indexed domainHash, bool allowed);
 
     error NotMember();
     error ZeroAmount();
@@ -99,10 +111,15 @@ contract ExitAssurance is Ownable {
     error ProvenanceDisabled();
     error RampNotMapped();
     error ReceiptAlreadyUsed();
+    error PatternNotAllowed();
+    error InvalidProof();
 
-    constructor(address owner_, IERC20 usd_, IIdentityRegistry identity_) Ownable(owner_) {
+    constructor(address owner_, IERC20 usd_, IIdentityRegistry identity_, IZKEmailVerifier zk_)
+        Ownable(owner_)
+    {
         usd = usd_;
         identity = identity_;
+        zkVerifier = zk_;
     }
 
     // ------------------------------------------------------------------- admin
@@ -116,6 +133,18 @@ contract ExitAssurance is Ownable {
     function setRampKey(bytes32 keyId, string calldata sender) external onlyOwner {
         rampSender[keyId] = sender;
         emit RampKeyMapped(keyId, sender);
+    }
+
+    /// @notice Set the exit-receipt blueprint accepted on the private (ZK) path.
+    function setExitPattern(bytes32 patternHash) external onlyOwner {
+        exitPattern = patternHash;
+        emit ExitPatternSet(patternHash);
+    }
+
+    /// @notice Allowlist a ramp domain (keccak of the domain) for the ZK path.
+    function setRampDomain(bytes32 domainHash, bool allowed) external onlyOwner {
+        rampDomainAllowed[domainHash] = allowed;
+        emit RampDomainSet(domainHash, allowed);
     }
 
     // --------------------------------------------------------- commit / redeem
@@ -248,6 +277,30 @@ contract ExitAssurance is Ownable {
         }
         attestedIlsTotal += ilsAmount;
         emit ProvenanceAttested(nf, msg.sender, ilsAmount, receiptNullifier);
+    }
+
+    /// @notice PRIVATE provenance: prove — in zero knowledge — that you hold a
+    ///         DKIM-signed ramp withdrawal receipt naming your own address, WITHOUT
+    ///         putting the address or the email on-chain. Only the proof's nullifier
+    ///         is revealed. The proof is bound to msg.sender (extraData), so it is not
+    ///         a bearer instrument; the nullifier (derived in-circuit from the DKIM
+    ///         signature folded with a wallet secret) dedups replay and cannot be
+    ///         recomputed by the exchange. Mock verifier today; a compiled zkEmail
+    ///         circuit drops into the same `exitPattern` slot with no contract change.
+    function attestProvenanceZK(EmailProof calldata p) external {
+        bytes32 nf = _memberNullifier(msg.sender);
+        if (exitPattern == bytes32(0) || p.patternHash != exitPattern) revert PatternNotAllowed();
+        if (!rampDomainAllowed[p.domainHash]) revert RampNotMapped();
+        // Bind the proof to this wallet — a stolen proof can't be redirected.
+        if (!zkVerifier.verify(p, uint256(uint160(msg.sender)))) revert InvalidProof();
+        if (receiptUsed[p.nullifier]) revert ReceiptAlreadyUsed();
+        receiptUsed[p.nullifier] = true;
+
+        if (!provenanceAttested[nf]) {
+            provenanceAttested[nf] = true;
+            attestedExits += 1;
+        }
+        emit ProvenanceAttestedZK(nf, msg.sender, p.nullifier);
     }
 
     // ------------------------------------------------------------------ views

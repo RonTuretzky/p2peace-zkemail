@@ -2,9 +2,10 @@
 pragma solidity ^0.8.28;
 
 import {BaseTest} from "./Base.t.sol";
-import {Community} from "../src/Types.sol";
+import {Community, EmailProof} from "../src/Types.sol";
 import {ExitAssurance} from "../src/ExitAssurance.sol";
 import {ExitReceiptVerifier} from "../src/ExitReceiptVerifier.sol";
+import {IGroth16Verifier} from "../src/interfaces/IGroth16Verifier.sol";
 
 /// @notice The Exit mechanism end-to-end: the sDAI stock (commit/redeem) that IS the
 ///         honest Exit Index, the nullifier Sybil cap (funds follow the person, not the
@@ -16,26 +17,36 @@ contract ExitTest is BaseTest {
     // The synthetic receipt names this address as its destination, so it must be the
     // member that attests provenance.
     address internal constant DEST = 0x1111111111111111111111111111111111111111;
-    string internal constant RAMP_FROM = "noreply@ramp.example";
+    string internal constant RAMP_FROM = "info@bit2c-demo.example";
 
     bytes internal rSignedHeaders;
     bytes internal rSignature;
     bytes internal rBody;
     bytes32 internal rampKeyId;
 
+    bytes32 internal constant EXIT_PATTERN = keccak256("p2peace/exit-receipt-v1");
+    bytes32 internal constant BIT2C = keccak256("bit2c.co.il");
+
     function setUp() public override {
         super.setUp();
         exit = d.exitAssurance;
 
-        // Register the synthetic ramp key + allowlist its sender (test is owner).
+        // Public path: register the synthetic ramp key + allowlist its sender.
         string memory json = vm.readFile("test/exit-receipt-vector.json");
         rSignedHeaders = vm.parseJsonBytes(json, ".signedData");
         rSignature = vm.parseJsonBytes(json, ".signature");
         rBody = vm.parseJsonBytes(json, ".body");
         bytes memory modulus = vm.parseJsonBytes(json, ".modulus");
         bytes memory exponent = vm.parseJsonBytes(json, ".exponent");
-        rampKeyId = d.exitReceipt.registerKey("ramp.example", "exitsel", modulus, exponent);
+        rampKeyId = d.exitReceipt.registerKey("bit2c-demo.example", "s1", modulus, exponent);
         exit.setRampKey(rampKeyId, RAMP_FROM);
+
+        // Private (ZK) path: route the exit-receipt blueprint to the mock verifier,
+        // register Bit2C's domain key, and allowlist the pattern + domain.
+        d.verifier.setVerifier(EXIT_PATTERN, IGroth16Verifier(address(d.groth16)));
+        d.dkim.setKey(BIT2C, dkimKeyOf(BIT2C), 0, 0);
+        exit.setExitPattern(EXIT_PATTERN);
+        exit.setRampDomain(BIT2C, true);
     }
 
     // -------------------------------------------------------- commit / redeem
@@ -182,8 +193,9 @@ contract ExitTest is BaseTest {
         vm.stopPrank();
 
         assertTrue(exit.provenanceAttested(idNullifier("dest")), "member flagged");
-        assertEq(exit.attestedExits(), 1, "one attested exit");
-        assertEq(exit.attestedIlsTotal(), 10000, "ILS amount recorded from the receipt");
+        assertEq(exit.attestedExits(), 1, "one attested exit, address bound + verified");
+        // Real-format receipts (Bit2C) carry no ILS marker — amount is best-effort 0.
+        assertEq(exit.attestedIlsTotal(), 0, "no ILS marker in a real conversion receipt");
     }
 
     function test_provenance_replayReceipt_reverts() public {
@@ -202,5 +214,60 @@ contract ExitTest is BaseTest {
         vm.prank(other);
         vm.expectRevert(ExitReceiptVerifier.AddressMismatch.selector);
         exit.attestProvenance(rampKeyId, rSignedHeaders, rSignature, rBody);
+    }
+
+    // ---------------------------------------------- private (ZK) provenance path
+
+    function _exitProof(string memory seed) internal view returns (EmailProof memory) {
+        // Only the nullifier is ever revealed; no address, no email, in calldata.
+        return mkProof(BIT2C, EXIT_PATTERN, emailNullifier(seed), uint64(block.timestamp));
+    }
+
+    function test_provenanceZK_countsExit_revealsOnlyNullifier() public {
+        address m = makeAddr("zkmember");
+        registerMember(m, Community.A, "zk");
+        vm.prank(m);
+        exit.attestProvenanceZK(_exitProof("zk-receipt-1"));
+
+        assertTrue(exit.provenanceAttested(idNullifier("zk")), "member flagged via ZK proof");
+        assertEq(exit.attestedExits(), 1, "counted without revealing the address");
+        assertTrue(exit.receiptUsed(emailNullifier("zk-receipt-1")), "receipt nullifier spent");
+    }
+
+    function test_provenanceZK_replay_reverts() public {
+        address m = makeAddr("zkmember");
+        registerMember(m, Community.A, "zk");
+        vm.startPrank(m);
+        exit.attestProvenanceZK(_exitProof("zk-receipt-1"));
+        vm.expectRevert(ExitAssurance.ReceiptAlreadyUsed.selector);
+        exit.attestProvenanceZK(_exitProof("zk-receipt-1"));
+        vm.stopPrank();
+    }
+
+    function test_provenanceZK_wrongPattern_reverts() public {
+        address m = makeAddr("zkmember");
+        registerMember(m, Community.A, "zk");
+        EmailProof memory p =
+            mkProof(BIT2C, keccak256("not-the-exit-pattern"), emailNullifier("x"), uint64(block.timestamp));
+        vm.prank(m);
+        vm.expectRevert(ExitAssurance.PatternNotAllowed.selector);
+        exit.attestProvenanceZK(p);
+    }
+
+    function test_provenanceZK_nonRampDomain_reverts() public {
+        address m = makeAddr("zkmember");
+        registerMember(m, Community.A, "zk");
+        EmailProof memory p =
+            mkProof(keccak256("not-a-ramp.example"), EXIT_PATTERN, emailNullifier("y"), uint64(block.timestamp));
+        vm.prank(m);
+        vm.expectRevert(ExitAssurance.RampNotMapped.selector);
+        exit.attestProvenanceZK(p);
+    }
+
+    function test_provenanceZK_nonMember_reverts() public {
+        EmailProof memory p = _exitProof("z");
+        vm.prank(makeAddr("nonmember"));
+        vm.expectRevert(ExitAssurance.NotMember.selector);
+        exit.attestProvenanceZK(p);
     }
 }

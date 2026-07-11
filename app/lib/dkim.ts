@@ -175,26 +175,29 @@ function relaxedHeader(name: string, value: string): string {
  *    tag value emptied, and with NO trailing CRLF.
  */
 function buildSignedHeaders(headers: RawHeader[], sig: DkimSig): string {
-  const usedIdx = new Set<number>();
+  // RFC 6376 §5.4.2 header selection, matching the widely-deployed behavior
+  // (dkimpy / OpenDKIM select_headers): for each name in h=, take the LAST not-yet-
+  // consumed instance (scanning bottom-up), and when a listed name has no remaining
+  // instance — oversigning (a name repeated in h= beyond its occurrences) or an
+  // absent header — append NOTHING, not an empty "name:" line. Bit2C oversigns
+  // content-type/from/subject/to and lists an absent cc; the empty-line reading
+  // (which the single-instance btl.gov.il path never exercised) breaks the hash.
+  const lastIndex = new Map<string, number>();
   let out = "";
 
   for (const hName of sig.hList) {
     const lower = hName.toLowerCase();
-    let matchIdx = -1;
-    for (let i = 0; i < headers.length; i++) {
-      if (usedIdx.has(i)) continue;
+    let i = lastIndex.has(lower) ? (lastIndex.get(lower) as number) : headers.length;
+    let matched = -1;
+    while (i > 0) {
+      i -= 1;
       if (headers[i].name.toLowerCase() === lower) {
-        matchIdx = i;
+        matched = i;
         break;
       }
     }
-    if (matchIdx === -1) {
-      // Header listed in h= but not present: RFC says treat as empty value.
-      out += relaxedHeader(hName, "");
-      continue;
-    }
-    usedIdx.add(matchIdx);
-    out += relaxedHeader(headers[matchIdx].name, headers[matchIdx].value);
+    lastIndex.set(lower, i);
+    if (matched !== -1) out += relaxedHeader(headers[matched].name, headers[matched].value);
   }
 
   // Append the DKIM-Signature header itself with b= emptied, no trailing CRLF.

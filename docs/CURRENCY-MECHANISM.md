@@ -209,19 +209,51 @@ leg. `ExitReceiptVerifier` enforces exactly this (`AddressMismatch` if the claim
 the named address).
 
 But the red-team was clear about the limits: address-binding closes **who deposits**, not
-**what** — round-trip, borrowed-ILS, and pre-owned-stablecoin top-ups all survive it. And
-two empirical walls make the *literal* form undeployable against real ramps today:
+**what** — round-trip, borrowed-ILS, and pre-owned-stablecoin top-ups all survive it.
 
-- **No Israeli ramp settles natively on Gnosis** (Kraken lists Gnosis as unsupported;
-  Bit2C/Coinbase/Bits of Gold are Ethereum/Base/Solana). A mandatory bridge hop severs
-  `address == depositor`.
-- **None emails a full, un-truncated address + amount in the DKIM-signed body** (Kraken
-  sends no withdrawal-completion email at all; others mask the address for anti-phishing).
+**Update — a real Bit2C receipt breaks the "no ramp emits a full address" wall.** A genuine
+Bit2C (Israeli exchange) withdrawal-confirmation email, verified end-to-end against the
+deployed `ExitReceiptVerifier` on a Gnosis fork, carries the **full, un-truncated destination
+address in the DKIM-signed HTML body** — its own confirmation language even reads *"to myself
+and an address I own."* Two format details the verifier now handles: `c=relaxed/relaxed` body
+canonicalization (validated to reproduce Bit2C's signed `bh=` byte-for-byte), and the address
+being split by a quoted-printable soft break (`...Cf24=\r\n21676946C`), reassembled on-chain.
+Fixing this also surfaced a real header-selection bug (oversigned/absent `h=` entries must
+append *nothing*, not an empty header line — the single-instance btl.gov.il path never
+exercised it). So the DKIM signature, the body hash, and the address binding of a real
+exchange withdrawal genuinely verify on-chain today.
 
-ZKP2P avoids all of this not with a cleverer email but with **pre-commitment**: the
-on-chain leg is the anchor and funds route to a pre-committed address. That's why our
-load-bearing measure is the on-chain stock, and the email is only ever provenance riding
-alongside — exactly the "measure the sink, don't fake the source" stance of §2b.
+Two caveats remain, and they point at the ZK path:
+
+- **Bit2C settles on Ethereum, not Gnosis** — a bridge hop still severs `address ==
+  depositor` for the on-chain arrival leg, so the address binding proves the *withdrawal
+  destination*, not that the same coins landed in the contract.
+- **The public path is gas-heavy**: a real 37 KB HTML receipt costs ~55 M gas to verify
+  on-chain (fine as a read, over the block limit as a transaction).
+
+ZKP2P avoids all of this not with a cleverer email but with **pre-commitment**: the on-chain
+leg is the anchor and funds route to a pre-committed address. That's why our load-bearing
+measure is the on-chain stock, and the email is only ever provenance riding alongside —
+exactly the "measure the sink, don't fake the source" stance of §2b.
+
+### 5.4a Privacy — proving without revealing the address (the ZK path)
+
+The public path proves authenticity but is *not private*: on-chain DKIM verification needs
+the signed body (which contains the address, and whose headers contain the recipient email) in
+transaction calldata, and calldata is public forever. Hiding the address is therefore not a
+tweak — it requires moving the verification *inside a zero-knowledge proof*.
+
+`ExitAssurance.attestProvenanceZK` is that path. A compiled zkEmail circuit proves the same
+statement — *"I hold a Bit2C-DKIM-signed withdrawal receipt naming my own address"* — and
+reveals **only a nullifier** plus the ramp domain and blueprint hash. The address, amount, and
+email never touch the chain. The proof is bound to `msg.sender` (the `extraData` public input),
+so a stolen proof can't be redirected (not a bearer instrument); the nullifier is derived
+in-circuit as `Poseidon(dkimSignature, walletSecret)` so it dedups replay **and** cannot be
+recomputed by the exchange (which knows the signature but not the wallet secret) — closing the
+sender-de-anonymization hole. It is also far cheaper: the 37 KB body is processed off-chain and
+only a ~250 k-gas proof is verified on-chain. Today it runs on the mock verifier (demo tier,
+like identity/events); a compiled circuit drops into the same `exitPattern` slot with no
+contract change.
 
 ### 5.5 The assurance campaigns
 
@@ -238,14 +270,16 @@ Added **additively** against the live `IdentityRegistry` + sDAI (no system redep
 
 | Contract | Address |
 |---|---|
-| `ExitAssurance` | `0x6b8AA1F18E0A64077C5C4C8f9244616Fe3aE9CAf` |
-| `ExitReceiptVerifier` | `0x25dC50f63E336292318A23e41d1908AE53174a7e` |
+| `ExitAssurance` | `0xCd77F7658f77faf52020dF0a6a8660c01cC452e9` |
+| `ExitReceiptVerifier` | `0xa17Bf591bCFD9B4aC9Ce219de73622489119B71f` |
 
 Live at [`/exit`](https://ronturetzky.github.io/p2peace-zkemail/exit): commit/redeem,
-assurance campaigns, and an optional receipt-upload provenance tab. The provenance path
-is wired and unit-tested against a synthetic self-signed vector, but reports "sender not
-recognized" until governance allowlists a ramp — because, per §5.4, no conforming ramp
-exists yet. That is honesty, not breakage.
+assurance campaigns, and a two-tier receipt-upload provenance tab (private ZK path that hides
+the address, or public on-chain verification). **Bit2C is wired as an allowlisted ramp** — its
+real `s1` DKIM key is registered in `ExitReceiptVerifier`, and `bit2c.co.il` + the exit-receipt
+blueprint are allowlisted for the ZK path — so a genuine Bit2C withdrawal email is recognized
+on both paths. The public path verifies the real signature/body/address on-chain; the ZK path
+is mock-verified until the circuit compiles (the anonymity model is final).
 
 **Honest ceiling.** No scheme here proves a permanent, net exit from the shekel.
 Cryptography certifies *authenticity* (the ramp really said this, bound to your address);
@@ -261,7 +295,8 @@ we label everything else exactly as what it is.
 | Our Gnosis contracts can hold/trade ILS today | **No** | BILS is Solana-only; no EVM jILS; no on-chain ILS feed |
 | "Sell shekels to devalue the currency" | **No** | Backed stablecoins are un-sellable-down; real FX market too deep |
 | Shrink shekel demand / deny seigniorage | **Yes** | Every exit moves economic life out of ₪ — the Exit Index measures it |
-| Prove a conversion happened (authenticity) | **Yes** | DKIM-signed ramp receipt, body-bound + address-bound (`ExitReceiptVerifier`) |
+| Prove a conversion happened (authenticity) | **Yes** | Real Bit2C DKIM receipt verifies on-chain — body-bound + full-address-bound (`ExitReceiptVerifier`) |
+| Prove it *privately* (no address revealed) | **Yes (ZK)** | `attestProvenanceZK` reveals only a nullifier; mock now, circuit-ready |
 | Prove a *net* exit from the shekel | **No** | Round-trip / borrowed-ILS / provenance-of-input are unclosable from any artifact |
 | Coordinate exits to a collective threshold | **Yes** | `ExitAssurance` assurance campaigns, funds never trapped |
 | Event-triggered BILS→sDAI conversion | **Later** | Designed against the escrow; waits for BILS-on-EVM liquidity |

@@ -123,7 +123,7 @@ contract Deploy is Script {
         // The Exit: voluntary migration of economic life out of the national currency
         // into sDAI-backed community money — the measurable demand-destruction path.
         d.exitReceipt = new ExitReceiptVerifier(deployer);
-        d.exitAssurance = new ExitAssurance(deployer, d.usd, d.identity);
+        d.exitAssurance = new ExitAssurance(deployer, d.usd, d.identity, d.verifier);
 
         // ---- wiring
         d.tokenA.setMinter(address(d.minterA));

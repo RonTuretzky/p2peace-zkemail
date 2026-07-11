@@ -6,13 +6,13 @@ import { formatUnits, parseUnits } from "viem"
 import { useAccount, useReadContract, useReadContracts } from "wagmi"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ArrowCircleUp, ArrowCircleDown, Flag, UploadSimple, Warning, CheckCircle } from "@phosphor-icons/react"
+import { ArrowCircleUp, ArrowCircleDown, Flag, UploadSimple, Warning, CheckCircle, LockSimple } from "@phosphor-icons/react"
 import { TxButton, useTxSteps, useMembership } from "@/components/flow"
 import { HonestyNote } from "@/components/explainer"
 import { contract } from "@/lib/contracts"
-import { ADDRESSES } from "@/lib/chains"
+import { ADDRESSES, EXIT_PROVENANCE } from "@/lib/chains"
 import { parseReceiptEml, type ParsedReceipt } from "@/lib/dkim"
-import { keccak256, encodePacked } from "viem"
+import { keccak256, encodePacked, concat } from "viem"
 
 const DEC = 18
 const f2 = (v: bigint | undefined, frac = 2) =>
@@ -383,11 +383,13 @@ function CampaignRow({ c, me, onChange }: { c: CampaignView; me?: string; onChan
 /* --------------------------------------------------------------- provenance */
 
 function ProvenancePanel() {
+  const { address } = useAccount()
   const [parsed, setParsed] = useState<ParsedReceipt | null>(null)
   const [fileName, setFileName] = useState("")
   const [parseError, setParseError] = useState<string | null>(null)
 
   const attest = useTxSteps()
+  const isBit2c = parsed?.domain.toLowerCase() === EXIT_PROVENANCE.rampDomain
 
   const onFile = async (file: File) => {
     attest.reset()
@@ -402,14 +404,44 @@ function ProvenancePanel() {
     }
   }
 
-  const submit = () => {
+  // Private path: prove you hold the receipt WITHOUT the address/email touching
+  // calldata — only a nullifier is revealed. (Demo tier: the proof is a mock, so the
+  // real cryptographic check is pending a compiled circuit; the anonymity model is
+  // real and swaps in without a contract change.)
+  const proveZK = () => {
+    if (!parsed || !address) return
+    // Stand-in nullifier: keccak(signature ‖ wallet). A real circuit derives
+    // Poseidon(dkimSig, walletSecret) privately so even Bit2C can't recompute it.
+    const nullifier = keccak256(concat([parsed.signature as `0x${string}`, address]))
+    const proof = {
+      dkimPubkeyHash: EXIT_PROVENANCE.bit2cKeyHash as `0x${string}`,
+      domainHash: EXIT_PROVENANCE.bit2cDomainHash as `0x${string}`,
+      nullifier,
+      patternHash: EXIT_PROVENANCE.exitPattern as `0x${string}`,
+      emailTimestamp: BigInt(Math.floor(Date.now() / 1000)),
+      proof: Array(8).fill(0n) as bigint[],
+    }
+    attest.run([
+      {
+        label: "Prove privately (only a nullifier goes on-chain)",
+        request: () => ({
+          ...contract.exitAssurance(),
+          functionName: "attestProvenanceZK",
+          args: [proof],
+        }),
+      },
+    ])
+  }
+
+  // Public path: verify the real DKIM signature + body + address fully on-chain.
+  const provePublic = () => {
     if (!parsed) return
     const keyId = keccak256(
       encodePacked(["string", "string", "string"], [parsed.domain, ":", parsed.selector]),
     )
     attest.run([
       {
-        label: "Attest provenance on-chain",
+        label: "Verify the receipt on-chain (public)",
         request: () => ({
           ...contract.exitAssurance(),
           functionName: "attestProvenance",
@@ -419,20 +451,22 @@ function ProvenancePanel() {
     ])
   }
 
+  const bodyBytes = parsed ? (parsed.body.length - 2) / 2 : 0
+
   return (
     <Card className="mt-4 border-primary/30">
       <CardHeader>
         <CardTitle className="text-lg">Prove it came from shekels (advanced)</CardTitle>
         <CardDescription>
-          Attach a DKIM-signed conversion receipt from a ramp/exchange. The signature and the amount
-          + destination address in it are verified fully on-chain, and the receipt only counts for
-          the wallet it names — so it can&apos;t be reused by anyone else.
+          Upload the withdrawal-confirmation email your exchange sent (Bit2C is recognized). It&apos;s
+          DKIM-signed, so it&apos;s tamper-proof, and it names the destination address you own — the
+          receipt can only ever count for that wallet.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <label className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border py-7 transition-colors hover:border-primary/50">
           <UploadSimple className="h-6 w-6 text-primary" weight="bold" />
-          <span className="text-sm font-medium">{fileName || "Choose a receipt .eml"}</span>
+          <span className="text-sm font-medium">{fileName || "Choose a Bit2C withdrawal .eml"}</span>
           <input
             type="file"
             accept=".eml,message/rfc822,text/plain"
@@ -451,22 +485,53 @@ function ProvenancePanel() {
           <div className="space-y-2 rounded-xl bg-muted/50 p-4 text-sm">
             <Row label="Signed by" value={parsed.domain} />
             <Row label="From" value={parsed.from} mono />
-            <p className="text-xs text-muted-foreground">
-              Body: {(parsed.body.length - 2) / 2} bytes, hashed on-chain against the signed{" "}
-              <code>bh=</code>.
-            </p>
+            {!isBit2c && (
+              <p className="flex items-center gap-2 text-xs text-amber-600">
+                <Warning className="h-4 w-4" weight="bold" /> Only Bit2C is allowlisted right now — this
+                sender will be rejected on-chain.
+              </p>
+            )}
           </div>
         )}
 
         {attest.done ? (
           <div className="flex flex-col items-center gap-1.5 rounded-lg bg-accent/40 p-4 text-center">
             <CheckCircle className="h-7 w-7 text-primary" weight="fill" />
-            <p className="text-sm">Provenance attached to your exit position.</p>
+            <p className="text-sm">Provenance attached to your exit — no address revealed.</p>
           </div>
         ) : (
-          <TxButton className="w-full" pending={attest.running} disabled={!parsed} onClick={submit}>
-            {attest.running ? attest.stepLabel : "Attest this receipt on-chain"}
-          </TxButton>
+          <div className="space-y-2">
+            <TxButton
+              className="w-full"
+              pending={attest.running}
+              disabled={!parsed}
+              onClick={proveZK}
+            >
+              <LockSimple className="mr-1.5 h-4 w-4" weight="bold" />
+              {attest.running ? attest.stepLabel : "Prove privately — hides your address (recommended)"}
+            </TxButton>
+            <details className="rounded-lg border border-border px-3 py-2 text-xs text-muted-foreground">
+              <summary className="cursor-pointer font-medium">
+                Or verify publicly (real on-chain crypto, reveals the address)
+              </summary>
+              <p className="mt-2">
+                Verifies the DKIM signature, body hash, and address entirely on-chain — genuine
+                cryptography, today. But the whole signed email goes into public calldata (revealing
+                your address), and a full HTML receipt ({bodyBytes.toLocaleString()} bytes here) can
+                exceed the block gas limit. Use the private path unless you specifically want a public,
+                fully-verified attestation of a compact receipt.
+              </p>
+              <TxButton
+                className="mt-2 w-full"
+                variant="outline"
+                pending={attest.running}
+                disabled={!parsed}
+                onClick={provePublic}
+              >
+                Verify publicly on-chain
+              </TxButton>
+            </details>
+          </div>
         )}
 
         {attest.error && (
@@ -474,12 +539,13 @@ function ProvenancePanel() {
         )}
 
         <HonestyNote>
-          Honest scope: this proves a ramp genuinely <em>said</em> it converted shekels for you —
-          authenticity, bound to your address. It does <em>not</em> prove a net exit (a round-trip or
-          a borrowed-shekel conversion would still produce a valid receipt), so it&apos;s reported as
-          its own number, never mixed into the trustless Exit Index. No live ramp emits a conforming
-          receipt or settles on Gnosis yet, so until governance allowlists one, this path will report
-          that the sender isn&apos;t recognized — by design, not by bug.
+          What this proves and what it doesn&apos;t: it proves a regulated exchange genuinely{" "}
+          <em>issued you</em> a withdrawal to an address you own — authenticity, bound to you. It does{" "}
+          <em>not</em> prove a net exit (a round-trip or a borrowed-shekel withdrawal still yields a
+          valid receipt), so it&apos;s reported as its own number, never mixed into the trustless Exit
+          Index. The private path reveals only a nullifier — not your address, amount, or email; the
+          real cryptographic check is a mock until the zkEmail circuit is compiled (the anonymity
+          model is final and swaps in without a contract change).
         </HonestyNote>
       </CardContent>
     </Card>
