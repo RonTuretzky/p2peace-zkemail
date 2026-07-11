@@ -6,6 +6,8 @@
         "communityPoolB": "0xf31599c4ec89cae2ff26265e53e7508bce5af0c0",
         "dkimRegistry": "0x0aae0d2af6f73d3034490e4bbb17e897c57ae977",
         "eventAttestation": "0x7150d600cf922eec337f0a0ada14b525f0dd530d",
+        "exitAssurance": "0xcd77f7658f77faf52020df0a6a8660c01cc452e9",
+        "exitReceiptVerifier": "0xa17bf591bcfd9b4ac9ce219de73622489119b71f",
         "identityRegistry": "0xab8758312f4dc3f50abb7f52ca4e65ecd19bd268",
         "incentiveRegistry": "0x2d552aac74e5229240dcf727d6edc3e2c3a3f42d",
         "mockGroth16Verifier": "0xaed7cf0fd62b547a02309b134a2cc89d053b2019",
@@ -18,9 +20,7 @@
         "reserveToken": "0xaf204776c7245bf4147c2612bf6e5972ee483701",
         "sanctionsEscrow": "0x4f931f24462d4b53a0475c98a00cad74d32d0a70",
         "treasury": "0x63f166ab322cd26b195a57fe283284a5d8adb186",
-        "zkEmailVerifier": "0xd43380d3639096a2450b1e0ef235b4ddca8796f8",
-        "exitAssurance": "0x6b8aa1f18e0a64077c5c4c8f9244616fe3ae9caf",
-        "exitReceiptVerifier": "0x25dc50f63e336292318a23e41d1908ae53174a7e"
+        "zkEmailVerifier": "0xd43380d3639096a2450b1e0ef235b4ddca8796f8"
       },
       "deployer": "0x6636A1CCBdf54485067304C1a590DE016DeaD9F0"
     }
